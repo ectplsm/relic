@@ -127,6 +127,53 @@ Relic also runs as an [MCP](https://modelcontextprotocol.io/) server, allowing a
 | `relic_list` | List all available Engrams |
 | `relic_show` | Preview an Engram's composed prompt |
 | `relic_summon` | Summon an Engram and return the persona prompt for injection |
+| `relic_inject` | Inject an Engram into an OpenClaw workspace |
+| `relic_extract` | Extract an Engram from an OpenClaw workspace |
+
+## OpenClaw Integration
+
+Relic is fully compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces. You can inject Engrams into OpenClaw agents or extract existing agents as Engrams.
+
+### Inject — Push an Engram into OpenClaw
+
+```bash
+# Inject into the main agent (auto-detects single vs multi-agent)
+relic inject --engram motoko
+
+# Inject into a specific agent
+relic inject --engram johnny --agent researcher
+
+# Specify a custom OpenClaw directory
+relic inject --engram motoko --openclaw /path/to/.openclaw
+```
+
+### Extract — Create an Engram from OpenClaw
+
+```bash
+# Extract the main agent (ID defaults to "main")
+relic extract --name "My Agent"
+
+# Extract a specific agent (ID defaults to agent name)
+relic extract --name "Researcher" --agent researcher
+
+# Explicit ID
+relic extract --name "My Agent" --id custom-id
+
+# Overwrite an existing Engram
+relic extract --name "My Agent" --force
+
+# Extract from a custom OpenClaw directory
+relic extract --name "My Agent" --openclaw /path/to/.openclaw
+```
+
+### Auto-Detection
+
+Relic automatically detects the OpenClaw workspace mode:
+
+| Condition | `--agent` omitted | `--agent <name>` |
+|-----------|-------------------|-------------------|
+| `~/.openclaw/agents/` exists | Targets `agents/main/agent/` | Targets `agents/<name>/agent/` |
+| `~/.openclaw/agents/` absent | Targets `workspace/` | Error: agent not found |
 
 ## Creating Your Own Engram
 
@@ -219,6 +266,7 @@ src/
 - [x] CLI with init, list, show commands
 - [x] Shell injection: Claude Code, Gemini CLI, Codex CLI, Copilot CLI
 - [x] MCP Server interface
+- [x] OpenClaw integration (inject / extract)
 - [ ] Mikoshi cloud backend (`mikoshi.ectplsm.com`)
 - [ ] `relic create` — interactive Engram creation wizard
 - [ ] `relic sync` — sync Engrams between local and Mikoshi
