@@ -1,5 +1,5 @@
 {
-  "name": "relic",
+  "name": "@ectplsm/relic",
   "version": "0.1.0",
   "description": "PROJECT RELIC — Engram injection system for AI constructs",
   "type": "module",
