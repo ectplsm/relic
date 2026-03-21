@@ -27,18 +27,25 @@ relic gemini --engram motoko
 
 ```
 +--------------+     +--------------+     +--------------+
-|    Engram    |---->|    Relic     |---->|    Shell     |
-|   (persona)  |     |  (injector)  |     |   (AI CLI)   |
+|   Mikoshi    |     |    Relic     |     |    Shell     |
+|  (backend)   |     |  (injector)  |     |   (AI CLI)   |
 +--------------+     +--------------+     +--------------+
-   SOUL.md            compose &            claude
-   IDENTITY.md        inject               gemini
-   MEMORY.md                               codex
-   ...                                     copilot
+       |                   |                    |
+   +---------+        compose &            +---------+
+   | Engram  |------> inject ------------->|Construct|
+   |(persona)|                             | (live)  |
+   +---------+                             +---------+
+   SOUL.md                                  claude
+   IDENTITY.md                              gemini
+   MEMORY.md                                codex
+   ...                                      copilot
 ```
 
 1. **Engram** — A persona defined as a set of Markdown files (OpenClaw-compatible)
 2. **Relic** — Reads the Engram, composes it into a prompt, and injects it into...
 3. **Shell** — Any AI coding CLI. The persona takes over the session.
+4. **Construct** — A live process where an Engram is loaded into a Shell. The running instance of a persona.
+5. **Mikoshi** — Cloud backend where Engrams are stored and synced (planned).
 
 ## Installation
 
