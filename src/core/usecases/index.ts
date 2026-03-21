@@ -13,4 +13,9 @@ export {
   EngramAlreadyExistsError,
   type ExtractResult,
 } from "./extract.js";
+export {
+  MemorySearch,
+  MemoryEngramNotFoundError,
+  type MemorySearchResult,
+} from "./memory-search.js";
 export { AgentNotFoundError } from "../../shared/openclaw.js";
