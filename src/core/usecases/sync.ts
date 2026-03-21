@@ -56,7 +56,7 @@ export class Sync {
       // Engramがあるagentにはpersonaを注入
       if (target.hasEngram) {
         try {
-          await this.inject.execute(target.engramId, openclawDir);
+          await this.inject.execute(target.engramId, { openclawDir });
           injected.push(target.engramId);
         } catch {
           // inject失敗は警告として続行

@@ -23,16 +23,20 @@ export class Inject {
 
   async execute(
     engramId: string,
-    openclawDir?: string
+    options?: {
+      to?: string;
+      openclawDir?: string;
+    }
   ): Promise<InjectResult> {
     const engram = await this.repository.get(engramId);
     if (!engram) {
       throw new InjectEngramNotFoundError(engramId);
     }
 
-    const targetPath = resolveAgentPath(engramId, openclawDir);
+    const agentName = options?.to ?? engramId;
+    const targetPath = resolveAgentPath(agentName, options?.openclawDir);
     if (!existsSync(targetPath)) {
-      throw new InjectAgentNotFoundError(engramId, targetPath);
+      throw new InjectAgentNotFoundError(agentName, targetPath);
     }
     const filesWritten = await this.writeFiles(targetPath, engram.files);
 

@@ -196,6 +196,10 @@ server.tool(
   "Inject an Engram into an OpenClaw workspace (agent name = Engram ID)",
   {
     id: z.string().describe("Engram ID to inject (= OpenClaw agent name)"),
+    to: z
+      .string()
+      .optional()
+      .describe("Inject into a different agent name (default: same as Engram ID)"),
     openclaw: z
       .string()
       .optional()
@@ -211,7 +215,10 @@ server.tool(
     const inject = new Inject(repo);
 
     try {
-      const result = await inject.execute(args.id, args.openclaw);
+      const result = await inject.execute(args.id, {
+        to: args.to,
+        openclawDir: args.openclaw,
+      });
       return {
         content: [
           {
