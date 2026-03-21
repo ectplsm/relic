@@ -85,6 +85,40 @@ All shell commands support:
 
 Extra arguments are passed through to the underlying CLI.
 
+## MCP Server
+
+Relic also runs as an [MCP](https://modelcontextprotocol.io/) server, allowing any MCP-compatible client (like Claude Desktop) to access Engrams directly.
+
+### Setup (Claude Desktop)
+
+1. Build the project:
+   ```bash
+   npm run build
+   ```
+
+2. Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+   ```json
+   {
+     "mcpServers": {
+       "relic": {
+         "command": "node",
+         "args": ["/path/to/relic/dist/interfaces/mcp/index.js"]
+       }
+     }
+   }
+   ```
+
+3. Restart Claude Desktop.
+
+### Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `relic_init` | Initialize `~/.relic/` with config and sample Engrams |
+| `relic_list` | List all available Engrams |
+| `relic_show` | Preview an Engram's composed prompt |
+| `relic_summon` | Summon an Engram and return the persona prompt for injection |
+
 ## Creating Your Own Engram
 
 Create a directory under `~/.relic/engrams/` with the following structure:
@@ -157,7 +191,7 @@ src/
 │   └── shells/      # Claude, Gemini, Codex, Copilot launchers
 ├── interfaces/      # Entry points
 │   ├── cli/         # Commander-based CLI
-│   └── mcp/         # MCP Server (coming soon)
+│   └── mcp/         # MCP Server (stdio transport)
 └── shared/          # Engram composer, config management
 ```
 
@@ -175,7 +209,7 @@ src/
 
 - [x] CLI with init, list, show commands
 - [x] Shell injection: Claude Code, Gemini CLI, Codex CLI, Copilot CLI
-- [ ] MCP Server interface
+- [x] MCP Server interface
 - [ ] Mikoshi cloud backend (`mikoshi.ectplsm.com`)
 - [ ] `relic create` — interactive Engram creation wizard
 - [ ] `relic sync` — sync Engrams between local and Mikoshi
