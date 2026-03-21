@@ -13,15 +13,28 @@ export function registerInjectCommand(program: Command): void {
     .description("Inject an Engram into an OpenClaw workspace")
     .requiredOption("-e, --engram <id>", "Engram ID to inject")
     .option("-a, --agent <name>", "Target agent name (default: auto-detect)")
+    .option(
+      "--openclaw <dir>",
+      "Override OpenClaw directory path (default: ~/.openclaw)"
+    )
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(
-      async (opts: { engram: string; agent?: string; path?: string }) => {
+      async (opts: {
+        engram: string;
+        agent?: string;
+        openclaw?: string;
+        path?: string;
+      }) => {
         const engramsPath = await resolveEngramsPath(opts.path);
         const repo = new LocalEngramRepository(engramsPath);
         const inject = new Inject(repo);
 
         try {
-          const result = await inject.execute(opts.engram, opts.agent);
+          const result = await inject.execute(
+            opts.engram,
+            opts.agent,
+            opts.openclaw
+          );
 
           console.log(
             `Injected "${result.engramName}" into ${result.targetPath}`

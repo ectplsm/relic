@@ -4,6 +4,12 @@ export { Init, type InitResult } from "./init.js";
 export {
   Inject,
   InjectEngramNotFoundError,
-  AgentNotFoundError,
   type InjectResult,
 } from "./inject.js";
+export {
+  Extract,
+  WorkspaceNotFoundError,
+  WorkspaceEmptyError,
+  type ExtractResult,
+} from "./extract.js";
+export { AgentNotFoundError } from "../../shared/openclaw.js";
