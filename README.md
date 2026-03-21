@@ -147,6 +147,11 @@ Injects persona files (SOUL.md, IDENTITY.md, etc.) into `agents/<engramId>/agent
 # Inject Engram "motoko" → agents/motoko/agent/
 relic inject --engram motoko
 
+# Inject into a differently-named agent (one-way copy)
+relic inject --engram motoko --to main
+# → agents/main/agent/ receives motoko's persona
+# → extract will create Engram "main", not "motoko"
+
 # Specify a custom OpenClaw directory
 relic inject --engram motoko --openclaw /path/to/.openclaw
 ```
