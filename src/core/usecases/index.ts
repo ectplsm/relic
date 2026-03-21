@@ -24,3 +24,9 @@ export {
   MemoryWriteEngramNotFoundError,
   type MemoryWriteResult,
 } from "./memory-write.js";
+export {
+  Sync,
+  SyncAgentsDirNotFoundError,
+  type SyncTarget,
+  type SyncInitialResult,
+} from "./sync.js";
