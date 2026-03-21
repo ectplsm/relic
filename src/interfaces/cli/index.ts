@@ -7,6 +7,7 @@ import { registerShowCommand } from "./commands/show.js";
 import { registerShellCommands } from "./commands/shell.js";
 import { registerInjectCommand } from "./commands/inject.js";
 import { registerExtractCommand } from "./commands/extract.js";
+import { registerSyncCommand } from "./commands/sync.js";
 
 const program = new Command();
 
@@ -21,5 +22,6 @@ registerShowCommand(program);
 registerShellCommands(program);
 registerInjectCommand(program);
 registerExtractCommand(program);
+registerSyncCommand(program);
 
 program.parse();

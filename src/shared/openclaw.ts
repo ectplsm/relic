@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import type { EngramFiles } from "../core/entities/engram.js";
 
@@ -19,46 +18,15 @@ export const FILE_MAP: Record<
 
 export const MEMORY_DIR = "memory";
 
-export interface ResolvedTarget {
-  targetPath: string;
-  mode: "single" | "multi";
-  agent: string;
-}
-
 /**
- * OpenClawワークスペースのターゲットディレクトリを解決する。
+ * OpenClawのエージェントディレクトリパスを解決する。
  *
- * - openclawDir: OpenClawのベースディレクトリ（デフォルト: ~/.openclaw）
- * - agentName 指定あり → agents/<name>/agent/
- * - agentName 指定なし → agents/ の有無で自動検出
+ * agent名 = Engram ID の規約に基づき、常に agents/<engramId>/agent/ を返す。
  */
-export function resolveOpenClawTarget(
-  agentName?: string,
+export function resolveAgentPath(
+  engramId: string,
   openclawDir?: string
-): ResolvedTarget {
+): string {
   const baseDir = openclawDir ?? DEFAULT_OPENCLAW_DIR;
-  const agentsDir = join(baseDir, "agents");
-  const workspaceDir = join(baseDir, "workspace");
-
-  if (agentName) {
-    const targetPath = join(agentsDir, agentName, "agent");
-    if (!existsSync(targetPath)) {
-      throw new AgentNotFoundError(agentName, targetPath);
-    }
-    return { targetPath, mode: "multi", agent: agentName };
-  }
-
-  if (existsSync(agentsDir)) {
-    const targetPath = join(agentsDir, "main", "agent");
-    return { targetPath, mode: "multi", agent: "main" };
-  }
-
-  return { targetPath: workspaceDir, mode: "single", agent: "main" };
-}
-
-export class AgentNotFoundError extends Error {
-  constructor(agent: string, path: string) {
-    super(`Agent "${agent}" not found at ${path}`);
-    this.name = "AgentNotFoundError";
-  }
+  return join(baseDir, "agents", engramId, "agent");
 }

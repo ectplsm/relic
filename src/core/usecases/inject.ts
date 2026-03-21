@@ -1,50 +1,49 @@
 import { join } from "node:path";
-import { writeFile, mkdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { EngramFiles } from "../entities/engram.js";
-import {
-  FILE_MAP,
-  MEMORY_DIR,
-  resolveOpenClawTarget,
-} from "../../shared/openclaw.js";
+import { FILE_MAP, resolveAgentPath } from "../../shared/openclaw.js";
 
 export interface InjectResult {
   engramId: string;
   engramName: string;
   targetPath: string;
-  mode: "single" | "multi";
-  agent: string;
   filesWritten: string[];
 }
 
 /**
  * Inject — EngramのファイルをOpenClawワークスペースに注入する
+ *
+ * agent名 = Engram ID の規約に基づき、agents/<engramId>/agent/ に書き込む。
+ * memoryEntries はOpenClaw側の管理に委ねるため注入しない。
  */
 export class Inject {
   constructor(private readonly repository: EngramRepository) {}
 
   async execute(
     engramId: string,
-    agentName?: string,
-    openclawDir?: string
+    options?: {
+      to?: string;
+      openclawDir?: string;
+    }
   ): Promise<InjectResult> {
     const engram = await this.repository.get(engramId);
     if (!engram) {
       throw new InjectEngramNotFoundError(engramId);
     }
 
-    const { targetPath, mode, agent } = resolveOpenClawTarget(
-      agentName,
-      openclawDir
-    );
+    const agentName = options?.to ?? engramId;
+    const targetPath = resolveAgentPath(agentName, options?.openclawDir);
+    if (!existsSync(targetPath)) {
+      throw new InjectAgentNotFoundError(agentName, targetPath);
+    }
     const filesWritten = await this.writeFiles(targetPath, engram.files);
 
     return {
       engramId: engram.meta.id,
       engramName: engram.meta.name,
       targetPath,
-      mode,
-      agent,
       filesWritten,
     };
   }
@@ -53,8 +52,6 @@ export class Inject {
     targetPath: string,
     files: EngramFiles
   ): Promise<string[]> {
-    await mkdir(targetPath, { recursive: true });
-
     const written: string[] = [];
 
     for (const [key, filename] of Object.entries(FILE_MAP)) {
@@ -62,16 +59,6 @@ export class Inject {
       if (content !== undefined) {
         await writeFile(join(targetPath, filename), content, "utf-8");
         written.push(filename);
-      }
-    }
-
-    if (files.memoryEntries) {
-      const memoryDir = join(targetPath, MEMORY_DIR);
-      await mkdir(memoryDir, { recursive: true });
-      for (const [date, content] of Object.entries(files.memoryEntries)) {
-        const filename = `${date}.md`;
-        await writeFile(join(memoryDir, filename), content, "utf-8");
-        written.push(`${MEMORY_DIR}/${filename}`);
       }
     }
 
@@ -83,5 +70,14 @@ export class InjectEngramNotFoundError extends Error {
   constructor(id: string) {
     super(`Engram "${id}" not found`);
     this.name = "InjectEngramNotFoundError";
+  }
+}
+
+export class InjectAgentNotFoundError extends Error {
+  constructor(engramId: string, path: string) {
+    super(
+      `OpenClaw agent "${engramId}" not found at ${path}. The agent must exist before injecting.`
+    );
+    this.name = "InjectAgentNotFoundError";
   }
 }

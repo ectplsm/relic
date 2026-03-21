@@ -4,6 +4,7 @@ export { Init, type InitResult } from "./init.js";
 export {
   Inject,
   InjectEngramNotFoundError,
+  InjectAgentNotFoundError,
   type InjectResult,
 } from "./inject.js";
 export {
@@ -11,6 +12,7 @@ export {
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
   EngramAlreadyExistsError,
+  ExtractNameRequiredError,
   type ExtractResult,
 } from "./extract.js";
 export {
@@ -23,4 +25,9 @@ export {
   MemoryWriteEngramNotFoundError,
   type MemoryWriteResult,
 } from "./memory-write.js";
-export { AgentNotFoundError } from "../../shared/openclaw.js";
+export {
+  Sync,
+  SyncAgentsDirNotFoundError,
+  type SyncTarget,
+  type SyncInitialResult,
+} from "./sync.js";
