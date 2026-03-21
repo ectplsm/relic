@@ -4,6 +4,9 @@
   "description": "PROJECT RELIC — Engram injection system for AI constructs",
   "type": "module",
   "main": "dist/interfaces/cli/index.js",
+  "bin": {
+    "relic": "./bin/relic"
+  },
   "scripts": {
     "dev:cli": "tsx src/interfaces/cli/index.ts",
     "dev:mcp": "tsx src/interfaces/mcp/index.ts",
