@@ -18,14 +18,14 @@ relic gemini --engram motoko
 ## How It Works
 
 ```
-┌─────────┐     ┌──────────┐     ┌───────────┐
-│  Engram  │────▶│   Relic   │────▶│   Shell   │
-│ (persona)│     │(injector) │     │  (AI CLI)  │
-└─────────┘     └──────────┘     └───────────┘
-  SOUL.md         compose &        claude
-  IDENTITY.md     inject            gemini
-  MEMORY.md                         codex
-  ...                               copilot
+┌────────────┐     ┌────────────┐     ┌────────────┐
+│   Engram   │────▶│   Relic    │────▶│   Shell    │
+│  (persona) │     │ (injector) │     │  (AI CLI)  │
+└────────────┘     └────────────┘     └────────────┘
+   SOUL.md          compose &           claude
+   IDENTITY.md      inject              gemini
+   MEMORY.md                            codex
+   ...                                  copilot
 ```
 
 1. **Engram** — A persona defined as a set of Markdown files (OpenClaw-compatible)
