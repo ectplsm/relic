@@ -9,6 +9,9 @@ import {
   ListEngrams,
   Summon,
   EngramNotFoundError,
+  Inject,
+  InjectEngramNotFoundError,
+  AgentNotFoundError,
 } from "../../core/usecases/index.js";
 import { resolveEngramsPath } from "../../shared/config.js";
 
@@ -168,6 +171,55 @@ server.tool(
       };
     } catch (err) {
       if (err instanceof EngramNotFoundError) {
+        return {
+          content: [{ type: "text" as const, text: err.message }],
+          isError: true,
+        };
+      }
+      throw err;
+    }
+  }
+);
+
+// --- relic_inject ---
+server.tool(
+  "relic_inject",
+  "Inject an Engram into an OpenClaw workspace",
+  {
+    id: z.string().describe("Engram ID to inject"),
+    agent: z
+      .string()
+      .optional()
+      .describe("Target agent name (default: auto-detect main)"),
+    path: z
+      .string()
+      .optional()
+      .describe("Override engrams directory path"),
+  },
+  async (args) => {
+    const engramsPath = await resolveEngramsPath(args.path);
+    const repo = new LocalEngramRepository(engramsPath);
+    const inject = new Inject(repo);
+
+    try {
+      const result = await inject.execute(args.id, args.agent);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: [
+              `Injected "${result.engramName}" into ${result.targetPath}`,
+              `Mode: ${result.mode}-agent (${result.agent})`,
+              `Files written: ${result.filesWritten.join(", ")}`,
+            ].join("\n"),
+          },
+        ],
+      };
+    } catch (err) {
+      if (
+        err instanceof InjectEngramNotFoundError ||
+        err instanceof AgentNotFoundError
+      ) {
         return {
           content: [{ type: "text" as const, text: err.message }],
           isError: true,

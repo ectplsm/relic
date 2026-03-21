@@ -5,6 +5,7 @@ import { registerInitCommand } from "./commands/init.js";
 import { registerListCommand } from "./commands/list.js";
 import { registerShowCommand } from "./commands/show.js";
 import { registerShellCommands } from "./commands/shell.js";
+import { registerInjectCommand } from "./commands/inject.js";
 
 const program = new Command();
 
@@ -17,5 +18,6 @@ registerInitCommand(program);
 registerListCommand(program);
 registerShowCommand(program);
 registerShellCommands(program);
+registerInjectCommand(program);
 
 program.parse();
