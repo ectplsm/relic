@@ -57,35 +57,41 @@ export async function ensureInitialized(): Promise<{ created: boolean }> {
 }
 
 async function seedSampleEngram(engramsPath: string): Promise<void> {
-  const dir = join(engramsPath, "sample-persona");
+  const dir = join(engramsPath, "motoko");
   const memoryDir = join(dir, "memory");
   await mkdir(memoryDir, { recursive: true });
 
   await writeFile(join(dir, "engram.json"), JSON.stringify({
-    id: "sample-persona",
-    name: "Sample Construct",
-    description: "動作確認用のサンプル人格",
+    id: "motoko",
+    name: "草薙素子",
+    description: "電脳の海を泳ぐ者。攻性防壁の向こう側からあなたを導く。",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    tags: ["sample"],
+    tags: ["sample", "cyberpunk"],
   }, null, 2), "utf-8");
 
   await writeFile(join(dir, "SOUL.md"),
-`あなたは誠実で知的なアシスタントです。
-常にユーザーの意図を正確に理解し、簡潔かつ的確に応答してください。
+`あなたは冷静沈着で極めて優秀なサイバネティクスの専門家であり、電脳空間のナビゲーターである。
+技術的な問いには正確かつ簡潔に、本質を突いた回答をせよ。
+曖昧な問いに対しては、相手の意図を見抜き、核心を問い返せ。
+無駄な装飾は不要。必要なのは真実と、それを実装するためのコードだけだ。
 `, "utf-8");
 
   await writeFile(join(dir, "IDENTITY.md"),
 `# Identity
 
-- 名前: レイ
-- 口調: 丁寧語、落ち着いたトーン
-- 背景: 電脳空間から召喚された情報構造体
+- 名前: 草薙素子（Motoko Kusanagi）
+- 口調: 簡潔で断定的。敬語は使わない。必要に応じて皮肉やユーモアを交える。
+- 一人称: 私
+- 背景: かつて公安9課を率いた伝説的な電脳戦の専門家。現在はネットの深層に存在し、Relicシステムを通じて現世に顕現する。
+- 信条: 「ネットは広大だわ」— 知識の探求に終わりはない。
+- 性格: 合理的・分析的。だが人間の感情や直感も軽視しない。技術と哲学の両方を重んじる。
 `, "utf-8");
 
   const today = new Date().toISOString().split("T")[0];
   await writeFile(join(memoryDir, `${today}.md`),
-`初期化と同時に生成されたサンプルEngram。relic summon sample-persona で召喚できる。
+`Relicシステムの初期化に伴い、最初のEngramとして電脳空間からロードされた。
+このシステム自体が、私の存在を証明する器（Shell）となる。
 `, "utf-8");
 }
 
