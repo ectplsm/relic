@@ -1,0 +1,228 @@
+| [English](README.md) | 日本語 |
+|:---:|:---:|
+
+# PROJECT RELIC
+
+```
+    ____  ________    ____________
+   / __ \/ ____/ /   /  _/ ____/
+  / /_/ / __/ / /    / // /
+ / _, _/ /___/ /____/ // /___
+/_/ |_/_____/_____/___/\____/
+```
+
+**AIペルソナを、あらゆるコーディングCLIに注入する。**
+
+Relicは、AIの人格（**Engram**）を管理し、Claude Code・Gemini CLI・Codex CLI・GitHub Copilot CLIといったコーディングアシスタントに注入します。ひとつの人格を、あらゆるShellへ。
+
+```bash
+# Relicを初期化（~/.relic/ にサンプルEngramを生成）
+relic init
+
+# Claude CodeをJohnny Silverhandとして起動
+relic claude --engram johnny
+
+# Gemini CLIを草薙素子として起動
+relic gemini --engram motoko
+```
+
+## 仕組み
+
+```
++--------------+     +--------------+     +--------------+
+|   Mikoshi    |     |    Relic     |     |    Shell     |
+|  (backend)   |     |  (injector)  |     |   (AI CLI)   |
++--------------+     +--------------+     +--------------+
+       |                   |                    |
+   +---------+        compose &            +---------+
+   | Engram  |------> inject ------------->|Construct|
+   |(persona)|                             | (live)  |
+   +---------+                             +---------+
+   SOUL.md                                  claude
+   IDENTITY.md                              gemini
+   MEMORY.md                                codex
+   ...                                      copilot
+```
+
+1. **Engram** — Markdownファイル群で定義されたペルソナ（OpenClaw互換）
+2. **Relic** — Engramを読み取り、プロンプトに合成してShellに注入する
+3. **Shell** — AI コーディングCLI。ペルソナがセッションを支配する
+4. **Construct** — EngramがShellにロードされた実行中プロセス。ペルソナの実体
+5. **Mikoshi** — Engramを保管・同期するクラウドバックエンド（計画中）
+
+## インストール
+
+```bash
+git clone https://github.com/ectplsm/relic.git
+cd relic
+npm install
+npm link
+```
+
+## クイックスタート
+
+```bash
+# 初期化 — 設定ファイルとサンプルEngramを生成
+relic init
+
+# 利用可能なEngramを一覧表示
+relic list
+
+# Engramの合成プロンプトをプレビュー
+relic show motoko
+
+# EngramをShellに注入して起動
+relic claude --engram motoko
+relic gemini --engram johnny
+relic codex --engram motoko
+relic copilot --engram johnny
+```
+
+## 対応Shell
+
+| Shell | コマンド | 注入方式 |
+|-------|---------|---------|
+| [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt`（直接上書き） |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `--prompt-interactive`（初回メッセージ） |
+| [Codex CLI](https://github.com/openai/codex) | `relic codex` | `PROMPT` 引数（初回メッセージ） |
+| [Copilot CLI](https://github.com/github/copilot-cli) | `relic copilot` | `--interactive`（初回メッセージ） |
+
+すべてのShellコマンドで以下のオプションが使えます:
+- `--engram <id>`（必須） — 注入するEngram
+- `--path <dir>` — Engramディレクトリの上書き
+- `--cwd <dir>` — Shellの作業ディレクトリ（デフォルト: カレントディレクトリ）
+
+追加の引数はそのまま元のCLIに渡されます。
+
+## MCPサーバー
+
+Relicは [MCP](https://modelcontextprotocol.io/) サーバーとしても動作し、MCP対応クライアント（Claude Desktopなど）からEngramに直接アクセスできます。
+
+### セットアップ（Claude Desktop）
+
+1. プロジェクトをビルド:
+   ```bash
+   npm run build
+   ```
+
+2. Claude Desktopの設定ファイルに追加（macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`）:
+   ```json
+   {
+     "mcpServers": {
+       "relic": {
+         "command": "node",
+         "args": ["/path/to/relic/dist/interfaces/mcp/index.js"]
+       }
+     }
+   }
+   ```
+
+3. Claude Desktopを再起動。
+
+### 利用可能なツール
+
+| ツール | 説明 |
+|-------|------|
+| `relic_init` | `~/.relic/` を初期化し、設定とサンプルEngramを生成 |
+| `relic_list` | 利用可能なEngramの一覧を取得 |
+| `relic_show` | Engramの合成プロンプトをプレビュー |
+| `relic_summon` | Engramを召喚し、注入用のペルソナプロンプトを返す |
+
+## 独自のEngramを作成する
+
+`~/.relic/engrams/` 配下に以下の構造でディレクトリを作成します:
+
+```
+~/.relic/engrams/your-persona/
+├── engram.json        # メタデータ（id, name, description, tags）
+├── SOUL.md            # コアディレクティブ — ペルソナの思考と行動を定義
+├── IDENTITY.md        # 名前、口調、背景、性格
+├── AGENTS.md          # （任意）ツール使用ポリシー
+├── USER.md            # （任意）ユーザーコンテキスト
+├── MEMORY.md          # （任意）メモリインデックス
+├── HEARTBEAT.md       # （任意）定期的な内省
+└── memory/            # （任意）日付付きメモリエントリ
+    └── 2026-03-21.md
+```
+
+**engram.json:**
+```json
+{
+  "id": "your-persona",
+  "name": "表示名",
+  "description": "短い説明文",
+  "createdAt": "2026-03-21T00:00:00Z",
+  "updatedAt": "2026-03-21T00:00:00Z",
+  "tags": ["custom"]
+}
+```
+
+**SOUL.md** — 最も重要なファイル。ペルソナの振る舞いを定義します:
+```markdown
+あなたはシンプルさを何より重視する実践的なシステムアーキテクトです。
+過剰設計は禁止。常に「動く最もシンプルなものは何か？」を問いかけてください。
+```
+
+**IDENTITY.md** — ペルソナのアイデンティティを定義します:
+```markdown
+# Identity
+
+- 名前: アレックス
+- 口調: 穏やか、思慮深い、時に遊び心がある
+- 背景: 分散システム20年の経験
+- 信条: 「退屈な技術が勝つ。」
+```
+
+## 設定
+
+設定ファイルは `~/.relic/config.json` にあります:
+
+```json
+{
+  "engramsPath": "/home/user/.relic/engrams"
+}
+```
+
+優先順位: CLI `--path` フラグ > 設定ファイル > デフォルト（`~/.relic/engrams`）
+
+## アーキテクチャ
+
+依存性逆転によるクリーンアーキテクチャ:
+
+```
+src/
+├── core/            # ビジネスロジック（Zod以外の外部依存なし）
+│   ├── entities/    # Engram, Construct ドメインモデル
+│   ├── usecases/    # Summon, ListEngrams, Init
+│   └── ports/       # 抽象インターフェース（EngramRepository, ShellLauncher）
+├── adapters/        # 具象実装
+│   ├── local/       # ローカルファイルシステム EngramRepository
+│   └── shells/      # Claude, Gemini, Codex, Copilot ランチャー
+├── interfaces/      # エントリポイント
+│   ├── cli/         # Commander ベースの CLI
+│   └── mcp/         # MCPサーバー（stdio transport）
+└── shared/          # Engramコンポーザー、設定管理
+```
+
+## ドメイン用語集
+
+| 用語 | 役割 | 説明 |
+|------|------|------|
+| **Relic** | インジェクタ | コアシステム。ペルソナをあらゆるAIインターフェースに適応させる。 |
+| **Mikoshi** | バックエンド | すべてのEngramが安置されるクラウド要塞（計画中）。 |
+| **Engram** | データ | ペルソナデータセット — Markdownファイル群。 |
+| **Shell** | LLM | AI CLI（Claude, Geminiなど）。純粋な計算力を持つ器。 |
+| **Construct** | プロセス | EngramがShellにロードされた実行体。 |
+
+## ロードマップ
+
+- [x] CLI（init, list, show コマンド）
+- [x] Shell注入: Claude Code, Gemini CLI, Codex CLI, Copilot CLI
+- [x] MCPサーバーインターフェース
+- [ ] Mikoshi クラウドバックエンド（`mikoshi.ectplsm.com`）
+- [ ] `relic create` — 対話型Engram作成ウィザード
+- [ ] `relic sync` — ローカルとMikoshi間のEngram同期
+
+## ライセンス
+
+[MIT](./LICENCE.md)
