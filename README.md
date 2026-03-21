@@ -284,9 +284,11 @@ src/
 - [x] Shell injection: Claude Code, Gemini CLI, Codex CLI, Copilot CLI
 - [x] MCP Server interface
 - [x] OpenClaw integration (inject / extract)
+- [ ] `relic sync` — watch OpenClaw agents and auto-sync (`--cloud` for Mikoshi)
+- [ ] `relic login` — authenticate with Mikoshi (OAuth Device Flow)
+- [ ] `relic push` / `relic pull` — sync Engrams with Mikoshi
 - [ ] Mikoshi cloud backend (`mikoshi.ectplsm.com`)
 - [ ] `relic create` — interactive Engram creation wizard
-- [ ] `relic sync` — bidirectional sync between Relic and OpenClaw / Mikoshi
 
 ## License
 
