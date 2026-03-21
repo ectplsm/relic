@@ -3,11 +3,11 @@ import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import { Summon, EngramNotFoundError } from "../../../core/usecases/index.js";
 import { resolveEngramsPath } from "../../../shared/config.js";
 
-export function registerSummonCommand(program: Command): void {
+export function registerShowCommand(program: Command): void {
   program
-    .command("summon")
-    .description("Summon an Engram — compose its prompt for Shell injection")
-    .argument("<id>", "Engram ID to summon")
+    .command("show")
+    .description("Show an Engram's composed prompt")
+    .argument("<id>", "Engram ID to show")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(async (id: string, opts: { path?: string }) => {
       const engramsPath = await resolveEngramsPath(opts.path);
