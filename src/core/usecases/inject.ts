@@ -4,7 +4,6 @@ import type { EngramRepository } from "../ports/engram-repository.js";
 import type { EngramFiles } from "../entities/engram.js";
 import {
   FILE_MAP,
-  MEMORY_DIR,
   resolveOpenClawTarget,
 } from "../../shared/openclaw.js";
 
@@ -65,15 +64,7 @@ export class Inject {
       }
     }
 
-    if (files.memoryEntries) {
-      const memoryDir = join(targetPath, MEMORY_DIR);
-      await mkdir(memoryDir, { recursive: true });
-      for (const [date, content] of Object.entries(files.memoryEntries)) {
-        const filename = `${date}.md`;
-        await writeFile(join(memoryDir, filename), content, "utf-8");
-        written.push(`${MEMORY_DIR}/${filename}`);
-      }
-    }
+    // memoryEntries はOpenClaw側の管理に委ねるため注入しない
 
     return written;
   }
