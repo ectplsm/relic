@@ -11,6 +11,9 @@ import {
   EngramNotFoundError,
   Inject,
   InjectEngramNotFoundError,
+  Extract,
+  WorkspaceNotFoundError,
+  WorkspaceEmptyError,
   AgentNotFoundError,
 } from "../../core/usecases/index.js";
 import { resolveEngramsPath } from "../../shared/config.js";
@@ -191,6 +194,10 @@ server.tool(
       .string()
       .optional()
       .describe("Target agent name (default: auto-detect main)"),
+    openclaw: z
+      .string()
+      .optional()
+      .describe("Override OpenClaw directory path (default: ~/.openclaw)"),
     path: z
       .string()
       .optional()
@@ -202,7 +209,7 @@ server.tool(
     const inject = new Inject(repo);
 
     try {
-      const result = await inject.execute(args.id, args.agent);
+      const result = await inject.execute(args.id, args.agent, args.openclaw);
       return {
         content: [
           {
@@ -218,6 +225,67 @@ server.tool(
     } catch (err) {
       if (
         err instanceof InjectEngramNotFoundError ||
+        err instanceof AgentNotFoundError
+      ) {
+        return {
+          content: [{ type: "text" as const, text: err.message }],
+          isError: true,
+        };
+      }
+      throw err;
+    }
+  }
+);
+
+// --- relic_extract ---
+server.tool(
+  "relic_extract",
+  "Extract an Engram from an OpenClaw workspace",
+  {
+    id: z.string().describe("Engram ID to create"),
+    name: z.string().describe("Engram display name"),
+    agent: z
+      .string()
+      .optional()
+      .describe("Source agent name (default: auto-detect main)"),
+    openclaw: z
+      .string()
+      .optional()
+      .describe("Override OpenClaw directory path (default: ~/.openclaw)"),
+    path: z
+      .string()
+      .optional()
+      .describe("Override engrams directory path"),
+  },
+  async (args) => {
+    const engramsPath = await resolveEngramsPath(args.path);
+    const repo = new LocalEngramRepository(engramsPath);
+    const extract = new Extract(repo);
+
+    try {
+      const result = await extract.execute(
+        args.id,
+        args.name,
+        args.agent,
+        args.openclaw
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: [
+              `Extracted "${result.engramName}" from ${result.sourcePath}`,
+              `Mode: ${result.mode}-agent (${result.agent})`,
+              `Files read: ${result.filesRead.join(", ")}`,
+              `Saved as Engram: ${result.engramId}`,
+            ].join("\n"),
+          },
+        ],
+      };
+    } catch (err) {
+      if (
+        err instanceof WorkspaceNotFoundError ||
+        err instanceof WorkspaceEmptyError ||
         err instanceof AgentNotFoundError
       ) {
         return {
