@@ -37,7 +37,24 @@ export async function saveConfig(config: RelicConfig): Promise<void> {
 }
 
 /**
+ * ~/.relic/ を初期化する。既に存在する場合はスキップ。
+ * 戻り値: 新規作成されたか否か
+ */
+export async function ensureInitialized(): Promise<{ created: boolean }> {
+  if (existsSync(CONFIG_PATH)) {
+    return { created: false };
+  }
+
+  const defaultConfig = RelicConfigSchema.parse({});
+  await mkdir(RELIC_DIR, { recursive: true });
+  await mkdir(defaultConfig.engramsPath, { recursive: true });
+  await writeFile(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2), "utf-8");
+  return { created: true };
+}
+
+/**
  * 設定を解決する。コマンド引数 > 設定ファイル > デフォルト の優先順位。
+ * 初回実行時は ~/.relic/ を自動初期化する。
  */
 export async function resolveEngramsPath(
   cliOverride?: string
@@ -45,6 +62,7 @@ export async function resolveEngramsPath(
   if (cliOverride) {
     return cliOverride;
   }
+  await ensureInitialized();
   const config = await loadConfig();
   return config.engramsPath;
 }
