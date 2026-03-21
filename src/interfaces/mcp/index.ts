@@ -15,6 +15,8 @@ import {
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
   EngramAlreadyExistsError,
+  MemorySearch,
+  MemoryEngramNotFoundError,
   AgentNotFoundError,
 } from "../../core/usecases/index.js";
 import { resolveEngramsPath } from "../../shared/config.js";
@@ -297,6 +299,167 @@ server.tool(
         err instanceof EngramAlreadyExistsError ||
         err instanceof AgentNotFoundError
       ) {
+        return {
+          content: [{ type: "text" as const, text: err.message }],
+          isError: true,
+        };
+      }
+      throw err;
+    }
+  }
+);
+
+// --- relic_memory_search ---
+server.tool(
+  "relic_memory_search",
+  "Search an Engram's memory entries by keyword",
+  {
+    id: z.string().describe("Engram ID"),
+    query: z.string().describe("Search keyword"),
+    limit: z
+      .number()
+      .optional()
+      .describe("Max results to return (default: 5)"),
+    path: z
+      .string()
+      .optional()
+      .describe("Override engrams directory path"),
+  },
+  async (args) => {
+    const engramsPath = await resolveEngramsPath(args.path);
+    const repo = new LocalEngramRepository(engramsPath);
+    const memorySearch = new MemorySearch(repo);
+
+    try {
+      const results = await memorySearch.search(
+        args.id,
+        args.query,
+        args.limit ?? 5
+      );
+
+      if (results.length === 0) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `No memory entries matching "${args.query}" found.`,
+            },
+          ],
+        };
+      }
+
+      const text = results
+        .map(
+          (r) =>
+            `## ${r.date}\n${r.matchedLines.join("\n")}\n\n---\n\n${r.content}`
+        )
+        .join("\n\n");
+
+      return {
+        content: [{ type: "text" as const, text }],
+      };
+    } catch (err) {
+      if (err instanceof MemoryEngramNotFoundError) {
+        return {
+          content: [{ type: "text" as const, text: err.message }],
+          isError: true,
+        };
+      }
+      throw err;
+    }
+  }
+);
+
+// --- relic_memory_get ---
+server.tool(
+  "relic_memory_get",
+  "Get a specific memory entry by date",
+  {
+    id: z.string().describe("Engram ID"),
+    date: z
+      .string()
+      .describe("Date of the memory entry (YYYY-MM-DD)"),
+    path: z
+      .string()
+      .optional()
+      .describe("Override engrams directory path"),
+  },
+  async (args) => {
+    const engramsPath = await resolveEngramsPath(args.path);
+    const repo = new LocalEngramRepository(engramsPath);
+    const memorySearch = new MemorySearch(repo);
+
+    try {
+      const result = await memorySearch.get(args.id, args.date);
+
+      if (!result) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `No memory entry found for ${args.date}.`,
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `## ${result.date}\n\n${result.content}`,
+          },
+        ],
+      };
+    } catch (err) {
+      if (err instanceof MemoryEngramNotFoundError) {
+        return {
+          content: [{ type: "text" as const, text: err.message }],
+          isError: true,
+        };
+      }
+      throw err;
+    }
+  }
+);
+
+// --- relic_memory_list ---
+server.tool(
+  "relic_memory_list",
+  "List all memory entry dates for an Engram",
+  {
+    id: z.string().describe("Engram ID"),
+    path: z
+      .string()
+      .optional()
+      .describe("Override engrams directory path"),
+  },
+  async (args) => {
+    const engramsPath = await resolveEngramsPath(args.path);
+    const repo = new LocalEngramRepository(engramsPath);
+    const memorySearch = new MemorySearch(repo);
+
+    try {
+      const dates = await memorySearch.listDates(args.id);
+
+      if (dates.length === 0) {
+        return {
+          content: [
+            { type: "text" as const, text: "No memory entries found." },
+          ],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `${dates.length} entries:\n${dates.join("\n")}`,
+          },
+        ],
+      };
+    } catch (err) {
+      if (err instanceof MemoryEngramNotFoundError) {
         return {
           content: [{ type: "text" as const, text: err.message }],
           isError: true,
