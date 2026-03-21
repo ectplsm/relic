@@ -135,48 +135,46 @@ Relic also runs as an [MCP](https://modelcontextprotocol.io/) server, allowing a
 
 ## OpenClaw Integration
 
-Relic is fully compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces. You can inject Engrams into OpenClaw agents or extract existing agents as Engrams.
+Relic is fully compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces. **Agent name = Engram ID** — this simple convention eliminates the need for mapping configuration.
 
 ### Inject — Push an Engram into OpenClaw
 
-```bash
-# Inject into the main agent (auto-detects single vs multi-agent)
-relic inject --engram motoko
+Injects persona files (SOUL.md, IDENTITY.md, etc.) into `agents/<engramId>/agent/`. Memory entries are **not** injected — they are managed by OpenClaw independently.
 
-# Inject into a specific agent
-relic inject --engram johnny --agent researcher
+```bash
+# Inject Engram "motoko" → agents/motoko/agent/
+relic inject --engram motoko
 
 # Specify a custom OpenClaw directory
 relic inject --engram motoko --openclaw /path/to/.openclaw
 ```
 
-### Extract — Create an Engram from OpenClaw
+### Extract — Sync memory from OpenClaw
+
+Reads from `agents/<engramId>/agent/` and merges memory entries back to the Relic Engram.
 
 ```bash
-# Extract the main agent (ID defaults to "main")
-relic extract --name "My Agent"
+# Extract memory from agent "motoko" → merge into Engram "motoko"
+relic extract --engram motoko
 
-# Extract a specific agent (ID defaults to agent name)
-relic extract --name "Researcher" --agent researcher
+# New agent with no existing Engram (--name required)
+relic extract --engram analyst --name "Data Analyst"
 
-# Explicit ID
-relic extract --name "My Agent" --id custom-id
-
-# Overwrite an existing Engram
-relic extract --name "My Agent" --force
+# Overwrite persona files (memory is always merged)
+relic extract --engram motoko --force
 
 # Extract from a custom OpenClaw directory
-relic extract --name "My Agent" --openclaw /path/to/.openclaw
+relic extract --engram motoko --openclaw /path/to/.openclaw
 ```
 
-### Auto-Detection
+### Memory Sync Behavior
 
-Relic automatically detects the OpenClaw workspace mode:
-
-| Condition | `--agent` omitted | `--agent <name>` |
-|-----------|-------------------|-------------------|
-| `~/.openclaw/agents/` exists | Targets `agents/main/agent/` | Targets `agents/<name>/agent/` |
-| `~/.openclaw/agents/` absent | Targets `workspace/` | Error: agent not found |
+| Scenario | Persona (SOUL, IDENTITY...) | Memory entries |
+|----------|---------------------------|----------------|
+| **inject** | Relic → OpenClaw (overwrite) | Not copied (OpenClaw manages its own) |
+| **extract** (existing Engram) | Not touched | OpenClaw → Relic (append) |
+| **extract** + `--force` | OpenClaw → Relic (overwrite) | OpenClaw → Relic (append) |
+| **extract** (new Engram) | Created from OpenClaw | Created from OpenClaw |
 
 ## Memory Management
 
@@ -288,7 +286,7 @@ src/
 - [x] OpenClaw integration (inject / extract)
 - [ ] Mikoshi cloud backend (`mikoshi.ectplsm.com`)
 - [ ] `relic create` — interactive Engram creation wizard
-- [ ] `relic sync` — sync Engrams between local and Mikoshi
+- [ ] `relic sync` — bidirectional sync between Relic and OpenClaw / Mikoshi
 
 ## License
 
