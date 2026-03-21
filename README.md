@@ -129,6 +129,9 @@ Relic also runs as an [MCP](https://modelcontextprotocol.io/) server, allowing a
 | `relic_summon` | Summon an Engram and return the persona prompt for injection |
 | `relic_inject` | Inject an Engram into an OpenClaw workspace |
 | `relic_extract` | Extract an Engram from an OpenClaw workspace |
+| `relic_memory_search` | Search an Engram's memory entries by keyword |
+| `relic_memory_get` | Get a specific memory entry by date |
+| `relic_memory_list` | List all memory entry dates for an Engram |
 
 ## OpenClaw Integration
 
@@ -174,6 +177,22 @@ Relic automatically detects the OpenClaw workspace mode:
 |-----------|-------------------|-------------------|
 | `~/.openclaw/agents/` exists | Targets `agents/main/agent/` | Targets `agents/<name>/agent/` |
 | `~/.openclaw/agents/` absent | Targets `workspace/` | Error: agent not found |
+
+## Memory Management
+
+Relic uses a **2-day sliding window** for memory entries, matching OpenClaw's approach:
+
+- `MEMORY.md` — Always included in the prompt (curated long-term memory)
+- `memory/today.md` + `memory/yesterday.md` — Always included
+- Older entries — **Not included in the prompt**, but accessible via MCP tools
+
+This keeps prompts compact while preserving full history. AI clients (like Claude Desktop) can use the memory tools to search or retrieve older entries on demand:
+
+```
+relic_memory_search  → keyword search across all entries
+relic_memory_get     → fetch a specific date's entry
+relic_memory_list    → list all available dates
+```
 
 ## Creating Your Own Engram
 
