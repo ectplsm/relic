@@ -215,4 +215,4 @@ src/
 
 ## License
 
-MIT
+[MIT](./LICENCE.md)
