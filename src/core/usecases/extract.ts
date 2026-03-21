@@ -25,15 +25,30 @@ export class Extract {
   constructor(private readonly repository: EngramRepository) {}
 
   async execute(
-    engramId: string,
     engramName: string,
-    agentName?: string,
-    openclawDir?: string
+    options?: {
+      id?: string;
+      agent?: string;
+      openclawDir?: string;
+      force?: boolean;
+    }
   ): Promise<ExtractResult> {
+    const agentName = options?.agent;
     const { targetPath, mode, agent } = resolveOpenClawTarget(
       agentName,
-      openclawDir
+      options?.openclawDir
     );
+
+    // Resolve ID: explicit > agent name > "main"
+    const engramId = options?.id ?? agentName ?? "main";
+
+    // Check for existing Engram
+    if (!options?.force) {
+      const existing = await this.repository.get(engramId);
+      if (existing) {
+        throw new EngramAlreadyExistsError(engramId);
+      }
+    }
 
     if (!existsSync(targetPath)) {
       throw new WorkspaceNotFoundError(targetPath);
@@ -119,5 +134,14 @@ export class WorkspaceEmptyError extends Error {
   constructor(path: string) {
     super(`No workspace files found at ${path}`);
     this.name = "WorkspaceEmptyError";
+  }
+}
+
+export class EngramAlreadyExistsError extends Error {
+  constructor(id: string) {
+    super(
+      `Engram "${id}" already exists. Use --force to overwrite.`
+    );
+    this.name = "EngramAlreadyExistsError";
   }
 }

@@ -14,6 +14,7 @@ import {
   Extract,
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
+  EngramAlreadyExistsError,
   AgentNotFoundError,
 } from "../../core/usecases/index.js";
 import { resolveEngramsPath } from "../../shared/config.js";
@@ -242,8 +243,11 @@ server.tool(
   "relic_extract",
   "Extract an Engram from an OpenClaw workspace",
   {
-    id: z.string().describe("Engram ID to create"),
     name: z.string().describe("Engram display name"),
+    id: z
+      .string()
+      .optional()
+      .describe("Engram ID (default: agent name or 'main')"),
     agent: z
       .string()
       .optional()
@@ -256,6 +260,10 @@ server.tool(
       .string()
       .optional()
       .describe("Override engrams directory path"),
+    force: z
+      .boolean()
+      .optional()
+      .describe("Overwrite existing Engram"),
   },
   async (args) => {
     const engramsPath = await resolveEngramsPath(args.path);
@@ -263,12 +271,12 @@ server.tool(
     const extract = new Extract(repo);
 
     try {
-      const result = await extract.execute(
-        args.id,
-        args.name,
-        args.agent,
-        args.openclaw
-      );
+      const result = await extract.execute(args.name, {
+        id: args.id,
+        agent: args.agent,
+        openclawDir: args.openclaw,
+        force: args.force,
+      });
       return {
         content: [
           {
@@ -286,6 +294,7 @@ server.tool(
       if (
         err instanceof WorkspaceNotFoundError ||
         err instanceof WorkspaceEmptyError ||
+        err instanceof EngramAlreadyExistsError ||
         err instanceof AgentNotFoundError
       ) {
         return {

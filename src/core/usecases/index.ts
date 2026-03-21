@@ -10,6 +10,7 @@ export {
   Extract,
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
+  EngramAlreadyExistsError,
   type ExtractResult,
 } from "./extract.js";
 export { AgentNotFoundError } from "../../shared/openclaw.js";
