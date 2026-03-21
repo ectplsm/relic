@@ -141,6 +141,8 @@ Relic is fully compatible with [OpenClaw](https://github.com/openclaw/openclaw) 
 
 Injects persona files (SOUL.md, IDENTITY.md, etc.) into `agents/<engramId>/agent/`. Memory entries are **not** injected — they are managed by OpenClaw independently.
 
+> **Note:** The OpenClaw agent must already exist. Inject writes persona files into an existing agent directory — it does not create new agents. Create the agent in OpenClaw first, then inject.
+
 ```bash
 # Inject Engram "motoko" → agents/motoko/agent/
 relic inject --engram motoko
@@ -167,6 +169,26 @@ relic extract --engram motoko --force
 relic extract --engram motoko --openclaw /path/to/.openclaw
 ```
 
+### Sync — Watch and auto-sync
+
+Watches all agents under `~/.openclaw/agents/` and automatically syncs:
+
+```bash
+# Start watching (Ctrl+C to stop)
+relic sync
+
+# Specify a custom OpenClaw directory
+relic sync --openclaw /path/to/.openclaw
+```
+
+On startup:
+1. Injects persona files for all agents that have a matching Engram
+2. Extracts memory entries from all agents
+
+While running:
+- Watches each agent's `memory/` directory for changes
+- Automatically merges new memory entries into the corresponding Engram
+
 ### Memory Sync Behavior
 
 | Scenario | Persona (SOUL, IDENTITY...) | Memory entries |
@@ -175,6 +197,8 @@ relic extract --engram motoko --openclaw /path/to/.openclaw
 | **extract** (existing Engram) | Not touched | OpenClaw → Relic (append) |
 | **extract** + `--force` | OpenClaw → Relic (overwrite) | OpenClaw → Relic (append) |
 | **extract** (new Engram) | Created from OpenClaw | Created from OpenClaw |
+| **sync** (startup) | inject for matching Engrams | extract all |
+| **sync** (watching) | — | Auto-extract on change |
 
 ## Memory Management
 
@@ -284,7 +308,7 @@ src/
 - [x] Shell injection: Claude Code, Gemini CLI, Codex CLI, Copilot CLI
 - [x] MCP Server interface
 - [x] OpenClaw integration (inject / extract)
-- [ ] `relic sync` — watch OpenClaw agents and auto-sync (`--cloud` for Mikoshi)
+- [x] `relic sync` — watch OpenClaw agents and auto-sync (`--cloud` for Mikoshi: planned)
 - [ ] `relic login` — authenticate with Mikoshi (OAuth Device Flow)
 - [ ] `relic push` / `relic pull` — sync Engrams with Mikoshi
 - [ ] Mikoshi cloud backend (`mikoshi.ectplsm.com`)
