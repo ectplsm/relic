@@ -1,0 +1,26 @@
+{
+  "name": "relic",
+  "version": "0.1.0",
+  "description": "PROJECT RELIC — Engram injection system for AI constructs",
+  "type": "module",
+  "main": "dist/interfaces/cli/index.js",
+  "scripts": {
+    "dev:cli": "tsx src/interfaces/cli/index.ts",
+    "dev:mcp": "tsx src/interfaces/mcp/index.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "zod": "^3.23.0",
+    "commander": "^13.0.0",
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "@types/node": "^22.0.0"
+  }
+}
