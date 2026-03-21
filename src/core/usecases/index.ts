@@ -11,6 +11,7 @@ export {
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
   EngramAlreadyExistsError,
+  ExtractNameRequiredError,
   type ExtractResult,
 } from "./extract.js";
 export {
@@ -23,4 +24,3 @@ export {
   MemoryWriteEngramNotFoundError,
   type MemoryWriteResult,
 } from "./memory-write.js";
-export { AgentNotFoundError } from "../../shared/openclaw.js";

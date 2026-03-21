@@ -3,24 +3,20 @@ import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { Engram, EngramFiles } from "../entities/engram.js";
-import {
-  FILE_MAP,
-  MEMORY_DIR,
-  resolveOpenClawTarget,
-} from "../../shared/openclaw.js";
+import { FILE_MAP, MEMORY_DIR, resolveAgentPath } from "../../shared/openclaw.js";
 
 export interface ExtractResult {
   engramId: string;
   engramName: string;
   sourcePath: string;
-  mode: "single" | "multi";
-  agent: string;
   filesRead: string[];
   memoryMerged: boolean;
 }
 
 /**
  * Extract — OpenClawワークスペースからEngramを作成する
+ *
+ * agent名 = Engram ID の規約に基づき、agents/<engramId>/agent/ から読み取る。
  *
  * 既存Engramがある場合:
  *   - --force なし → memoryエントリのみマージ（persona部分は変更しない）
@@ -32,31 +28,23 @@ export class Extract {
   constructor(private readonly repository: EngramRepository) {}
 
   async execute(
-    engramName: string,
+    engramId: string,
     options?: {
-      id?: string;
-      agent?: string;
+      name?: string;
       openclawDir?: string;
       force?: boolean;
     }
   ): Promise<ExtractResult> {
-    const agentName = options?.agent;
-    const { targetPath, mode, agent } = resolveOpenClawTarget(
-      agentName,
-      options?.openclawDir
-    );
+    const sourcePath = resolveAgentPath(engramId, options?.openclawDir);
 
-    // Resolve ID: explicit > agent name > "main"
-    const engramId = options?.id ?? agentName ?? "main";
-
-    if (!existsSync(targetPath)) {
-      throw new WorkspaceNotFoundError(targetPath);
+    if (!existsSync(sourcePath)) {
+      throw new WorkspaceNotFoundError(sourcePath);
     }
 
-    const { files, filesRead } = await this.readFiles(targetPath);
+    const { files, filesRead } = await this.readFiles(sourcePath);
 
     if (filesRead.length === 0) {
-      throw new WorkspaceEmptyError(targetPath);
+      throw new WorkspaceEmptyError(sourcePath);
     }
 
     const existing = await this.repository.get(engramId);
@@ -64,13 +52,15 @@ export class Extract {
     if (existing) {
       if (options?.force) {
         // --force: persona上書き + memoryマージ
-        const merged = await this.mergeAndSave(existing, files, engramName);
+        const merged = await this.mergeAndSave(
+          existing,
+          files,
+          options.name ?? existing.meta.name
+        );
         return {
           engramId,
-          engramName,
-          sourcePath: targetPath,
-          mode,
-          agent,
+          engramName: options.name ?? existing.meta.name,
+          sourcePath,
           filesRead,
           memoryMerged: merged,
         };
@@ -85,21 +75,24 @@ export class Extract {
       return {
         engramId,
         engramName: existing.meta.name,
-        sourcePath: targetPath,
-        mode,
-        agent,
+        sourcePath,
         filesRead,
         memoryMerged: merged,
       };
     }
 
-    // 新規作成
+    // 新規作成 — nameは必須
+    const engramName = options?.name;
+    if (!engramName) {
+      throw new ExtractNameRequiredError(engramId);
+    }
+
     const now = new Date().toISOString();
     const engram: Engram = {
       meta: {
         id: engramId,
         name: engramName,
-        description: `Extracted from OpenClaw ${mode}-agent (${agent})`,
+        description: `Extracted from OpenClaw agent (${engramId})`,
         createdAt: now,
         updatedAt: now,
         tags: ["extracted", "openclaw"],
@@ -112,9 +105,7 @@ export class Extract {
     return {
       engramId,
       engramName,
-      sourcePath: targetPath,
-      mode,
-      agent,
+      sourcePath,
       filesRead,
       memoryMerged: false,
     };
@@ -249,5 +240,14 @@ export class EngramAlreadyExistsError extends Error {
       `Engram "${id}" already exists. Use --force to overwrite.`
     );
     this.name = "EngramAlreadyExistsError";
+  }
+}
+
+export class ExtractNameRequiredError extends Error {
+  constructor(id: string) {
+    super(
+      `No existing Engram "${id}" found. --name is required for new Engrams.`
+    );
+    this.name = "ExtractNameRequiredError";
   }
 }

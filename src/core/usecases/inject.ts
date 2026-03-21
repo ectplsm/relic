@@ -2,29 +2,26 @@ import { join } from "node:path";
 import { writeFile, mkdir } from "node:fs/promises";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { EngramFiles } from "../entities/engram.js";
-import {
-  FILE_MAP,
-  resolveOpenClawTarget,
-} from "../../shared/openclaw.js";
+import { FILE_MAP, resolveAgentPath } from "../../shared/openclaw.js";
 
 export interface InjectResult {
   engramId: string;
   engramName: string;
   targetPath: string;
-  mode: "single" | "multi";
-  agent: string;
   filesWritten: string[];
 }
 
 /**
  * Inject — EngramのファイルをOpenClawワークスペースに注入する
+ *
+ * agent名 = Engram ID の規約に基づき、agents/<engramId>/agent/ に書き込む。
+ * memoryEntries はOpenClaw側の管理に委ねるため注入しない。
  */
 export class Inject {
   constructor(private readonly repository: EngramRepository) {}
 
   async execute(
     engramId: string,
-    agentName?: string,
     openclawDir?: string
   ): Promise<InjectResult> {
     const engram = await this.repository.get(engramId);
@@ -32,18 +29,13 @@ export class Inject {
       throw new InjectEngramNotFoundError(engramId);
     }
 
-    const { targetPath, mode, agent } = resolveOpenClawTarget(
-      agentName,
-      openclawDir
-    );
+    const targetPath = resolveAgentPath(engramId, openclawDir);
     const filesWritten = await this.writeFiles(targetPath, engram.files);
 
     return {
       engramId: engram.meta.id,
       engramName: engram.meta.name,
       targetPath,
-      mode,
-      agent,
       filesWritten,
     };
   }
@@ -63,8 +55,6 @@ export class Inject {
         written.push(filename);
       }
     }
-
-    // memoryEntries はOpenClaw側の管理に委ねるため注入しない
 
     return written;
   }
