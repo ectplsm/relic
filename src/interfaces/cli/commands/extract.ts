@@ -5,7 +5,7 @@ import {
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
   EngramAlreadyExistsError,
-  AgentNotFoundError,
+  ExtractNameRequiredError,
 } from "../../../core/usecases/index.js";
 import { resolveEngramsPath } from "../../../shared/config.js";
 
@@ -13,20 +13,18 @@ export function registerExtractCommand(program: Command): void {
   program
     .command("extract")
     .description("Extract an Engram from an OpenClaw workspace")
-    .requiredOption("--name <name>", "Engram display name")
-    .option("--id <id>", "Engram ID (default: agent name or 'main')")
-    .option("-a, --agent <name>", "Source agent name (default: auto-detect)")
+    .requiredOption("-e, --engram <id>", "Engram ID (= agent name)")
+    .option("--name <name>", "Engram display name (required for new Engrams)")
     .option(
       "--openclaw <dir>",
       "Override OpenClaw directory path (default: ~/.openclaw)"
     )
     .option("-p, --path <dir>", "Override engrams directory path")
-    .option("-f, --force", "Overwrite existing Engram")
+    .option("-f, --force", "Overwrite existing Engram persona files")
     .action(
       async (opts: {
-        name: string;
-        id?: string;
-        agent?: string;
+        engram: string;
+        name?: string;
         openclaw?: string;
         path?: string;
         force?: boolean;
@@ -36,9 +34,8 @@ export function registerExtractCommand(program: Command): void {
         const extract = new Extract(repo);
 
         try {
-          const result = await extract.execute(opts.name, {
-            id: opts.id,
-            agent: opts.agent,
+          const result = await extract.execute(opts.engram, {
+            name: opts.name,
             openclawDir: opts.openclaw,
             force: opts.force,
           });
@@ -46,7 +43,6 @@ export function registerExtractCommand(program: Command): void {
           console.log(
             `Extracted "${result.engramName}" from ${result.sourcePath}`
           );
-          console.log(`  Mode: ${result.mode}-agent (${result.agent})`);
           console.log(`  Files read: ${result.filesRead.join(", ")}`);
           console.log(`  Saved as Engram: ${result.engramId}`);
           if (result.memoryMerged) {
@@ -57,7 +53,7 @@ export function registerExtractCommand(program: Command): void {
             err instanceof WorkspaceNotFoundError ||
             err instanceof WorkspaceEmptyError ||
             err instanceof EngramAlreadyExistsError ||
-            err instanceof AgentNotFoundError
+            err instanceof ExtractNameRequiredError
           ) {
             console.error(`Error: ${err.message}`);
             process.exit(1);

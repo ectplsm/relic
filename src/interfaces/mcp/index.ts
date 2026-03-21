@@ -15,11 +15,11 @@ import {
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
   EngramAlreadyExistsError,
+  ExtractNameRequiredError,
   MemorySearch,
   MemoryEngramNotFoundError,
   MemoryWrite,
   MemoryWriteEngramNotFoundError,
-  AgentNotFoundError,
 } from "../../core/usecases/index.js";
 import { resolveEngramsPath } from "../../shared/config.js";
 
@@ -192,13 +192,9 @@ server.tool(
 // --- relic_inject ---
 server.tool(
   "relic_inject",
-  "Inject an Engram into an OpenClaw workspace",
+  "Inject an Engram into an OpenClaw workspace (agent name = Engram ID)",
   {
-    id: z.string().describe("Engram ID to inject"),
-    agent: z
-      .string()
-      .optional()
-      .describe("Target agent name (default: auto-detect main)"),
+    id: z.string().describe("Engram ID to inject (= OpenClaw agent name)"),
     openclaw: z
       .string()
       .optional()
@@ -214,24 +210,20 @@ server.tool(
     const inject = new Inject(repo);
 
     try {
-      const result = await inject.execute(args.id, args.agent, args.openclaw);
+      const result = await inject.execute(args.id, args.openclaw);
       return {
         content: [
           {
             type: "text" as const,
             text: [
               `Injected "${result.engramName}" into ${result.targetPath}`,
-              `Mode: ${result.mode}-agent (${result.agent})`,
               `Files written: ${result.filesWritten.join(", ")}`,
             ].join("\n"),
           },
         ],
       };
     } catch (err) {
-      if (
-        err instanceof InjectEngramNotFoundError ||
-        err instanceof AgentNotFoundError
-      ) {
+      if (err instanceof InjectEngramNotFoundError) {
         return {
           content: [{ type: "text" as const, text: err.message }],
           isError: true,
@@ -245,17 +237,13 @@ server.tool(
 // --- relic_extract ---
 server.tool(
   "relic_extract",
-  "Extract an Engram from an OpenClaw workspace",
+  "Extract an Engram from an OpenClaw workspace (agent name = Engram ID)",
   {
-    name: z.string().describe("Engram display name"),
-    id: z
+    id: z.string().describe("Engram ID (= OpenClaw agent name)"),
+    name: z
       .string()
       .optional()
-      .describe("Engram ID (default: agent name or 'main')"),
-    agent: z
-      .string()
-      .optional()
-      .describe("Source agent name (default: auto-detect main)"),
+      .describe("Engram display name (required for new Engrams)"),
     openclaw: z
       .string()
       .optional()
@@ -267,7 +255,7 @@ server.tool(
     force: z
       .boolean()
       .optional()
-      .describe("Overwrite existing Engram"),
+      .describe("Overwrite existing Engram persona files"),
   },
   async (args) => {
     const engramsPath = await resolveEngramsPath(args.path);
@@ -275,9 +263,8 @@ server.tool(
     const extract = new Extract(repo);
 
     try {
-      const result = await extract.execute(args.name, {
-        id: args.id,
-        agent: args.agent,
+      const result = await extract.execute(args.id, {
+        name: args.name,
         openclawDir: args.openclaw,
         force: args.force,
       });
@@ -287,7 +274,6 @@ server.tool(
             type: "text" as const,
             text: [
               `Extracted "${result.engramName}" from ${result.sourcePath}`,
-              `Mode: ${result.mode}-agent (${result.agent})`,
               `Files read: ${result.filesRead.join(", ")}`,
               `Saved as Engram: ${result.engramId}`,
               ...(result.memoryMerged
@@ -302,7 +288,7 @@ server.tool(
         err instanceof WorkspaceNotFoundError ||
         err instanceof WorkspaceEmptyError ||
         err instanceof EngramAlreadyExistsError ||
-        err instanceof AgentNotFoundError
+        err instanceof ExtractNameRequiredError
       ) {
         return {
           content: [{ type: "text" as const, text: err.message }],

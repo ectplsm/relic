@@ -3,7 +3,6 @@ import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import {
   Inject,
   InjectEngramNotFoundError,
-  AgentNotFoundError,
 } from "../../../core/usecases/index.js";
 import { resolveEngramsPath } from "../../../shared/config.js";
 
@@ -11,8 +10,7 @@ export function registerInjectCommand(program: Command): void {
   program
     .command("inject")
     .description("Inject an Engram into an OpenClaw workspace")
-    .requiredOption("-e, --engram <id>", "Engram ID to inject")
-    .option("-a, --agent <name>", "Target agent name (default: auto-detect)")
+    .requiredOption("-e, --engram <id>", "Engram ID to inject (= agent name)")
     .option(
       "--openclaw <dir>",
       "Override OpenClaw directory path (default: ~/.openclaw)"
@@ -21,7 +19,6 @@ export function registerInjectCommand(program: Command): void {
     .action(
       async (opts: {
         engram: string;
-        agent?: string;
         openclaw?: string;
         path?: string;
       }) => {
@@ -30,22 +27,14 @@ export function registerInjectCommand(program: Command): void {
         const inject = new Inject(repo);
 
         try {
-          const result = await inject.execute(
-            opts.engram,
-            opts.agent,
-            opts.openclaw
-          );
+          const result = await inject.execute(opts.engram, opts.openclaw);
 
           console.log(
             `Injected "${result.engramName}" into ${result.targetPath}`
           );
-          console.log(`  Mode: ${result.mode}-agent (${result.agent})`);
           console.log(`  Files written: ${result.filesWritten.join(", ")}`);
         } catch (err) {
-          if (
-            err instanceof InjectEngramNotFoundError ||
-            err instanceof AgentNotFoundError
-          ) {
+          if (err instanceof InjectEngramNotFoundError) {
             console.error(`Error: ${err.message}`);
             process.exit(1);
           }
