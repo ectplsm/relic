@@ -11,6 +11,7 @@ import {
   EngramNotFoundError,
   Inject,
   InjectEngramNotFoundError,
+  InjectAgentNotFoundError,
   Extract,
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
@@ -223,7 +224,10 @@ server.tool(
         ],
       };
     } catch (err) {
-      if (err instanceof InjectEngramNotFoundError) {
+      if (
+        err instanceof InjectEngramNotFoundError ||
+        err instanceof InjectAgentNotFoundError
+      ) {
         return {
           content: [{ type: "text" as const, text: err.message }],
           isError: true,

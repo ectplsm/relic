@@ -3,6 +3,7 @@ import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import {
   Inject,
   InjectEngramNotFoundError,
+  InjectAgentNotFoundError,
 } from "../../../core/usecases/index.js";
 import { resolveEngramsPath } from "../../../shared/config.js";
 
@@ -34,7 +35,10 @@ export function registerInjectCommand(program: Command): void {
           );
           console.log(`  Files written: ${result.filesWritten.join(", ")}`);
         } catch (err) {
-          if (err instanceof InjectEngramNotFoundError) {
+          if (
+            err instanceof InjectEngramNotFoundError ||
+            err instanceof InjectAgentNotFoundError
+          ) {
             console.error(`Error: ${err.message}`);
             process.exit(1);
           }

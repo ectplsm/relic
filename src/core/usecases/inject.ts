@@ -1,5 +1,6 @@
 import { join } from "node:path";
-import { writeFile, mkdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { EngramFiles } from "../entities/engram.js";
 import { FILE_MAP, resolveAgentPath } from "../../shared/openclaw.js";
@@ -30,6 +31,9 @@ export class Inject {
     }
 
     const targetPath = resolveAgentPath(engramId, openclawDir);
+    if (!existsSync(targetPath)) {
+      throw new InjectAgentNotFoundError(engramId, targetPath);
+    }
     const filesWritten = await this.writeFiles(targetPath, engram.files);
 
     return {
@@ -44,8 +48,6 @@ export class Inject {
     targetPath: string,
     files: EngramFiles
   ): Promise<string[]> {
-    await mkdir(targetPath, { recursive: true });
-
     const written: string[] = [];
 
     for (const [key, filename] of Object.entries(FILE_MAP)) {
@@ -64,5 +66,14 @@ export class InjectEngramNotFoundError extends Error {
   constructor(id: string) {
     super(`Engram "${id}" not found`);
     this.name = "InjectEngramNotFoundError";
+  }
+}
+
+export class InjectAgentNotFoundError extends Error {
+  constructor(engramId: string, path: string) {
+    super(
+      `OpenClaw agent "${engramId}" not found at ${path}. The agent must exist before injecting.`
+    );
+    this.name = "InjectAgentNotFoundError";
   }
 }
