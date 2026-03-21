@@ -17,6 +17,8 @@ import {
   EngramAlreadyExistsError,
   MemorySearch,
   MemoryEngramNotFoundError,
+  MemoryWrite,
+  MemoryWriteEngramNotFoundError,
   AgentNotFoundError,
 } from "../../core/usecases/index.js";
 import { resolveEngramsPath } from "../../shared/config.js";
@@ -460,6 +462,54 @@ server.tool(
       };
     } catch (err) {
       if (err instanceof MemoryEngramNotFoundError) {
+        return {
+          content: [{ type: "text" as const, text: err.message }],
+          isError: true,
+        };
+      }
+      throw err;
+    }
+  }
+);
+
+// --- relic_memory_write ---
+server.tool(
+  "relic_memory_write",
+  "Write a memory entry to an Engram (appends to the day's log)",
+  {
+    id: z.string().describe("Engram ID"),
+    content: z.string().describe("Memory content to append"),
+    date: z
+      .string()
+      .optional()
+      .describe("Date for the entry (YYYY-MM-DD, default: today)"),
+    path: z
+      .string()
+      .optional()
+      .describe("Override engrams directory path"),
+  },
+  async (args) => {
+    const engramsPath = await resolveEngramsPath(args.path);
+    const memoryWrite = new MemoryWrite(engramsPath);
+
+    try {
+      const result = await memoryWrite.execute(
+        args.id,
+        args.content,
+        args.date
+      );
+
+      const action = result.appended ? "Appended to" : "Created";
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `${action} memory entry for ${result.date} (${result.engramId})`,
+          },
+        ],
+      };
+    } catch (err) {
+      if (err instanceof MemoryWriteEngramNotFoundError) {
         return {
           content: [{ type: "text" as const, text: err.message }],
           isError: true,
