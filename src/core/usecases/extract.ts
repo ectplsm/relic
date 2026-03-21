@@ -16,10 +16,17 @@ export interface ExtractResult {
   mode: "single" | "multi";
   agent: string;
   filesRead: string[];
+  memoryMerged: boolean;
 }
 
 /**
  * Extract — OpenClawワークスペースからEngramを作成する
+ *
+ * 既存Engramがある場合:
+ *   - --force なし → memoryエントリのみマージ（persona部分は変更しない）
+ *   - --force あり → persona部分を上書き + memoryをマージ
+ * 既存Engramがない場合:
+ *   - 新規作成（全ファイル含む）
  */
 export class Extract {
   constructor(private readonly repository: EngramRepository) {}
@@ -42,14 +49,6 @@ export class Extract {
     // Resolve ID: explicit > agent name > "main"
     const engramId = options?.id ?? agentName ?? "main";
 
-    // Check for existing Engram
-    if (!options?.force) {
-      const existing = await this.repository.get(engramId);
-      if (existing) {
-        throw new EngramAlreadyExistsError(engramId);
-      }
-    }
-
     if (!existsSync(targetPath)) {
       throw new WorkspaceNotFoundError(targetPath);
     }
@@ -60,6 +59,41 @@ export class Extract {
       throw new WorkspaceEmptyError(targetPath);
     }
 
+    const existing = await this.repository.get(engramId);
+
+    if (existing) {
+      if (options?.force) {
+        // --force: persona上書き + memoryマージ
+        const merged = await this.mergeAndSave(existing, files, engramName);
+        return {
+          engramId,
+          engramName,
+          sourcePath: targetPath,
+          mode,
+          agent,
+          filesRead,
+          memoryMerged: merged,
+        };
+      }
+
+      // --forceなし: memoryのみマージ
+      if (!files.memoryEntries || Object.keys(files.memoryEntries).length === 0) {
+        throw new EngramAlreadyExistsError(engramId);
+      }
+
+      const merged = await this.mergeMemoryOnly(engramId, files.memoryEntries);
+      return {
+        engramId,
+        engramName: existing.meta.name,
+        sourcePath: targetPath,
+        mode,
+        agent,
+        filesRead,
+        memoryMerged: merged,
+      };
+    }
+
+    // 新規作成
     const now = new Date().toISOString();
     const engram: Engram = {
       meta: {
@@ -82,7 +116,79 @@ export class Extract {
       mode,
       agent,
       filesRead,
+      memoryMerged: false,
     };
+  }
+
+  /**
+   * --force時: persona上書き + memoryマージ
+   */
+  private async mergeAndSave(
+    existing: Engram,
+    newFiles: EngramFiles,
+    engramName: string
+  ): Promise<boolean> {
+    const mergedFiles: EngramFiles = { ...newFiles };
+
+    // memoryEntriesをマージ
+    let memoryMerged = false;
+    if (newFiles.memoryEntries) {
+      mergedFiles.memoryEntries = { ...existing.files.memoryEntries };
+      for (const [date, content] of Object.entries(newFiles.memoryEntries)) {
+        const existingContent = mergedFiles.memoryEntries?.[date];
+        if (existingContent) {
+          const separator = existingContent.endsWith("\n") ? "\n" : "\n\n";
+          mergedFiles.memoryEntries[date] = existingContent + separator + content;
+        } else {
+          mergedFiles.memoryEntries = mergedFiles.memoryEntries ?? {};
+          mergedFiles.memoryEntries[date] = content;
+        }
+        memoryMerged = true;
+      }
+    }
+
+    const updatedEngram: Engram = {
+      meta: {
+        ...existing.meta,
+        name: engramName,
+        updatedAt: new Date().toISOString(),
+      },
+      files: mergedFiles,
+    };
+
+    await this.repository.save(updatedEngram);
+    return memoryMerged;
+  }
+
+  /**
+   * --forceなし時: memoryエントリのみ追記（repositoryのAPIを使用）
+   */
+  private async mergeMemoryOnly(
+    engramId: string,
+    newEntries: Record<string, string>
+  ): Promise<boolean> {
+    const existing = await this.repository.get(engramId);
+    if (!existing) return false;
+
+    const mergedEntries = { ...existing.files.memoryEntries };
+    for (const [date, content] of Object.entries(newEntries)) {
+      const existingContent = mergedEntries[date];
+      if (existingContent) {
+        const separator = existingContent.endsWith("\n") ? "\n" : "\n\n";
+        mergedEntries[date] = existingContent + separator + content;
+      } else {
+        mergedEntries[date] = content;
+      }
+    }
+
+    const updatedEngram: Engram = {
+      ...existing,
+      meta: { ...existing.meta, updatedAt: new Date().toISOString() },
+      files: { ...existing.files, memoryEntries: mergedEntries },
+    };
+
+    await this.repository.save(updatedEngram);
+    return true;
   }
 
   private async readFiles(

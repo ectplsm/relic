@@ -49,6 +49,9 @@ export function registerExtractCommand(program: Command): void {
           console.log(`  Mode: ${result.mode}-agent (${result.agent})`);
           console.log(`  Files read: ${result.filesRead.join(", ")}`);
           console.log(`  Saved as Engram: ${result.engramId}`);
+          if (result.memoryMerged) {
+            console.log(`  Memory entries merged into existing Engram`);
+          }
         } catch (err) {
           if (
             err instanceof WorkspaceNotFoundError ||

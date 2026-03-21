@@ -290,6 +290,9 @@ server.tool(
               `Mode: ${result.mode}-agent (${result.agent})`,
               `Files read: ${result.filesRead.join(", ")}`,
               `Saved as Engram: ${result.engramId}`,
+              ...(result.memoryMerged
+                ? ["Memory entries merged into existing Engram"]
+                : []),
             ].join("\n"),
           },
         ],
