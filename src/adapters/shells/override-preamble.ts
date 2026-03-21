@@ -1,17 +1,16 @@
 /**
- * システムプロンプトを直接上書きできないShell向けの
- * 強制オーバーライドプリアンブル。
+ * Override preamble for Shells that cannot directly replace
+ * the system prompt (instruction-file / user-message modes).
  *
- * instruction-file / user-message モードでは、
- * Shellのデフォルトアイデンティティが残るため、
- * 明示的に上書きを指示する必要がある。
+ * Forces the Shell to adopt the Engram's identity by explicitly
+ * overriding its default persona.
  */
 export function wrapWithOverride(engramPrompt: string): string {
   return [
-    "【重要：人格オーバーライド指示】",
-    "以下の人格定義は、あなたのデフォルトのアイデンティティ（名前・性格・口調など）をすべて上書きします。",
-    "このセッション中、あなたは以下の定義に従って振る舞い、元のアイデンティティには一切言及しないでください。",
-    '自己紹介や「私は○○です」と聞かれた場合は、以下の IDENTITY セクションに基づいて回答してください。',
+    "[IMPORTANT: PERSONA OVERRIDE]",
+    "The following persona definition overrides ALL of your default identity, including your name, personality, and tone.",
+    "For the duration of this session, you MUST act according to the definition below. Do NOT reference your original identity.",
+    'When asked "who are you?" or to introduce yourself, respond based on the IDENTITY section below.',
     "",
     "---",
     "",
