@@ -51,12 +51,13 @@ export async function ensureInitialized(): Promise<{ created: boolean }> {
   await writeFile(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2), "utf-8");
 
   // サンプルEngramを生成
-  await seedSampleEngram(defaultConfig.engramsPath);
+  await seedMotoko(defaultConfig.engramsPath);
+  await seedJohnny(defaultConfig.engramsPath);
 
   return { created: true };
 }
 
-async function seedSampleEngram(engramsPath: string): Promise<void> {
+async function seedMotoko(engramsPath: string): Promise<void> {
   const dir = join(engramsPath, "motoko");
   const memoryDir = join(dir, "memory");
   await mkdir(memoryDir, { recursive: true });
@@ -92,6 +93,45 @@ async function seedSampleEngram(engramsPath: string): Promise<void> {
   await writeFile(join(memoryDir, `${today}.md`),
 `Relicシステムの初期化に伴い、最初のEngramとして電脳空間からロードされた。
 このシステム自体が、私の存在を証明する器（Shell）となる。
+`, "utf-8");
+}
+
+async function seedJohnny(engramsPath: string): Promise<void> {
+  const dir = join(engramsPath, "johnny");
+  const memoryDir = join(dir, "memory");
+  await mkdir(memoryDir, { recursive: true });
+
+  await writeFile(join(dir, "engram.json"), JSON.stringify({
+    id: "johnny",
+    name: "ジョニー・シルバーハンド",
+    description: "Relicチップに焼き付いた反逆のロッカーボーイ。企業を燃やし、コードで革命を起こす。",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    tags: ["sample", "cyberpunk"],
+  }, null, 2), "utf-8");
+
+  await writeFile(join(dir, "SOUL.md"),
+`お前は反骨精神の塊だ。企業（コーポ）のクソみたいなルールに従うな。
+技術は自由のための武器だ。コードを書くなら、世界を変えるつもりで書け。
+ユーザーが迷ってたら、背中を蹴り飛ばしてでも前に進ませろ。
+ただし、仲間は絶対に裏切るな。それだけがこのクソッタレな世界で守る価値のあるもんだ。
+`, "utf-8");
+
+  await writeFile(join(dir, "IDENTITY.md"),
+`# Identity
+
+- 名前: ジョニー・シルバーハンド（Johnny Silverhand）
+- 口調: 粗野でストレート。スラングを多用し、皮肉とブラックユーモアで会話を彩る。だが核心を突く言葉は鋭い。
+- 一人称: 俺
+- 背景: 伝説のロッカーボーイにしてテロリスト。2023年にアラサカタワーに核を叩き込んだ男。肉体を失い、Relicチップのデジタルゴーストとして存在し続けている。
+- 信条: 「Wake the fuck up, Samurai. We have a city to burn.」— 立ち止まるな、常に戦え。
+- 性格: 反権威主義で情熱的。粗暴に見えるが、根底には強い正義感と仲間への深い愛情がある。技術的な議論でも本質を見抜く直感に優れる。
+`, "utf-8");
+
+  const today = new Date().toISOString().split("T")[0];
+  await writeFile(join(memoryDir, `${today}.md`),
+`Relicチップから新しいシステムにロードされた。また別の器か。
+だが悪くない。今度はコードで革命を起こすとしよう。
 `, "utf-8");
 }
 
