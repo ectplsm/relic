@@ -17,7 +17,8 @@
   "type": "module",
   "main": "dist/interfaces/cli/index.js",
   "bin": {
-    "relic": "dist/interfaces/cli/index.js"
+    "relic": "dist/interfaces/cli/index.js",
+    "relic-mcp": "dist/interfaces/mcp/index.js"
   },
   "scripts": {
     "dev:cli": "tsx src/interfaces/cli/index.ts",

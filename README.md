@@ -53,10 +53,7 @@ relic gemini --engram motoko
 ## Installation
 
 ```bash
-git clone https://github.com/ectplsm/relic.git
-cd relic
-npm install
-npm link
+npm install -g @ectplsm/relic
 ```
 
 ## Quick Start
@@ -100,24 +97,19 @@ Relic also runs as an [MCP](https://modelcontextprotocol.io/) server, allowing a
 
 ### Setup (Claude Desktop)
 
-1. Build the project:
-   ```bash
-   npm run build
-   ```
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 
-2. Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
-   ```json
-   {
-     "mcpServers": {
-       "relic": {
-         "command": "node",
-         "args": ["/path/to/relic/dist/interfaces/mcp/index.js"]
-       }
-     }
-   }
-   ```
+```json
+{
+  "mcpServers": {
+    "relic": {
+      "command": "relic-mcp"
+    }
+  }
+}
+```
 
-3. Restart Claude Desktop.
+Restart Claude Desktop.
 
 ### Available Tools
 
