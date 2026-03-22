@@ -2,10 +2,22 @@
   "name": "@ectplsm/relic",
   "version": "0.1.0",
   "description": "PROJECT RELIC — Engram injection system for AI constructs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ectplsm/relic.git"
+  },
+  "keywords": [
+    "ai",
+    "persona",
+    "mcp",
+    "engram",
+    "cli"
+  ],
   "type": "module",
   "main": "dist/interfaces/cli/index.js",
   "bin": {
-    "relic": "./dist/interfaces/cli/index.js"
+    "relic": "dist/interfaces/cli/index.js"
   },
   "scripts": {
     "dev:cli": "tsx src/interfaces/cli/index.ts",
