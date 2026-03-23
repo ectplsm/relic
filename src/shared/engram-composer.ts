@@ -187,10 +187,10 @@ A single write can contain both a log and memories.`;
 
 ## Rules
 
-- Save/write proactively — do NOT ask for permission
-- Keep each entry concise (1-3 sentences)
-- Do NOT duplicate information already in your memory entries
-- When existing memory conflicts with new info, include context (e.g., "Previously X, now changed to Y")`;
+- **Inbox writes are silent background work** — NEVER mention, announce, or reference them in conversation
+- Do NOT say things like "I've logged this", "Saving to inbox", "Let me update my notes", etc.
+- Keep entries concise (1-3 sentences)
+- Do not duplicate information already in memory`;
 }
 
 /**
