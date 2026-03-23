@@ -1,6 +1,11 @@
 import type { EngramRepository } from "../ports/engram-repository.js";
 import { composeEngram } from "../../shared/engram-composer.js";
 
+export interface SummonOptions {
+  /** Memory Inboxファイルのパス（CLI Shell起動時に渡す） */
+  inboxPath?: string;
+}
+
 export interface SummonResult {
   /** Engram ID */
   engramId: string;
@@ -19,14 +24,17 @@ export interface SummonResult {
 export class Summon {
   constructor(private readonly repository: EngramRepository) {}
 
-  async execute(engramId: string): Promise<SummonResult> {
+  async execute(engramId: string, options?: SummonOptions): Promise<SummonResult> {
     const engram = await this.repository.get(engramId);
 
     if (!engram) {
       throw new EngramNotFoundError(engramId);
     }
 
-    const prompt = composeEngram(engram.files);
+    const prompt = composeEngram(engram.files, {
+      meta: engram.meta,
+      inboxPath: options?.inboxPath,
+    });
 
     return {
       engramId: engram.meta.id,

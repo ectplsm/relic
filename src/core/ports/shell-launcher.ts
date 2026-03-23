@@ -8,6 +8,18 @@
 export type InjectionMode = "system-prompt" | "instruction-file" | "user-message";
 
 /**
+ * Shell起動オプション
+ */
+export interface ShellLaunchOptions {
+  /** Shell に追加で渡す引数 */
+  extraArgs?: string[];
+  /** Shell の作業ディレクトリ */
+  cwd?: string;
+  /** Memory Inbox ファイルのパス（Codex の --add-dir 等、書き込み許可に使用） */
+  inboxPath?: string;
+}
+
+/**
  * ShellLauncher — AI CLIにEngramを注入して起動する抽象ポート
  *
  * 各Shell(LLM CLI)ごとにシステムプロンプトの渡し方が異なるため、
@@ -27,5 +39,5 @@ export interface ShellLauncher {
    * EngramプロンプトをShellに注入して起動する。
    * プロセスはフォアグラウンドで実行され、ユーザーが終了するまでブロックする。
    */
-  launch(prompt: string, extraArgs?: string[], cwd?: string): Promise<void>;
+  launch(prompt: string, options?: ShellLaunchOptions): Promise<void>;
 }
