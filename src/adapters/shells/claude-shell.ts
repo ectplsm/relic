@@ -1,6 +1,6 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import type { ShellLauncher, InjectionMode } from "../../core/ports/shell-launcher.js";
+import type { ShellLauncher, InjectionMode, ShellLaunchOptions } from "../../core/ports/shell-launcher.js";
 import { spawnShell } from "./spawn-shell.js";
 
 const execAsync = promisify(exec);
@@ -8,6 +8,9 @@ const execAsync = promisify(exec);
 /**
  * Claude Code CLI アダプター
  * --system-prompt フラグでEngramを直接注入する。
+ *
+ * inbox.md への書き込み許可は `relic init` で
+ * ~/.claude/settings.json に事前登録される。
  */
 export class ClaudeShell implements ShellLauncher {
   readonly name = "Claude Code";
@@ -24,12 +27,12 @@ export class ClaudeShell implements ShellLauncher {
     }
   }
 
-  async launch(prompt: string, extraArgs: string[] = [], cwd?: string): Promise<void> {
+  async launch(prompt: string, options?: ShellLaunchOptions): Promise<void> {
     const args = [
       "--system-prompt",
       prompt,
-      ...extraArgs,
+      ...(options?.extraArgs ?? []),
     ];
-    await spawnShell(this.command, args, cwd);
+    await spawnShell(this.command, args, options?.cwd);
   }
 }
