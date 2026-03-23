@@ -16,15 +16,15 @@ export {
   type ExtractResult,
 } from "./extract.js";
 export {
-  MemorySearch,
-  MemoryEngramNotFoundError,
-  type MemorySearchResult,
-} from "./memory-search.js";
-export {
   MemoryWrite,
   MemoryWriteEngramNotFoundError,
   type MemoryWriteResult,
 } from "./memory-write.js";
+export {
+  InboxWrite,
+  InboxWriteEngramNotFoundError,
+  type InboxWriteResult,
+} from "./inbox-write.js";
 export {
   Sync,
   SyncAgentsDirNotFoundError,

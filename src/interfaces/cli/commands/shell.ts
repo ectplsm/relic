@@ -7,7 +7,7 @@ import { resolveEngramsPath } from "../../../shared/config.js";
 import { ClaudeShell } from "../../../adapters/shells/claude-shell.js";
 import { GeminiShell } from "../../../adapters/shells/gemini-shell.js";
 import { CodexShell } from "../../../adapters/shells/codex-shell.js";
-import { CopilotShell } from "../../../adapters/shells/copilot-shell.js";
+
 
 interface ShellDef {
   name: string;
@@ -30,11 +30,6 @@ const SHELLS: ShellDef[] = [
     name: "codex",
     description: "Summon an Engram into Codex CLI",
     create: () => new CodexShell(),
-  },
-  {
-    name: "copilot",
-    description: "Summon an Engram into GitHub Copilot CLI",
-    create: () => new CopilotShell(),
   },
 ];
 
@@ -64,12 +59,14 @@ export function registerShellCommands(program: Command): void {
 
         try {
           const result = await summon.execute(opts.engram);
-          console.log(`Summoning "${result.engramName}" into ${launcher.name}...\n`);
+
+          console.log(`Summoning "${result.engramName}" into ${launcher.name}...`);
+          console.log();
 
           // --engram, --path, --cwd 以外の引数をShellにパススルー
           const extraArgs = cmd.args;
           const cwd = opts.cwd ? resolve(opts.cwd) : process.cwd();
-          await launcher.launch(result.prompt, extraArgs, cwd);
+          await launcher.launch(result.prompt, { extraArgs, cwd });
         } catch (err) {
           if (err instanceof EngramNotFoundError) {
             console.error(`Error: ${err.message}`);

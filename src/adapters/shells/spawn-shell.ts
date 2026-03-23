@@ -25,8 +25,16 @@ export function spawnShell(
       reject(new Error(`Failed to launch ${command}: ${err.message}`));
     });
 
-    child.on("close", (code) => {
-      if (code === 0 || code === null) {
+    child.on("close", (code, signal) => {
+      // code 0 = 正常終了
+      // code null = シグナルで終了
+      // signal SIGINT/SIGTERM = ユーザーによる中断（正常扱い）
+      if (
+        code === 0 ||
+        code === null ||
+        signal === "SIGINT" ||
+        signal === "SIGTERM"
+      ) {
         resolve();
       } else {
         reject(new Error(`${command} exited with code ${code}`));

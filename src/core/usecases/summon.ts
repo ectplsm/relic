@@ -15,6 +15,9 @@ export interface SummonResult {
  *
  * これがRELICの中核オペレーション。
  * Engramの取得 → Markdown結合 → 注入可能なプロンプト生成 を行う。
+ *
+ * inboxへの書き込みはMCPサーバー(relic_inbox_write)が担う。
+ * CLIはEngramの注入に特化する。
  */
 export class Summon {
   constructor(private readonly repository: EngramRepository) {}
@@ -26,7 +29,9 @@ export class Summon {
       throw new EngramNotFoundError(engramId);
     }
 
-    const prompt = composeEngram(engram.files);
+    const prompt = composeEngram(engram.files, {
+      meta: engram.meta,
+    });
 
     return {
       engramId: engram.meta.id,

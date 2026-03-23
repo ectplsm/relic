@@ -1,7 +1,7 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import { readFileSync } from "node:fs";
-import type { ShellLauncher, InjectionMode } from "../../core/ports/shell-launcher.js";
+import type { ShellLauncher, InjectionMode, ShellLaunchOptions } from "../../core/ports/shell-launcher.js";
 import { spawnShell, writeTempPrompt } from "./spawn-shell.js";
 import { wrapWithOverride } from "./override-preamble.js";
 
@@ -27,7 +27,7 @@ export class GeminiShell implements ShellLauncher {
     }
   }
 
-  async launch(prompt: string, extraArgs: string[] = [], cwd?: string): Promise<void> {
+  async launch(prompt: string, options?: ShellLaunchOptions): Promise<void> {
     const tmp = writeTempPrompt(wrapWithOverride(prompt));
 
     try {
@@ -35,9 +35,9 @@ export class GeminiShell implements ShellLauncher {
       const args = [
         "--prompt-interactive",
         fileContent,
-        ...extraArgs,
+        ...(options?.extraArgs ?? []),
       ];
-      await spawnShell(this.command, args, cwd);
+      await spawnShell(this.command, args, options?.cwd);
     } finally {
       tmp.cleanup();
     }
