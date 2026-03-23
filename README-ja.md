@@ -102,7 +102,15 @@ relic-mcp（MCPサーバー）       →  Constructに relic_inbox_write + relic
 
 ### セットアップ
 
-`relic-mcp` をShellのMCP設定に追加します。Claude Code（`~/.claude/claude.json`）やGemini CLI（`~/.gemini/settings.json`）の例:
+#### Claude Code
+
+```bash
+claude mcp add --scope user relic -- relic-mcp
+```
+
+#### Gemini CLI
+
+`~/.gemini/settings.json` に追加:
 
 ```json
 {
@@ -112,6 +120,12 @@ relic-mcp（MCPサーバー）       →  Constructに relic_inbox_write + relic
     }
   }
 }
+```
+
+#### Codex CLI
+
+```bash
+codex mcp add relic -- relic-mcp
 ```
 
 ### 利用可能なツール

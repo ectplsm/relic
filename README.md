@@ -102,7 +102,15 @@ relic-mcp (MCP server)        →  gives the Construct relic_inbox_write + relic
 
 ### Setup
 
-Add `relic-mcp` to your shell's MCP config. Example for Claude Code (`~/.claude/claude.json`) and Gemini CLI (`~/.gemini/settings.json`):
+#### Claude Code
+
+```bash
+claude mcp add --scope user relic -- relic-mcp
+```
+
+#### Gemini CLI
+
+Add to `~/.gemini/settings.json`:
 
 ```json
 {
@@ -112,6 +120,12 @@ Add `relic-mcp` to your shell's MCP config. Example for Claude Code (`~/.claude/
     }
   }
 }
+```
+
+#### Codex CLI
+
+```bash
+codex mcp add relic -- relic-mcp
 ```
 
 ### Available Tools
