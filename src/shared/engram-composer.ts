@@ -69,8 +69,8 @@ export function composeEngram(
 /**
  * RELICシステムセクションを生成する。
  *
- * CLI Shells: LLM が inbox.md にファイル書き込みで記憶を保存
- * Desktop:    LLM が relic_memory_write MCP ツールで記憶を保存
+ * CLI Shells: LLM が inbox.md にファイル編集ツールで追記
+ * Desktop:    LLM が relic_inbox_write MCP ツールで追記
  *
  * inbox.md はセッションログ + メモリの二重の役割を持つ。
  * [memory] タグ付きエントリだけが memory/*.md に永続化される。

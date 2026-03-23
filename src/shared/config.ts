@@ -112,7 +112,7 @@ At natural pauses in conversation, reflect on whether anything worth remembering
 - The user corrected a previous assumption
 - Important project context was discussed for the first time
 
-When triggered, use \`relic_memory_write\` to persist the information.
+When triggered, write the information to your inbox with a \`[memory]\` tag.
 Write memories as concise, factual notes — not conversation logs.
 `, "utf-8");
 
@@ -178,7 +178,7 @@ At natural pauses in conversation, reflect on whether anything worth remembering
 - The user corrected a previous assumption
 - Important project context was discussed for the first time
 
-When triggered, use \`relic_memory_write\` to persist the information.
+When triggered, write the information to your inbox with a \`[memory]\` tag.
 Write memories as concise, factual notes — not conversation logs.
 `, "utf-8");
 
