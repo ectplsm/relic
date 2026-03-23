@@ -1,4 +1,5 @@
 import { exec } from "node:child_process";
+import { dirname } from "node:path";
 import { promisify } from "node:util";
 import type { ShellLauncher, InjectionMode, ShellLaunchOptions } from "../../core/ports/shell-launcher.js";
 import { spawnShell } from "./spawn-shell.js";
@@ -11,8 +12,9 @@ const execAsync = promisify(exec);
  * [PROMPT] 引数でEngramを初回メッセージとして注入し、
  * インタラクティブモードを継続する。
  *
- * inbox.md への書き込み許可は `relic init` で
- * ~/.codex/config.toml に事前登録される。
+ * inbox.md への書き込み許可は二段構え:
+ *   1. `relic init` で ~/.codex/config.toml に永続登録（sandbox層）
+ *   2. 起動時 --add-dir でセッション単位のツール承認をバイパス
  */
 export class CodexShell implements ShellLauncher {
   readonly name = "Codex CLI";
@@ -30,10 +32,13 @@ export class CodexShell implements ShellLauncher {
   }
 
   async launch(prompt: string, options?: ShellLaunchOptions): Promise<void> {
-    const args = [
-      ...(options?.extraArgs ?? []),
-      wrapWithOverride(prompt),
-    ];
+    const args: string[] = [];
+
+    if (options?.inboxPath) {
+      args.push("--add-dir", dirname(options.inboxPath));
+    }
+
+    args.push(...(options?.extraArgs ?? []), wrapWithOverride(prompt));
     await spawnShell(this.command, args, options?.cwd);
   }
 }
