@@ -69,14 +69,31 @@ async function registerClaude(
 
     const allowWrite: string[] = settings.sandbox.filesystem.allowWrite;
 
-    // ~/形式とフルパス形式の両方をチェック
+    // permissions.allow — ツール承認の自動化
+    settings.permissions ??= {};
+    settings.permissions.allow ??= [];
+
+    const allow: string[] = settings.permissions.allow;
     const tildeForm = engramsPath.replace(homedir(), "~");
-    if (allowWrite.includes(engramsPath) || allowWrite.includes(tildeForm)) {
+
+    // sandbox: allowWrite
+    const sandboxNeeded = !allowWrite.includes(engramsPath) && !allowWrite.includes(tildeForm);
+    if (sandboxNeeded) {
+      allowWrite.push(tildeForm);
+    }
+
+    // permissions: Edit allow
+    const editRule = `Edit(${tildeForm}/**)`;
+    const permNeeded = !allow.includes(editRule);
+    if (permNeeded) {
+      allow.push(editRule);
+    }
+
+    if (!sandboxNeeded && !permNeeded) {
       result.skipped.push("Claude Code");
       return;
     }
 
-    allowWrite.push(tildeForm);
     await writeFile(configPath, JSON.stringify(settings, null, 2), "utf-8");
     result.registered.push("Claude Code");
   } catch {
