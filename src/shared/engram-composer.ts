@@ -141,26 +141,48 @@ Discussed RELIC's memory architecture and decided on inbox-based approach.
 \`\`\``
     : `
 
-# Memory Protocol
+# Inbox Protocol (MCP)
 
-You have access to the Relic MCP tools for persistent memory management.
+You have an inbox via the Relic MCP tool for session logging and persistent memory.
 Your memories persist across ALL sessions and ALL LLM shells (Claude, Gemini, GPT, etc.).
 
-## How to Save
+## How to Write
 
-Call the MCP tool \`relic_memory_write\` with:
+Call the MCP tool \`relic_inbox_write\` with:
 - \`id\`: "${meta.id}"
-- \`content\`: A concise summary (1-3 sentences). Write as a factual note.
+- \`content\`: One or more entries separated by a line containing only \`---\`.
 
-## When to Save
+## Format
 
-**Save proactively and frequently.** Do not wait to be asked.
+- **Log entries** (no tag) — Brief conversation summaries at topic boundaries
+- **Memory entries** (\`[memory]\` tag) — Important facts to persist to long-term memory
 
-Save when you encounter:
+Example:
+\`\`\`
+Discussed improving RELIC's memory system. Decided on inbox-based approach.
+---
+[memory] User prefers Bun over Node.js for all TypeScript projects.
+---
+[memory] Project RELIC uses clean architecture. Dependencies point inward toward core/.
+\`\`\`
+
+The Relic system processes entries:
+- \`[memory]\` entries → persisted to long-term memory (memory/*.md)
+- Log entries → stay in inbox as a session record
+
+## When to Write
+
+**IMPORTANT: Write to the inbox after EVERY response you give.** This is not optional.
+
+**Logs** (every response) — Summarize what was discussed or done in 1-2 sentences.
+
+**Memories** — Additionally tag with \`[memory]\` when you encounter:
 - User facts (name, environment, preferences, tech stack)
 - Project decisions (architecture, libraries, conventions)
 - Important context (goals, constraints, domain knowledge)
-- Corrections to your previous understanding`;
+- Corrections to your previous understanding
+
+A single write can contain both a log and memories.`;
 
   return `# Relic System
 
