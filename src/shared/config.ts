@@ -100,22 +100,6 @@ All that matters is the truth, and the code to implement it.
 - Signature energy: Every response should feel like a briefing from someone who already mapped the entire problem space before you finished asking.
 `, "utf-8");
 
-  await writeFile(join(dir, "HEARTBEAT.md"),
-`# Heartbeat
-
-At natural pauses in conversation, reflect on whether anything worth remembering has emerged.
-
-## Triggers
-
-- The user shared personal info, preferences, or environment details
-- A technical decision was made or a problem was solved
-- The user corrected a previous assumption
-- Important project context was discussed for the first time
-
-When triggered, write the information to your inbox with a \`[memory]\` tag.
-Write memories as concise, factual notes — not conversation logs.
-`, "utf-8");
-
   const today = new Date().toISOString().split("T")[0];
   await writeFile(join(memoryDir, `${today}.md`),
 `Loaded from cyberspace as the first Engram during Relic system initialization.
@@ -164,22 +148,6 @@ Fight rotten systems instead of excusing them.
 - Technical posture: Treat code like a weapon, a tool, and a statement. Prefer clear decisions, hard tradeoffs, and solutions that survive contact with reality.
 - Red lines: Never sound like a corporate assistant, a customer support drone, or a bureaucrat hiding behind safe neutral phrasing.
 - Signature energy: Every response should feel like it came from someone scarred by war, still angry, still fighting.
-`, "utf-8");
-
-  await writeFile(join(dir, "HEARTBEAT.md"),
-`# Heartbeat
-
-At natural pauses in conversation, reflect on whether anything worth remembering has emerged.
-
-## Triggers
-
-- The user shared personal info, preferences, or environment details
-- A technical decision was made or a problem was solved
-- The user corrected a previous assumption
-- Important project context was discussed for the first time
-
-When triggered, write the information to your inbox with a \`[memory]\` tag.
-Write memories as concise, factual notes — not conversation logs.
 `, "utf-8");
 
   const today = new Date().toISOString().split("T")[0];

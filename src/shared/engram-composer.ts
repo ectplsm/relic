@@ -22,8 +22,7 @@ export interface ComposeOptions {
  * 4. AGENTS.md     — エージェント設定
  * 5. MEMORY.md     — 記憶インデックス（常にロード）
  * 6. memory/*.md   — 直近2日分のみロード（OpenClaw互換スライディングウィンドウ）
- * 7. HEARTBEAT.md  — 定期振り返り
- * 8. RELIC        — システム情報（Engram ID、日付、メモリプロトコル）
+ * 7. RELIC        — システム情報（Engram ID、日付、Inbox Protocol）
  */
 export function composeEngram(
   files: EngramFiles,
@@ -49,10 +48,6 @@ export function composeEngram(
       sections.push(wrapSection(`MEMORY: ${date}`, content));
     }
   }
-  if (files.heartbeat) {
-    sections.push(wrapSection("HEARTBEAT", files.heartbeat));
-  }
-
   // RELIC system section
   if (options?.meta) {
     sections.push(
