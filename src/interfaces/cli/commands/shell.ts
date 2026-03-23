@@ -8,7 +8,7 @@ import { MemoryInbox } from "../../../shared/memory-inbox.js";
 import { ClaudeShell } from "../../../adapters/shells/claude-shell.js";
 import { GeminiShell } from "../../../adapters/shells/gemini-shell.js";
 import { CodexShell } from "../../../adapters/shells/codex-shell.js";
-import { CopilotShell } from "../../../adapters/shells/copilot-shell.js";
+
 
 interface ShellDef {
   name: string;
@@ -31,11 +31,6 @@ const SHELLS: ShellDef[] = [
     name: "codex",
     description: "Summon an Engram into Codex CLI",
     create: () => new CodexShell(),
-  },
-  {
-    name: "copilot",
-    description: "Summon an Engram into GitHub Copilot CLI",
-    create: () => new CopilotShell(),
   },
 ];
 

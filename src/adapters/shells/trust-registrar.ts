@@ -12,7 +12,6 @@ import { existsSync } from "node:fs";
  * 対応Shell:
  *   - Claude Code:  ~/.claude/settings.json    (sandbox.filesystem.allowWrite)
  *   - Codex CLI:    ~/.codex/config.toml       ([sandbox] writable_roots)
- *   - Copilot CLI:  ~/.copilot/config.json     (trusted_folders)
  *   - Gemini CLI:   ~/.gemini/trustedFolders.json (TRUST_FOLDER)
  */
 
@@ -31,8 +30,7 @@ export async function registerTrustedFolders(
   await Promise.all([
     registerClaude(relicEngramsPath, result),
     registerCodex(relicEngramsPath, result),
-    registerCopilot(relicEngramsPath, result),
-    registerGemini(relicEngramsPath, result),
+registerGemini(relicEngramsPath, result),
   ]);
 
   return result;
@@ -165,47 +163,6 @@ async function registerCodex(
 
     await writeFile(configPath, content, "utf-8");
     result.registered.push("Codex CLI");
-  } catch {
-    // best effort
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Copilot CLI — ~/.copilot/config.json
-// { "trusted_folders": ["/path/to/engrams"] }
-// ---------------------------------------------------------------------------
-async function registerCopilot(
-  engramsPath: string,
-  result: TrustResult
-): Promise<void> {
-  const copilotDir = join(homedir(), ".copilot");
-  const configPath = join(copilotDir, "config.json");
-
-  if (!existsSync(copilotDir)) {
-    return;
-  }
-
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let config: any = {};
-
-    if (existsSync(configPath)) {
-      const raw = await readFile(configPath, "utf-8");
-      config = JSON.parse(raw);
-    }
-
-    config.trusted_folders ??= [];
-
-    const folders: string[] = config.trusted_folders;
-
-    if (folders.includes(engramsPath)) {
-      result.skipped.push("Copilot CLI");
-      return;
-    }
-
-    folders.push(engramsPath);
-    await writeFile(configPath, JSON.stringify(config, null, 2), "utf-8");
-    result.registered.push("Copilot CLI");
   } catch {
     // best effort
   }
