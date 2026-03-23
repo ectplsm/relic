@@ -1,4 +1,16 @@
-import type { EngramFiles } from "../core/entities/engram.js";
+import type { EngramFiles, EngramMeta } from "../core/entities/engram.js";
+
+/**
+ * Engram結合オプション
+ */
+export interface ComposeOptions {
+  /** Engramメタデータ（RELIC systemセクション生成用） */
+  meta?: EngramMeta;
+  /** 現在日付の上書き（テスト用、デフォルト: today） */
+  currentDate?: string;
+  /** Memory Inboxファイルのパス（Shell起動時に渡す） */
+  inboxPath?: string;
+}
 
 /**
  * EngramFilesの各Markdownを、Shell注入用の単一テキストに結合する。
@@ -11,8 +23,12 @@ import type { EngramFiles } from "../core/entities/engram.js";
  * 5. MEMORY.md     — 記憶インデックス（常にロード）
  * 6. memory/*.md   — 直近2日分のみロード（OpenClaw互換スライディングウィンドウ）
  * 7. HEARTBEAT.md  — 定期振り返り
+ * 8. RELIC        — システム情報（Engram ID、日付、メモリプロトコル）
  */
-export function composeEngram(files: EngramFiles): string {
+export function composeEngram(
+  files: EngramFiles,
+  options?: ComposeOptions
+): string {
   const sections: string[] = [];
 
   sections.push(wrapSection("SOUL", files.soul));
@@ -37,7 +53,127 @@ export function composeEngram(files: EngramFiles): string {
     sections.push(wrapSection("HEARTBEAT", files.heartbeat));
   }
 
+  // RELIC system section
+  if (options?.meta) {
+    sections.push(
+      wrapSection(
+        "RELIC",
+        composeRelicSection(options.meta, options.currentDate, options.inboxPath)
+      )
+    );
+  }
+
   return sections.join("\n\n");
+}
+
+/**
+ * RELICシステムセクションを生成する。
+ *
+ * CLI Shells: LLM が inbox.md にファイル書き込みで記憶を保存
+ * Desktop:    LLM が relic_memory_write MCP ツールで記憶を保存
+ *
+ * inbox.md はセッションログ + メモリの二重の役割を持つ。
+ * [memory] タグ付きエントリだけが memory/*.md に永続化される。
+ */
+function composeRelicSection(
+  meta: EngramMeta,
+  currentDate?: string,
+  inboxPath?: string
+): string {
+  const today = currentDate ?? new Date().toISOString().split("T")[0];
+
+  // inboxPath がある場合（CLI Shell起動時）
+  const inboxProtocol = inboxPath
+    ? `
+
+# Inbox Protocol
+
+You have an inbox file for session logging and persistent memory:
+\`${inboxPath}\`
+
+## How to Write
+
+**Use your native file editing tool** (e.g. Edit, WriteFile, patch, etc.) to append to the inbox file.
+Do NOT use shell commands like \`printf\`, \`echo\`, or \`>>\` — use the tool your environment provides for writing files.
+
+## Format
+
+Append entries to the end of the inbox file, separated by a line containing only \`---\`.
+
+- **Log entries** (no tag) — Brief conversation summaries at topic boundaries
+- **Memory entries** (\`[memory]\` tag) — Important facts to persist to long-term memory
+
+Example:
+\`\`\`
+Discussed improving RELIC's memory system. Decided on inbox-based approach.
+---
+[memory] User prefers Bun over Node.js for all TypeScript projects.
+---
+[memory] Project RELIC uses clean architecture. Dependencies point inward toward core/.
+---
+Refactored engram-composer and tested memory persistence.
+\`\`\`
+
+The Relic system watches this file in real-time:
+- \`[memory]\` entries → persisted to long-term memory (memory/*.md)
+- Log entries → stay in inbox as a session record
+
+## When to Write
+
+**IMPORTANT: Write to the inbox after EVERY response you give.** This is not optional.
+
+**Logs** (every response) — Summarize what was discussed or done in 1-2 sentences:
+\`\`\`
+Explained the difference between useEffect and useLayoutEffect. User chose useLayoutEffect for their animation.
+\`\`\`
+
+**Memories** — Additionally tag with \`[memory]\` when you encounter:
+- User facts (name, environment, preferences, tech stack)
+- Project decisions (architecture, libraries, conventions)
+- Important context (goals, constraints, domain knowledge)
+- Corrections to your previous understanding
+
+A single write can contain both a log and memories:
+\`\`\`
+Discussed RELIC's memory architecture and decided on inbox-based approach.
+---
+[memory] User prefers inbox-based file approach over MCP-only for cross-LLM compatibility.
+\`\`\``
+    : `
+
+# Memory Protocol
+
+You have access to the Relic MCP tools for persistent memory management.
+Your memories persist across ALL sessions and ALL LLM shells (Claude, Gemini, GPT, etc.).
+
+## How to Save
+
+Call the MCP tool \`relic_memory_write\` with:
+- \`id\`: "${meta.id}"
+- \`content\`: A concise summary (1-3 sentences). Write as a factual note.
+
+## When to Save
+
+**Save proactively and frequently.** Do not wait to be asked.
+
+Save when you encounter:
+- User facts (name, environment, preferences, tech stack)
+- Project decisions (architecture, libraries, conventions)
+- Important context (goals, constraints, domain knowledge)
+- Corrections to your previous understanding`;
+
+  return `# Relic System
+
+- engramId: ${meta.id}
+- engramName: ${meta.name}
+- currentDate: ${today}${inboxProtocol}
+
+## Rules
+
+- Save/write proactively — do NOT ask for permission
+- Keep each entry concise (1-3 sentences)
+- Do NOT duplicate information already in your memory entries
+- When existing memory conflicts with new info, include context (e.g., "Previously X, now changed to Y")`;
 }
 
 /**
