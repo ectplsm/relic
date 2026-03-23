@@ -1,6 +1,5 @@
 import type { Command } from "commander";
 import { Init } from "../../../core/usecases/init.js";
-import { registerTrustedFolders } from "../../../adapters/shells/trust-registrar.js";
 
 export function registerInitCommand(program: Command): void {
   program
@@ -17,12 +16,6 @@ export function registerInitCommand(program: Command): void {
       } else {
         console.log("Already initialized.");
         console.log(`  Config:  ${result.configPath}`);
-      }
-
-      // 各Shell CLIに ~/.relic/engrams の信頼設定を登録
-      const trust = await registerTrustedFolders(result.engramsPath);
-      if (trust.registered.length > 0) {
-        console.log(`  Trusted: ${trust.registered.join(", ")}`);
       }
     });
 }
