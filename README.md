@@ -93,11 +93,16 @@ Extra arguments are passed through to the underlying CLI.
 
 ## MCP Server
 
-Relic also runs as an [MCP](https://modelcontextprotocol.io/) server, allowing any MCP-compatible client (like Claude Desktop) to access Engrams directly.
+Relic runs as an [MCP](https://modelcontextprotocol.io/) server that pairs with CLI injection. The CLI injects the Engram persona at session start; the MCP server gives the running Construct tools for memory management.
 
-### Setup (Claude Desktop)
+```
+relic claude --engram johnny   →  injects persona into Claude Code
+relic-mcp (MCP server)        →  gives the Construct relic_inbox_write + relic_inbox_search
+```
 
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+### Setup
+
+Add `relic-mcp` to your shell's MCP config. Example for Claude Code (`~/.claude/claude.json`) and Gemini CLI (`~/.gemini/settings.json`):
 
 ```json
 {
@@ -109,21 +114,14 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 }
 ```
 
-Restart Claude Desktop.
-
 ### Available Tools
 
 | Tool | Description |
 |------|-------------|
-| `relic_init` | Initialize `~/.relic/` with config and sample Engrams |
-| `relic_list` | List all available Engrams |
-| `relic_show` | Preview an Engram's composed prompt |
-| `relic_summon` | Summon an Engram and return the persona prompt for injection |
-| `relic_inject` | Inject an Engram into an OpenClaw workspace |
-| `relic_extract` | Extract an Engram from an OpenClaw workspace |
-| `relic_memory_search` | Search an Engram's memory entries by keyword |
-| `relic_memory_get` | Get a specific memory entry by date |
-| `relic_memory_list` | List all memory entry dates for an Engram |
+| `relic_inbox_write` | Write session logs and `[memory]` entries to the Engram's inbox |
+| `relic_inbox_search` | Search the Engram's raw inbox by keyword (newest-first) |
+
+The Construct calls these tools automatically during the session — `relic_inbox_write` after every response, `relic_inbox_search` when it needs to recall past context.
 
 ## OpenClaw Integration
 
@@ -203,15 +201,15 @@ Relic uses a **2-day sliding window** for memory entries, matching OpenClaw's ap
 
 - `MEMORY.md` — Always included in the prompt (curated long-term memory)
 - `memory/today.md` + `memory/yesterday.md` — Always included
-- Older entries — **Not included in the prompt**, but accessible via MCP tools
+- Older entries — **Not included in the prompt**, but searchable via MCP
 
-This keeps prompts compact while preserving full history. AI clients (like Claude Desktop) can use the memory tools to search or retrieve older entries on demand:
+This keeps prompts compact while preserving full history. The Construct can search past context on demand using the MCP tool:
 
 ```
-relic_memory_search  → keyword search across all entries
-relic_memory_get     → fetch a specific date's entry
-relic_memory_list    → list all available dates
+relic_inbox_search  → keyword search across the full raw inbox (all sessions)
 ```
+
+The inbox (`inbox.md`) is the primary data store — it contains all session logs and memory entries as written. The `memory/*.md` files are a distilled subset (only `[memory]`-tagged entries), used for cloud sync with Mikoshi.
 
 ## Creating Your Own Engram
 
