@@ -1,11 +1,6 @@
 import type { EngramRepository } from "../ports/engram-repository.js";
 import { composeEngram } from "../../shared/engram-composer.js";
 
-export interface SummonOptions {
-  /** Memory Inboxファイルのパス（CLI Shell起動時に渡す） */
-  inboxPath?: string;
-}
-
 export interface SummonResult {
   /** Engram ID */
   engramId: string;
@@ -20,11 +15,14 @@ export interface SummonResult {
  *
  * これがRELICの中核オペレーション。
  * Engramの取得 → Markdown結合 → 注入可能なプロンプト生成 を行う。
+ *
+ * inboxへの書き込みはMCPサーバー(relic_inbox_write)が担う。
+ * CLIはEngramの注入に特化する。
  */
 export class Summon {
   constructor(private readonly repository: EngramRepository) {}
 
-  async execute(engramId: string, options?: SummonOptions): Promise<SummonResult> {
+  async execute(engramId: string): Promise<SummonResult> {
     const engram = await this.repository.get(engramId);
 
     if (!engram) {
@@ -33,7 +31,6 @@ export class Summon {
 
     const prompt = composeEngram(engram.files, {
       meta: engram.meta,
-      inboxPath: options?.inboxPath,
     });
 
     return {

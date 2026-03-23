@@ -1,4 +1,4 @@
-export { Summon, EngramNotFoundError, type SummonResult, type SummonOptions } from "./summon.js";
+export { Summon, EngramNotFoundError, type SummonResult } from "./summon.js";
 export { ListEngrams } from "./list-engrams.js";
 export { Init, type InitResult } from "./init.js";
 export {
@@ -15,11 +15,6 @@ export {
   ExtractNameRequiredError,
   type ExtractResult,
 } from "./extract.js";
-export {
-  MemorySearch,
-  MemoryEngramNotFoundError,
-  type MemorySearchResult,
-} from "./memory-search.js";
 export {
   MemoryWrite,
   MemoryWriteEngramNotFoundError,

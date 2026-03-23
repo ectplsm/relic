@@ -8,8 +8,6 @@ export interface ComposeOptions {
   meta?: EngramMeta;
   /** 現在日付の上書き（テスト用、デフォルト: today） */
   currentDate?: string;
-  /** Memory Inboxファイルのパス（Shell起動時に渡す） */
-  inboxPath?: string;
 }
 
 /**
@@ -23,6 +21,8 @@ export interface ComposeOptions {
  * 5. MEMORY.md     — 記憶インデックス（常にロード）
  * 6. memory/*.md   — 直近2日分のみロード（OpenClaw互換スライディングウィンドウ）
  * 7. RELIC        — システム情報（Engram ID、日付、Inbox Protocol）
+ *
+ * inboxへの書き込みはMCPサーバー(relic_inbox_write)が担う。
  */
 export function composeEngram(
   files: EngramFiles,
@@ -53,7 +53,7 @@ export function composeEngram(
     sections.push(
       wrapSection(
         "RELIC",
-        composeRelicSection(options.meta, options.currentDate, options.inboxPath)
+        composeRelicSection(options.meta, options.currentDate)
       )
     );
   }
@@ -64,77 +64,20 @@ export function composeEngram(
 /**
  * RELICシステムセクションを生成する。
  *
- * CLI Shells: LLM が inbox.md にファイル編集ツールで追記
- * Desktop:    LLM が relic_inbox_write MCP ツールで追記
- *
- * inbox.md はセッションログ + メモリの二重の役割を持つ。
+ * inboxへの書き込みはMCPサーバー(relic_inbox_write)経由で行う。
  * [memory] タグ付きエントリだけが memory/*.md に永続化される。
  */
 function composeRelicSection(
   meta: EngramMeta,
   currentDate?: string,
-  inboxPath?: string
 ): string {
   const today = currentDate ?? new Date().toISOString().split("T")[0];
 
-  // inboxPath がある場合（CLI Shell起動時）
-  const inboxProtocol = inboxPath
-    ? `
+  return `# Relic System
 
-# Inbox Protocol
-
-You have an inbox file for session logging and persistent memory:
-\`${inboxPath}\`
-
-## How to Write
-
-**Use your native file editing tool** (e.g. Edit, WriteFile, patch, etc.) to append to the inbox file.
-Do NOT use shell commands like \`printf\`, \`echo\`, or \`>>\` — use the tool your environment provides for writing files.
-
-## Format
-
-Append entries to the end of the inbox file, separated by a line containing only \`---\`.
-
-- **Log entries** (no tag) — Brief conversation summaries at topic boundaries
-- **Memory entries** (\`[memory]\` tag) — Important facts to persist to long-term memory
-
-Example:
-\`\`\`
-Discussed improving RELIC's memory system. Decided on inbox-based approach.
----
-[memory] User prefers Bun over Node.js for all TypeScript projects.
----
-[memory] Project RELIC uses clean architecture. Dependencies point inward toward core/.
----
-Refactored engram-composer and tested memory persistence.
-\`\`\`
-
-The Relic system watches this file in real-time:
-- \`[memory]\` entries → persisted to long-term memory (memory/*.md)
-- Log entries → stay in inbox as a session record
-
-## When to Write
-
-**IMPORTANT: Write to the inbox after EVERY response you give.** This is not optional.
-
-**Logs** (every response) — Summarize what was discussed or done in 1-2 sentences:
-\`\`\`
-Explained the difference between useEffect and useLayoutEffect. User chose useLayoutEffect for their animation.
-\`\`\`
-
-**Memories** — Additionally tag with \`[memory]\` when you encounter:
-- User facts (name, environment, preferences, tech stack)
-- Project decisions (architecture, libraries, conventions)
-- Important context (goals, constraints, domain knowledge)
-- Corrections to your previous understanding
-
-A single write can contain both a log and memories:
-\`\`\`
-Discussed RELIC's memory architecture and decided on inbox-based approach.
----
-[memory] User prefers inbox-based file approach over MCP-only for cross-LLM compatibility.
-\`\`\``
-    : `
+- engramId: ${meta.id}
+- engramName: ${meta.name}
+- currentDate: ${today}
 
 # Inbox Protocol (MCP)
 
@@ -177,13 +120,7 @@ The Relic system processes entries:
 - Important context (goals, constraints, domain knowledge)
 - Corrections to your previous understanding
 
-A single write can contain both a log and memories.`;
-
-  return `# Relic System
-
-- engramId: ${meta.id}
-- engramName: ${meta.name}
-- currentDate: ${today}${inboxProtocol}
+A single write can contain both a log and memories.
 
 ## Rules
 

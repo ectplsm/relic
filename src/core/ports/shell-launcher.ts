@@ -15,8 +15,6 @@ export interface ShellLaunchOptions {
   extraArgs?: string[];
   /** Shell の作業ディレクトリ */
   cwd?: string;
-  /** Memory Inbox ファイルのパス（Codex の --add-dir 等、書き込み許可に使用） */
-  inboxPath?: string;
 }
 
 /**
@@ -24,6 +22,9 @@ export interface ShellLaunchOptions {
  *
  * 各Shell(LLM CLI)ごとにシステムプロンプトの渡し方が異なるため、
  * 具象実装はadapters/shells/に配置される。
+ *
+ * inboxへの書き込みはMCPサーバー(relic_inbox_write)が担う。
+ * ShellLauncherは注入に特化する。
  */
 export interface ShellLauncher {
   /** Shell種別の表示名 */
