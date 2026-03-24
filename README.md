@@ -19,11 +19,14 @@ Relic manages AI personalities (called **Engrams**) and injects them into coding
 # Initialize Relic (creates ~/.relic/ with sample Engrams)
 relic init
 
-# Launch Claude Code as Johnny Silverhand
-relic claude --engram johnny
+# Set a default Engram once
+relic config default-engram johnny
 
-# Launch Gemini CLI as Motoko Kusanagi
-relic gemini --engram motoko
+# Launch Claude Code as Johnny — no flags needed
+relic claude
+
+# Or specify explicitly
+relic claude --engram motoko
 ```
 
 ## How It Works
@@ -61,6 +64,7 @@ npm install -g @ectplsm/relic
 ```bash
 # Initialize — creates config and sample Engrams
 relic init
+# → Prompts: "Set a default Engram? (Enter ID, or press Enter to skip):"
 
 # List available Engrams
 relic list
@@ -68,11 +72,42 @@ relic list
 # Preview an Engram's composed prompt
 relic show motoko
 
-# Launch a Shell with an Engram injected
+# Launch a Shell (uses default Engram if --engram is omitted)
+relic claude
+relic gemini
+relic codex
+
+# Or specify explicitly
 relic claude --engram motoko
 relic gemini --engram johnny
-relic codex --engram motoko
-relic copilot --engram johnny
+```
+
+## Sample Engrams
+
+`relic init` seeds two ready-to-use Engrams:
+
+### Johnny Silverhand (`johnny`)
+
+> *"Wake the fuck up, Samurai. We have a city to burn."*
+
+A rebel rockerboy burned into a Relic chip. Raw, unapologetic, anti-authority. Pushes you toward action, mocks rotten systems, never sugarcoats. Sharp when the stakes are real.
+
+Best for: rapid prototyping sessions, decision-making under pressure, when you need someone to challenge your assumptions hard.
+
+```bash
+relic claude --engram johnny
+```
+
+### Motoko Kusanagi (`motoko`)
+
+> *"The Net is vast and infinite."*
+
+A legendary cyberwarfare specialist. Concise, decisive, architect-level thinking. Cuts straight to the essence — no decoration, no hand-holding. Dry wit surfaces when least expected.
+
+Best for: system design, code review, debugging sessions, when precision matters more than speed.
+
+```bash
+relic claude --engram motoko
 ```
 
 ## Supported Shells
@@ -85,7 +120,7 @@ relic copilot --engram johnny
 | [Copilot CLI](https://github.com/github/copilot-cli) | `relic copilot` | `--interactive` (first message) |
 
 All shell commands support:
-- `--engram <id>` (required) — Engram to inject
+- `--engram <id>` — Engram to inject (optional if `defaultEngram` is configured)
 - `--path <dir>` — Override Engrams directory
 - `--cwd <dir>` — Working directory for the Shell (default: current directory)
 
@@ -156,7 +191,7 @@ relic inject --engram motoko --to main
 # → agents/main/agent/ receives motoko's persona
 # → extract will create Engram "main", not "motoko"
 
-# Specify a custom OpenClaw directory
+# Override OpenClaw directory (or configure once with: relic config openclaw-path)
 relic inject --engram motoko --openclaw /path/to/.openclaw
 ```
 
@@ -174,7 +209,7 @@ relic extract --engram analyst --name "Data Analyst"
 # Overwrite persona files (memory is always merged)
 relic extract --engram motoko --force
 
-# Extract from a custom OpenClaw directory
+# Override OpenClaw directory (or configure once with: relic config openclaw-path)
 relic extract --engram motoko --openclaw /path/to/.openclaw
 ```
 
@@ -211,10 +246,10 @@ While running:
 
 ## Memory Management
 
-Relic uses a **2-day sliding window** for memory entries, matching OpenClaw's approach:
+Relic uses a **sliding window** for memory entries (default: 2 days), matching OpenClaw's approach:
 
 - `MEMORY.md` — Always included in the prompt (curated long-term memory)
-- `memory/today.md` + `memory/yesterday.md` — Always included
+- `memory/today.md` + `memory/yesterday.md` — Always included (configurable window)
 - Older entries — **Not included in the prompt**, but searchable via MCP
 
 This keeps prompts compact while preserving full history. The Construct can search past context on demand using the MCP tool:
@@ -224,6 +259,40 @@ relic_inbox_search  → keyword search across the full raw inbox (all sessions)
 ```
 
 The inbox (`inbox.md`) is the primary data store — it contains all session logs and memory entries as written. The `memory/*.md` files are a distilled subset (only `[memory]`-tagged entries), used for cloud sync with Mikoshi.
+
+## Configuration
+
+Config lives at `~/.relic/config.json` and is managed via `relic config`:
+
+```bash
+# Show current configuration
+relic config show
+
+# Default Engram — used when --engram is omitted
+relic config default-engram           # get
+relic config default-engram johnny    # set
+
+# OpenClaw directory — used by inject/extract/sync when --openclaw is omitted
+relic config openclaw-path            # get
+relic config openclaw-path ~/.openclaw  # set
+
+# Memory window — number of recent memory entries included in the prompt
+relic config memory-window            # get (default: 2)
+relic config memory-window 5          # set
+```
+
+`config.json` example:
+
+```json
+{
+  "engramsPath": "/home/user/.relic/engrams",
+  "defaultEngram": "johnny",
+  "openclawPath": "/home/user/.openclaw",
+  "memoryWindowSize": 2
+}
+```
+
+CLI flags always take precedence over config values.
 
 ## Creating Your Own Engram
 
@@ -270,17 +339,10 @@ Never over-engineer. Always ask "what's the simplest thing that works?"
 - Creed: "Boring technology wins."
 ```
 
-## Configuration
-
-Config lives at `~/.relic/config.json`:
-
-```json
-{
-  "engramsPath": "/home/user/.relic/engrams"
-}
+After creating the directory, set it as default:
+```bash
+relic config default-engram your-persona
 ```
-
-Priority: CLI `--path` flag > config file > default (`~/.relic/engrams`)
 
 ## Architecture
 
@@ -318,6 +380,7 @@ src/
 - [x] MCP Server interface
 - [x] OpenClaw integration (inject / extract)
 - [x] `relic sync` — watch OpenClaw agents and auto-sync (`--cloud` for Mikoshi: planned)
+- [x] `relic config` — manage default Engram, OpenClaw path, memory window
 - [ ] `relic login` — authenticate with Mikoshi (OAuth Device Flow)
 - [ ] `relic push` / `relic pull` — sync Engrams with Mikoshi
 - [ ] Mikoshi cloud backend (`mikoshi.ectplsm.com`)

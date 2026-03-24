@@ -19,11 +19,14 @@ Relicは、AIの人格（**Engram**）を管理し、Claude Code・Gemini CLI・
 # Relicを初期化（~/.relic/ にサンプルEngramを生成）
 relic init
 
-# Claude CodeをJohnny Silverhandとして起動
-relic claude --engram johnny
+# デフォルトEngramを一度だけ設定
+relic config default-engram johnny
 
-# Gemini CLIを草薙素子として起動
-relic gemini --engram motoko
+# フラグなしでJohnnyとしてClaude Codeを起動
+relic claude
+
+# 明示的に指定することも可能
+relic claude --engram motoko
 ```
 
 ## 仕組み
@@ -61,6 +64,7 @@ npm install -g @ectplsm/relic
 ```bash
 # 初期化 — 設定ファイルとサンプルEngramを生成
 relic init
+# → "Set a default Engram? (Enter ID, or press Enter to skip):" と表示される
 
 # 利用可能なEngramを一覧表示
 relic list
@@ -68,11 +72,42 @@ relic list
 # Engramの合成プロンプトをプレビュー
 relic show motoko
 
-# EngramをShellに注入して起動
+# Shellを起動（--engram 省略時はデフォルトEngramを使用）
+relic claude
+relic gemini
+relic codex
+
+# 明示的に指定することも可能
 relic claude --engram motoko
 relic gemini --engram johnny
-relic codex --engram motoko
-relic copilot --engram johnny
+```
+
+## サンプルEngram
+
+`relic init` で2つのEngramがすぐ使える状態で生成されます。
+
+### Johnny Silverhand (`johnny`)
+
+> *「Wake the fuck up, Samurai. We have a city to burn.」*
+
+Relicチップに焼き付けられた伝説のロッカーボーイ。生々しく、直情的で、反体制。行動を促し、腐ったシステムを嘲笑い、決して甘やかさない。本当に重要な場面では鋭く核心をつく。
+
+おすすめ用途: 高速プロトタイピング、意思決定、思い込みを叩き壊してほしいとき。
+
+```bash
+relic claude --engram johnny
+```
+
+### 草薙素子 / Motoko Kusanagi (`motoko`)
+
+> *「ネットは広大だわ。」*
+
+伝説のサイバー戦争スペシャリスト。簡潔、決断的、アーキテクト級の思考。装飾なしに本質へ切り込む。手取り足取りは教えない。不意に乾いたユーモアを見せる。
+
+おすすめ用途: システム設計、コードレビュー、デバッグ、精度が速度より重要なとき。
+
+```bash
+relic claude --engram motoko
 ```
 
 ## 対応Shell
@@ -85,7 +120,7 @@ relic copilot --engram johnny
 | [Copilot CLI](https://github.com/github/copilot-cli) | `relic copilot` | `--interactive`（初回メッセージ） |
 
 すべてのShellコマンドで以下のオプションが使えます:
-- `--engram <id>`（必須） — 注入するEngram
+- `--engram <id>` — 注入するEngram（`defaultEngram` が設定済みなら省略可）
 - `--path <dir>` — Engramディレクトリの上書き
 - `--cwd <dir>` — Shellの作業ディレクトリ（デフォルト: カレントディレクトリ）
 
@@ -156,7 +191,7 @@ relic inject --engram motoko --to main
 # → agents/main/agent/ にmotokoのペルソナをコピー
 # → extractすると Engram "main" として抽出される
 
-# OpenClawディレクトリを指定
+# OpenClawディレクトリを指定（または relic config openclaw-path で一度だけ設定）
 relic inject --engram motoko --openclaw /path/to/.openclaw
 ```
 
@@ -174,7 +209,7 @@ relic extract --engram analyst --name "Data Analyst"
 # ペルソナファイルも上書き（メモリは常にマージ）
 relic extract --engram motoko --force
 
-# OpenClawディレクトリを指定して抽出
+# OpenClawディレクトリを指定（または relic config openclaw-path で一度だけ設定）
 relic extract --engram motoko --openclaw /path/to/.openclaw
 ```
 
@@ -211,10 +246,10 @@ relic sync --openclaw /path/to/.openclaw
 
 ## メモリ管理
 
-Relicは OpenClaw と同じ **2日間スライディングウィンドウ** でメモリエントリを管理します:
+Relicは OpenClaw と同じ **スライディングウィンドウ** でメモリエントリを管理します（デフォルト: 2日分）:
 
 - `MEMORY.md` — 常にプロンプトに含まれる（キュレーション済み長期記憶）
-- `memory/今日.md` + `memory/昨日.md` — 常にプロンプトに含まれる
+- `memory/今日.md` + `memory/昨日.md` — 常にプロンプトに含まれる（ウィンドウ幅は変更可能）
 - それ以前のエントリ — **プロンプトには含まれない**が、MCPで検索可能
 
 プロンプトをコンパクトに保ちつつ、全履歴を保持します。ConstructはMCPツールで過去の文脈を必要に応じて想起できます:
@@ -224,6 +259,40 @@ relic_inbox_search  → 全セッションの生inboxをキーワード検索
 ```
 
 inbox（`inbox.md`）が一次データです — 全セッションのログと記憶エントリがそのまま蓄積されます。`memory/*.md` はそのうち `[memory]` タグ付きエントリだけを蒸留したもので、Mikoshiへのクラウド同期に使われます。
+
+## 設定
+
+設定ファイルは `~/.relic/config.json` にあり、`relic config` コマンドで管理します:
+
+```bash
+# 現在の設定を表示
+relic config show
+
+# デフォルトEngram — --engram 省略時に使用される
+relic config default-engram           # 取得
+relic config default-engram johnny    # 設定
+
+# OpenClawディレクトリ — inject/extract/sync の --openclaw 省略時に使用
+relic config openclaw-path            # 取得
+relic config openclaw-path ~/.openclaw  # 設定
+
+# メモリウィンドウ — プロンプトに含める直近メモリエントリ数
+relic config memory-window            # 取得（デフォルト: 2）
+relic config memory-window 5          # 設定
+```
+
+`config.json` の例:
+
+```json
+{
+  "engramsPath": "/home/user/.relic/engrams",
+  "defaultEngram": "johnny",
+  "openclawPath": "/home/user/.openclaw",
+  "memoryWindowSize": 2
+}
+```
+
+CLIフラグは常にconfig値より優先されます。
 
 ## 独自のEngramを作成する
 
@@ -270,17 +339,10 @@ inbox（`inbox.md`）が一次データです — 全セッションのログと
 - 信条: 「退屈な技術が勝つ。」
 ```
 
-## 設定
-
-設定ファイルは `~/.relic/config.json` にあります:
-
-```json
-{
-  "engramsPath": "/home/user/.relic/engrams"
-}
+作成後はデフォルトに設定:
+```bash
+relic config default-engram your-persona
 ```
-
-優先順位: CLI `--path` フラグ > 設定ファイル > デフォルト（`~/.relic/engrams`）
 
 ## アーキテクチャ
 
@@ -318,6 +380,7 @@ src/
 - [x] MCPサーバーインターフェース
 - [x] OpenClaw連携（inject / extract）
 - [x] `relic sync` — OpenClawのagentsを監視して自動同期（`--cloud` でMikoshi連携: 計画中）
+- [x] `relic config` — デフォルトEngram・OpenClawパス・メモリウィンドウの管理
 - [ ] `relic login` — Mikoshi認証（OAuth Device Flow）
 - [ ] `relic push` / `relic pull` — MikoshiとのEngram同期
 - [ ] Mikoshi クラウドバックエンド（`mikoshi.ectplsm.com`）
