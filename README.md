@@ -64,7 +64,7 @@ npm install -g @ectplsm/relic
 ```bash
 # Initialize — creates config and sample Engrams
 relic init
-# → Prompts: "Set a default Engram? (Enter ID, or press Enter to skip):"
+# → Prompts: "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):"
 
 # List available Engrams
 relic list

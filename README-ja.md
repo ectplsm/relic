@@ -64,7 +64,7 @@ npm install -g @ectplsm/relic
 ```bash
 # 初期化 — 設定ファイルとサンプルEngramを生成
 relic init
-# → "Set a default Engram? (Enter ID, or press Enter to skip):" と表示される
+# → "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):" と表示される
 
 # 利用可能なEngramを一覧表示
 relic list
