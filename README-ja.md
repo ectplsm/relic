@@ -143,6 +143,21 @@ relic-mcp（MCPサーバー）       →  Constructに relic_inbox_write + relic
 claude mcp add --scope user relic -- relic-mcp
 ```
 
+確認ダイアログを抑制し、全プロジェクトでRelicツールを自動承認するには、`~/.claude/settings.json` に以下を追加します:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__relic__relic_inbox_write",
+      "mcp__relic__relic_inbox_search"
+    ]
+  }
+}
+```
+
+> **注意:** 確認ダイアログの「常に許可」は `~/.claude.json`（プロジェクトスコープのキャッシュ）に保存されます — グローバルには効きません。全プロジェクトで自動承認したい場合は `~/.claude/settings.json` が正しい設定場所です。
+
 #### Gemini CLI
 
 `~/.gemini/settings.json` に追加:

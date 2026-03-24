@@ -143,6 +143,21 @@ relic-mcp (MCP server)        →  gives the Construct relic_inbox_write + relic
 claude mcp add --scope user relic -- relic-mcp
 ```
 
+To suppress confirmation dialogs and auto-approve Relic tools across all projects, add the following to `~/.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__relic__relic_inbox_write",
+      "mcp__relic__relic_inbox_search"
+    ]
+  }
+}
+```
+
+> **Note:** The "Always allow" option in the confirmation dialog saves to `~/.claude.json` (project-scoped cache) — it does **not** persist globally. For global auto-approval, `~/.claude/settings.json` is the right place.
+
 #### Gemini CLI
 
 Add to `~/.gemini/settings.json`:
