@@ -1,5 +1,9 @@
 import type { Command } from "commander";
-import { loadConfig, setDefaultEngram, ensureInitialized } from "../../../shared/config.js";
+import {
+  loadConfig,
+  saveConfig,
+  ensureInitialized,
+} from "../../../shared/config.js";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 
 export function registerConfigCommand(program: Command): void {
@@ -17,25 +21,80 @@ export function registerConfigCommand(program: Command): void {
       console.log(JSON.stringify(cfg, null, 2));
     });
 
-  // relic config set-default <engramId>
+  // relic config default-engram [id]
   config
-    .command("set-default <engramId>")
-    .description("Set the default Engram to summon when --engram is not specified")
+    .command("default-engram [id]")
+    .description("Get or set the default Engram ID (used when --engram is omitted)")
     .option("-p, --path <dir>", "Override engrams directory path")
-    .action(async (engramId: string, opts: { path?: string }) => {
+    .action(async (id: string | undefined, opts: { path?: string }) => {
       await ensureInitialized();
       const cfg = await loadConfig();
-      const engramsPath = opts.path ?? cfg.engramsPath;
 
-      // Engram存在確認
+      if (!id) {
+        // getter
+        if (cfg.defaultEngram) {
+          console.log(cfg.defaultEngram);
+        } else {
+          console.log("(not set)");
+        }
+        return;
+      }
+
+      // setter — Engram 存在確認
+      const engramsPath = opts.path ?? cfg.engramsPath;
       const repo = new LocalEngramRepository(engramsPath);
-      const engram = await repo.get(engramId);
+      const engram = await repo.get(id);
       if (!engram) {
-        console.error(`Error: Engram "${engramId}" not found in ${engramsPath}`);
+        console.error(`Error: Engram "${id}" not found in ${engramsPath}`);
         process.exit(1);
       }
 
-      await setDefaultEngram(engramId);
-      console.log(`Default Engram set to: ${engram.meta.name} (${engramId})`);
+      cfg.defaultEngram = id;
+      await saveConfig(cfg);
+      console.log(`Default Engram set to: ${engram.meta.name} (${id})`);
+    });
+
+  // relic config openclaw-path [path]
+  config
+    .command("openclaw-path [path]")
+    .description("Get or set the OpenClaw directory path (default: ~/.openclaw)")
+    .action(async (path: string | undefined) => {
+      await ensureInitialized();
+      const cfg = await loadConfig();
+
+      if (!path) {
+        // getter
+        console.log(cfg.openclawPath ?? "(not set — using ~/.openclaw)");
+        return;
+      }
+
+      cfg.openclawPath = path;
+      await saveConfig(cfg);
+      console.log(`OpenClaw path set to: ${path}`);
+    });
+
+  // relic config memory-window [n]
+  config
+    .command("memory-window [n]")
+    .description("Get or set the number of recent memory entries to include in prompts (default: 2)")
+    .action(async (n: string | undefined) => {
+      await ensureInitialized();
+      const cfg = await loadConfig();
+
+      if (n === undefined) {
+        // getter
+        console.log(String(cfg.memoryWindowSize));
+        return;
+      }
+
+      const parsed = parseInt(n, 10);
+      if (isNaN(parsed) || parsed < 1) {
+        console.error("Error: memory-window must be a positive integer");
+        process.exit(1);
+      }
+
+      cfg.memoryWindowSize = parsed;
+      await saveConfig(cfg);
+      console.log(`Memory window set to: ${parsed}`);
     });
 }

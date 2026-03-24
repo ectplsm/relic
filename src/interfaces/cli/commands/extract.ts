@@ -7,7 +7,7 @@ import {
   EngramAlreadyExistsError,
   ExtractNameRequiredError,
 } from "../../../core/usecases/index.js";
-import { resolveEngramsPath } from "../../../shared/config.js";
+import { resolveEngramsPath, resolveOpenclawPath } from "../../../shared/config.js";
 
 export function registerExtractCommand(program: Command): void {
   program
@@ -30,13 +30,14 @@ export function registerExtractCommand(program: Command): void {
         force?: boolean;
       }) => {
         const engramsPath = await resolveEngramsPath(opts.path);
+        const openclawDir = await resolveOpenclawPath(opts.openclaw);
         const repo = new LocalEngramRepository(engramsPath);
         const extract = new Extract(repo);
 
         try {
           const result = await extract.execute(opts.engram, {
             name: opts.name,
-            openclawDir: opts.openclaw,
+            openclawDir,
             force: opts.force,
           });
 

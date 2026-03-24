@@ -48,10 +48,10 @@ export function registerInitCommand(program: Command): void {
               await setDefaultEngram(match.id);
               console.log(`Default Engram set to: ${match.name} (${match.id})`);
             } else {
-              console.log(`Unknown Engram "${answer}". Skipped. Run: relic config set-default <id>`);
+              console.log(`Unknown Engram "${answer}". Skipped. Run: relic config default-engram <id>`);
             }
           } else {
-            console.log(`Skipped. Run: relic config set-default <id> to configure later.`);
+            console.log(`Skipped. Run: relic config default-engram <id> to configure later.`);
           }
         }
       } else {

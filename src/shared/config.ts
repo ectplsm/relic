@@ -14,6 +14,10 @@ export const RelicConfigSchema = z.object({
   mikoshiUrl: z.string().optional(),
   /** --engram 未指定時に召喚するデフォルトEngram ID */
   defaultEngram: z.string().optional(),
+  /** inject/extract で使うOpenClawディレクトリ (default: ~/.openclaw) */
+  openclawPath: z.string().optional(),
+  /** システムプロンプトに含める直近メモリエントリ数 (default: 2) */
+  memoryWindowSize: z.number().int().min(1).default(2),
 });
 
 export type RelicConfig = z.infer<typeof RelicConfigSchema>;
@@ -197,6 +201,31 @@ export async function setDefaultEngram(engramId: string): Promise<void> {
   const config = await loadConfig();
   config.defaultEngram = engramId;
   await saveConfig(config);
+}
+
+/**
+ * OpenClawディレクトリを解決する。
+ * 優先順位: CLIオプション > config.openclawPath > ~/.openclaw
+ */
+export async function resolveOpenclawPath(
+  cliOverride?: string
+): Promise<string | undefined> {
+  if (cliOverride) {
+    return cliOverride;
+  }
+  await ensureInitialized();
+  const config = await loadConfig();
+  return config.openclawPath; // undefined の場合は openclaw.ts 側のデフォルトに委ねる
+}
+
+/**
+ * メモリウィンドウサイズを解決する。
+ * 優先順位: config.memoryWindowSize > 2 (デフォルト)
+ */
+export async function resolveMemoryWindowSize(): Promise<number> {
+  await ensureInitialized();
+  const config = await loadConfig();
+  return config.memoryWindowSize;
 }
 
 export { CONFIG_PATH, RELIC_DIR };

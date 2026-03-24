@@ -5,7 +5,7 @@ import {
   InjectEngramNotFoundError,
   InjectAgentNotFoundError,
 } from "../../../core/usecases/index.js";
-import { resolveEngramsPath } from "../../../shared/config.js";
+import { resolveEngramsPath, resolveOpenclawPath } from "../../../shared/config.js";
 
 export function registerInjectCommand(program: Command): void {
   program
@@ -26,13 +26,14 @@ export function registerInjectCommand(program: Command): void {
         path?: string;
       }) => {
         const engramsPath = await resolveEngramsPath(opts.path);
+        const openclawDir = await resolveOpenclawPath(opts.openclaw);
         const repo = new LocalEngramRepository(engramsPath);
         const inject = new Inject(repo);
 
         try {
           const result = await inject.execute(opts.engram, {
             to: opts.to,
-            openclawDir: opts.openclaw,
+            openclawDir,
           });
 
           console.log(
