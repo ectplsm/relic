@@ -12,6 +12,8 @@ export const RelicConfigSchema = z.object({
   engramsPath: z.string().default(join(homedir(), ".relic", "engrams")),
   /** Mikoshi APIのベースURL（将来用） */
   mikoshiUrl: z.string().optional(),
+  /** --engram 未指定時に召喚するデフォルトEngram ID */
+  defaultEngram: z.string().optional(),
 });
 
 export type RelicConfig = z.infer<typeof RelicConfigSchema>;
@@ -170,6 +172,31 @@ export async function resolveEngramsPath(
   await ensureInitialized();
   const config = await loadConfig();
   return config.engramsPath;
+}
+
+/**
+ * デフォルトEngram IDを解決する。
+ * 優先順位: CLIオプション > config.defaultEngram > undefined
+ */
+export async function resolveDefaultEngram(
+  cliOverride?: string
+): Promise<string | undefined> {
+  if (cliOverride) {
+    return cliOverride;
+  }
+  await ensureInitialized();
+  const config = await loadConfig();
+  return config.defaultEngram;
+}
+
+/**
+ * デフォルトEngram IDを設定ファイルに保存する。
+ */
+export async function setDefaultEngram(engramId: string): Promise<void> {
+  await ensureInitialized();
+  const config = await loadConfig();
+  config.defaultEngram = engramId;
+  await saveConfig(config);
 }
 
 export { CONFIG_PATH, RELIC_DIR };

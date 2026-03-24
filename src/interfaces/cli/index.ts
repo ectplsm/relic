@@ -11,6 +11,7 @@ import { registerShellCommands } from "./commands/shell.js";
 import { registerInjectCommand } from "./commands/inject.js";
 import { registerExtractCommand } from "./commands/extract.js";
 import { registerSyncCommand } from "./commands/sync.js";
+import { registerConfigCommand } from "./commands/config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, "../../../package.json"), "utf-8"));
@@ -29,5 +30,6 @@ registerShellCommands(program);
 registerInjectCommand(program);
 registerExtractCommand(program);
 registerSyncCommand(program);
+registerConfigCommand(program);
 
 program.parse();

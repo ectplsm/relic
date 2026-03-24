@@ -1,5 +1,18 @@
+import { createInterface } from "node:readline";
 import type { Command } from "commander";
 import { Init } from "../../../core/usecases/init.js";
+import { setDefaultEngram, loadConfig } from "../../../shared/config.js";
+import { LocalEngramRepository } from "../../../adapters/local/index.js";
+
+function ask(question: string): Promise<string> {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
 
 export function registerInitCommand(program: Command): void {
   program
@@ -13,6 +26,34 @@ export function registerInitCommand(program: Command): void {
         console.log("Initialized RELIC:");
         console.log(`  Config:  ${result.configPath}`);
         console.log(`  Engrams: ${result.engramsPath}`);
+        console.log();
+
+        // 利用可能なEngramを表示してデフォルト選択を促す
+        const cfg = await loadConfig();
+        const repo = new LocalEngramRepository(cfg.engramsPath);
+        const engrams = await repo.list();
+
+        if (engrams.length > 0) {
+          console.log("Available Engrams:");
+          for (const e of engrams) {
+            console.log(`  ${e.id.padEnd(12)} ${e.name}`);
+          }
+          console.log();
+
+          const answer = await ask("Set a default Engram? (Enter ID, or press Enter to skip): ");
+
+          if (answer) {
+            const match = engrams.find((e) => e.id === answer);
+            if (match) {
+              await setDefaultEngram(match.id);
+              console.log(`Default Engram set to: ${match.name} (${match.id})`);
+            } else {
+              console.log(`Unknown Engram "${answer}". Skipped. Run: relic config set-default <id>`);
+            }
+          } else {
+            console.log(`Skipped. Run: relic config set-default <id> to configure later.`);
+          }
+        }
       } else {
         console.log("Already initialized.");
         console.log(`  Config:  ${result.configPath}`);
