@@ -35,14 +35,24 @@ export function registerInitCommand(program: Command): void {
 
         if (engrams.length > 0) {
           console.log("Available Engrams:");
+          console.log(`  ${"ID".padEnd(12)} Name`);
           for (const e of engrams) {
             console.log(`  ${e.id.padEnd(12)} ${e.name}`);
           }
           console.log();
 
-          const answer = await ask("Set a default Engram? (Enter ID, or press Enter to skip): ");
+          const johnny = engrams.find((e) => e.id === "johnny");
+          const prompt = johnny
+            ? `Set a default Engram? (press Enter for "${johnny.id}", or enter ID, or "n" to skip): `
+            : "Set a default Engram? (Enter ID, or press Enter to skip): ";
+          const answer = await ask(prompt);
 
-          if (answer) {
+          if (answer === "" && johnny) {
+            await setDefaultEngram(johnny.id);
+            console.log(`Default Engram set to: ${johnny.name} (${johnny.id})`);
+          } else if (answer === "" || answer.toLowerCase() === "n") {
+            console.log(`Skipped. Run: relic config default-engram <id> to configure later.`);
+          } else {
             const match = engrams.find((e) => e.id === answer);
             if (match) {
               await setDefaultEngram(match.id);
@@ -50,8 +60,6 @@ export function registerInitCommand(program: Command): void {
             } else {
               console.log(`Unknown Engram "${answer}". Skipped. Run: relic config default-engram <id>`);
             }
-          } else {
-            console.log(`Skipped. Run: relic config default-engram <id> to configure later.`);
           }
         }
       } else {
