@@ -29,7 +29,7 @@ src/
 
 ## 技術スタック
 
-- **ランタイム**: Bun
+- **ランタイム**: Node.js (>=18)
 - **言語**: TypeScript (strict mode)
 - **バリデーション**: Zod
 - **CLI**: Commander
