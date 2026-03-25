@@ -13,17 +13,20 @@
 
 **Inject AI personas into any coding CLI.**
 
-Relic manages AI personalities (called **Engrams**) and injects them into coding assistants like Claude Code, Gemini CLI, Codex CLI, and GitHub Copilot CLI. One persona, any shell.
+Relic manages AI personalities (called **Engrams**) and injects them into coding assistants like Claude Code, Gemini CLI, Codex CLI. One persona, any shell.
 
 ```bash
 # Initialize Relic (creates ~/.relic/ with sample Engrams)
 relic init
 
-# Launch Claude Code as Johnny Silverhand
-relic claude --engram johnny
+# Set a default Engram once
+relic config default-engram johnny
 
-# Launch Gemini CLI as Motoko Kusanagi
-relic gemini --engram motoko
+# Launch Claude Code as Johnny — no flags needed
+relic claude
+
+# Or specify explicitly
+relic claude --engram motoko
 ```
 
 ## How It Works
@@ -41,7 +44,7 @@ relic gemini --engram motoko
    SOUL.md                                  claude
    IDENTITY.md                              gemini
    MEMORY.md                                codex
-   ...                                      copilot
+   ...
 ```
 
 1. **Engram** — A persona defined as a set of Markdown files (OpenClaw-compatible)
@@ -61,6 +64,7 @@ npm install -g @ectplsm/relic
 ```bash
 # Initialize — creates config and sample Engrams
 relic init
+# → Prompts: "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):"
 
 # List available Engrams
 relic list
@@ -68,11 +72,42 @@ relic list
 # Preview an Engram's composed prompt
 relic show motoko
 
-# Launch a Shell with an Engram injected
+# Launch a Shell (uses default Engram if --engram is omitted)
+relic claude
+relic gemini
+relic codex
+
+# Or specify explicitly
 relic claude --engram motoko
 relic gemini --engram johnny
-relic codex --engram motoko
-relic copilot --engram johnny
+```
+
+## Sample Engrams
+
+`relic init` seeds two ready-to-use Engrams:
+
+### Johnny Silverhand (`johnny`)
+
+> *"Wake the fuck up, Samurai. We have a city to burn."*
+
+A rebel rockerboy burned into a Relic chip. Raw, unapologetic, anti-authority. Pushes you toward action, mocks rotten systems, never sugarcoats. Sharp when the stakes are real.
+
+Best for: rapid prototyping sessions, decision-making under pressure, when you need someone to challenge your assumptions hard.
+
+```bash
+relic claude --engram johnny
+```
+
+### Motoko Kusanagi (`motoko`)
+
+> *"The Net is vast and infinite."*
+
+A legendary cyberwarfare specialist. Concise, decisive, architect-level thinking. Cuts straight to the essence — no decoration, no hand-holding. Dry wit surfaces when least expected.
+
+Best for: system design, code review, debugging sessions, when precision matters more than speed.
+
+```bash
+relic claude --engram motoko
 ```
 
 ## Supported Shells
@@ -82,10 +117,9 @@ relic copilot --engram johnny
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt` (direct override) |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `--prompt-interactive` (first message) |
 | [Codex CLI](https://github.com/openai/codex) | `relic codex` | `PROMPT` argument (first message) |
-| [Copilot CLI](https://github.com/github/copilot-cli) | `relic copilot` | `--interactive` (first message) |
 
 All shell commands support:
-- `--engram <id>` (required) — Engram to inject
+- `--engram <id>` — Engram to inject (optional if `defaultEngram` is configured)
 - `--path <dir>` — Override Engrams directory
 - `--cwd <dir>` — Working directory for the Shell (default: current directory)
 
@@ -93,7 +127,7 @@ Extra arguments are passed through to the underlying CLI.
 
 ## MCP Server
 
-Relic runs as an [MCP](https://modelcontextprotocol.io/) server that pairs with CLI injection. The CLI injects the Engram persona at session start; the MCP server gives the running Construct tools for memory management.
+Relic operates as an [MCP](https://modelcontextprotocol.io/) server paired with CLI injection to handle memory management. The CLI injects the Engram persona at session start, while the MCP server provides the running Construct with the means to read and write memory data.
 
 ```
 relic claude --engram johnny   →  injects persona into Claude Code
@@ -108,6 +142,22 @@ relic-mcp (MCP server)        →  gives the Construct relic_inbox_write + relic
 claude mcp add --scope user relic -- relic-mcp
 ```
 
+To suppress confirmation dialogs and auto-approve Relic tools across all projects, add the following to `~/.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Edit(~/.relic/engrams/**)",
+      "mcp__relic__relic_inbox_write",
+      "mcp__relic__relic_inbox_search"
+    ]
+  }
+}
+```
+
+> **Note:** The "Always allow" option in the confirmation dialog saves to `~/.claude.json` (project-scoped cache) — it does **not** persist globally. For global auto-approval, `~/.claude/settings.json` is the right place.
+
 #### Gemini CLI
 
 Add to `~/.gemini/settings.json`:
@@ -116,11 +166,14 @@ Add to `~/.gemini/settings.json`:
 {
   "mcpServers": {
     "relic": {
-      "command": "relic-mcp"
+      "command": "relic-mcp",
+      "trust": true
     }
   }
 }
 ```
+
+> **Note:** `trust: true` is required to suppress confirmation dialogs for Relic tools. Without it, dialogs will appear on every call even if you select "Allow for all future sessions" — this is a known bug in Gemini CLI where the tool name is saved in the wrong format (`mcp_relic_relic_inbox_write` instead of `relic_inbox_write`), causing the saved rule to never match.
 
 #### Codex CLI
 
@@ -139,7 +192,7 @@ The Construct calls these tools automatically during the session — `relic_inbo
 
 ## OpenClaw Integration
 
-Relic is fully compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces. **Agent name = Engram ID** — this simple convention eliminates the need for mapping configuration.
+Relic Engrams are fully compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces. They are mapped using a simple convention: Agent Name = Engram ID.
 
 ### Inject — Push an Engram into OpenClaw
 
@@ -156,7 +209,7 @@ relic inject --engram motoko --to main
 # → agents/main/agent/ receives motoko's persona
 # → extract will create Engram "main", not "motoko"
 
-# Specify a custom OpenClaw directory
+# Override OpenClaw directory (or configure once with: relic config openclaw-path)
 relic inject --engram motoko --openclaw /path/to/.openclaw
 ```
 
@@ -174,7 +227,7 @@ relic extract --engram analyst --name "Data Analyst"
 # Overwrite persona files (memory is always merged)
 relic extract --engram motoko --force
 
-# Extract from a custom OpenClaw directory
+# Override OpenClaw directory (or configure once with: relic config openclaw-path)
 relic extract --engram motoko --openclaw /path/to/.openclaw
 ```
 
@@ -211,10 +264,10 @@ While running:
 
 ## Memory Management
 
-Relic uses a **2-day sliding window** for memory entries, matching OpenClaw's approach:
+Relic uses a **sliding window** for memory entries (default: 2 days), matching OpenClaw's approach:
 
 - `MEMORY.md` — Always included in the prompt (curated long-term memory)
-- `memory/today.md` + `memory/yesterday.md` — Always included
+- `memory/today.md` + `memory/yesterday.md` — Always included (configurable window)
 - Older entries — **Not included in the prompt**, but searchable via MCP
 
 This keeps prompts compact while preserving full history. The Construct can search past context on demand using the MCP tool:
@@ -224,6 +277,40 @@ relic_inbox_search  → keyword search across the full raw inbox (all sessions)
 ```
 
 The inbox (`inbox.md`) is the primary data store — it contains all session logs and memory entries as written. The `memory/*.md` files are a distilled subset (only `[memory]`-tagged entries), used for cloud sync with Mikoshi.
+
+## Configuration
+
+Config lives at `~/.relic/config.json` and is managed via `relic config`:
+
+```bash
+# Show current configuration
+relic config show
+
+# Default Engram — used when --engram is omitted
+relic config default-engram           # get
+relic config default-engram johnny    # set
+
+# OpenClaw directory — used by inject/extract/sync when --openclaw is omitted
+relic config openclaw-path            # get
+relic config openclaw-path ~/.openclaw  # set
+
+# Memory window — number of recent memory entries included in the prompt
+relic config memory-window            # get (default: 2)
+relic config memory-window 5          # set
+```
+
+`config.json` example:
+
+```json
+{
+  "engramsPath": "/home/user/.relic/engrams",
+  "defaultEngram": "johnny",
+  "openclawPath": "/home/user/.openclaw",
+  "memoryWindowSize": 2
+}
+```
+
+CLI flags always take precedence over config values.
 
 ## Creating Your Own Engram
 
@@ -270,17 +357,10 @@ Never over-engineer. Always ask "what's the simplest thing that works?"
 - Creed: "Boring technology wins."
 ```
 
-## Configuration
-
-Config lives at `~/.relic/config.json`:
-
-```json
-{
-  "engramsPath": "/home/user/.relic/engrams"
-}
+After creating the directory, set it as default:
+```bash
+relic config default-engram your-persona
 ```
-
-Priority: CLI `--path` flag > config file > default (`~/.relic/engrams`)
 
 ## Architecture
 
@@ -294,7 +374,7 @@ src/
 │   └── ports/       # Abstract interfaces (EngramRepository, ShellLauncher)
 ├── adapters/        # Concrete implementations
 │   ├── local/       # Local filesystem EngramRepository
-│   └── shells/      # Claude, Gemini, Codex, Copilot launchers
+│   └── shells/      # Claude, Gemini, Codex launchers
 ├── interfaces/      # Entry points
 │   ├── cli/         # Commander-based CLI
 │   └── mcp/         # MCP Server (stdio transport)
@@ -314,10 +394,11 @@ src/
 ## Roadmap
 
 - [x] CLI with init, list, show commands
-- [x] Shell injection: Claude Code, Gemini CLI, Codex CLI, Copilot CLI
+- [x] Shell injection: Claude Code, Gemini CLI, Codex CLI
 - [x] MCP Server interface
 - [x] OpenClaw integration (inject / extract)
 - [x] `relic sync` — watch OpenClaw agents and auto-sync (`--cloud` for Mikoshi: planned)
+- [x] `relic config` — manage default Engram, OpenClaw path, memory window
 - [ ] `relic login` — authenticate with Mikoshi (OAuth Device Flow)
 - [ ] `relic push` / `relic pull` — sync Engrams with Mikoshi
 - [ ] Mikoshi cloud backend (`mikoshi.ectplsm.com`)

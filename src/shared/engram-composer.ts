@@ -8,6 +8,8 @@ export interface ComposeOptions {
   meta?: EngramMeta;
   /** 現在日付の上書き（テスト用、デフォルト: today） */
   currentDate?: string;
+  /** システムプロンプトに含める直近メモリエントリ数（デフォルト: 2） */
+  memoryWindowSize?: number;
 }
 
 /**
@@ -43,7 +45,8 @@ export function composeEngram(
     sections.push(wrapSection("MEMORY", files.memory));
   }
   if (files.memoryEntries) {
-    const recentEntries = getRecentMemoryEntries(files.memoryEntries, 2);
+    const windowSize = options?.memoryWindowSize ?? 2;
+    const recentEntries = getRecentMemoryEntries(files.memoryEntries, windowSize);
     for (const [date, content] of recentEntries) {
       sections.push(wrapSection(`MEMORY: ${date}`, content));
     }

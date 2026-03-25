@@ -3,7 +3,7 @@ import type { Command } from "commander";
 import type { ShellLauncher } from "../../../core/ports/shell-launcher.js";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import { Summon, EngramNotFoundError } from "../../../core/usecases/index.js";
-import { resolveEngramsPath } from "../../../shared/config.js";
+import { resolveEngramsPath, resolveDefaultEngram, resolveMemoryWindowSize } from "../../../shared/config.js";
 import { ClaudeShell } from "../../../adapters/shells/claude-shell.js";
 import { GeminiShell } from "../../../adapters/shells/gemini-shell.js";
 import { CodexShell } from "../../../adapters/shells/codex-shell.js";
@@ -38,11 +38,11 @@ export function registerShellCommands(program: Command): void {
     program
       .command(shell.name)
       .description(shell.description)
-      .requiredOption("-e, --engram <id>", "Engram ID to summon")
+      .option("-e, --engram <id>", "Engram ID to summon (default: config.defaultEngram)")
       .option("-p, --path <dir>", "Override engrams directory path")
       .option("--cwd <dir>", "Working directory for the Shell (default: current directory)")
       .allowUnknownOption(true)
-      .action(async (opts: { engram: string; path?: string; cwd?: string }, cmd: Command) => {
+      .action(async (opts: { engram?: string; path?: string; cwd?: string }, cmd: Command) => {
         const launcher = shell.create();
 
         // Shell利用可能チェック
@@ -52,13 +52,22 @@ export function registerShellCommands(program: Command): void {
           process.exit(1);
         }
 
+        // Engram ID解決: --engram > config.defaultEngram > エラー
+        const engramId = await resolveDefaultEngram(opts.engram);
+        if (!engramId) {
+          console.error("Error: No Engram specified. Use --engram <id> or set a default with: relic config default-engram <id>");
+          process.exit(1);
+        }
+
         // Engram取得 & プロンプト生成
         const engramsPath = await resolveEngramsPath(opts.path);
         const repo = new LocalEngramRepository(engramsPath);
         const summon = new Summon(repo);
 
+        const memoryWindowSize = await resolveMemoryWindowSize();
+
         try {
-          const result = await summon.execute(opts.engram);
+          const result = await summon.execute(engramId, { memoryWindowSize });
 
           console.log(`Summoning "${result.engramName}" into ${launcher.name}...`);
           console.log();
