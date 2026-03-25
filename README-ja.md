@@ -115,7 +115,7 @@ relic claude --engram motoko
 | Shell | コマンド | 注入方式 |
 |-------|---------|---------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt`（直接上書き） |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `--prompt-interactive`（初回メッセージ） |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `GEMINI_SYSTEM_MD`（システムプロンプト） |
 | [Codex CLI](https://github.com/openai/codex) | `relic codex` | `-c developer_instructions`（developerロールメッセージ） |
 
 すべてのShellコマンドで以下のオプションが使えます:
@@ -174,6 +174,13 @@ claude mcp add --scope user relic -- relic-mcp
 ```
 
 > **注意:** 確認ダイアログを抑制するには `trust: true` が必要です。設定しないと、ダイアログで「今後のセッションでも許可」を選択しても毎回確認が表示されます。これは Gemini CLI の既知のバグで、ツール名が誤ったフォーマット（`relic_inbox_write` ではなく `mcp_relic_relic_inbox_write`）で保存されるため、保存したルールが永遠にマッチしません。
+
+`relic gemini` の**初回起動時**に以下の2つのセットアップが自動で行われます:
+
+1. **AfterAgent hook の登録** — `~/.relic/hooks/gemini-after-agent.js` を生成し、`~/.gemini/settings.json` に登録。LLMループを介さずに各ターンのログを自動保存します
+2. **デフォルトシステムプロンプトのキャッシュ** — `GEMINI_WRITE_SYSTEM_MD` で Gemini CLI の組み込みプロンプトを `~/.relic/gemini-system-default.md` にキャプチャします
+
+以降の起動では、キャッシュしたデフォルトプロンプトに Engram を追記したものを `GEMINI_SYSTEM_MD` で毎回注入します。
 
 #### Codex CLI
 

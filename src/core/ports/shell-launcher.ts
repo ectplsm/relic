@@ -16,6 +16,8 @@ export interface ShellLaunchOptions {
   extraArgs?: string[];
   /** Shell の作業ディレクトリ */
   cwd?: string;
+  /** 注入するEngram ID（Shell固有のセットアップに使用） */
+  engramId?: string;
 }
 
 /**

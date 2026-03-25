@@ -115,7 +115,7 @@ relic claude --engram motoko
 | Shell | Command | Injection Method |
 |-------|---------|-----------------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt` (direct override) |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `--prompt-interactive` (first message) |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `GEMINI_SYSTEM_MD` (system prompt) |
 | [Codex CLI](https://github.com/openai/codex) | `relic codex` | `-c developer_instructions` (developer-role message) |
 
 All shell commands support:
@@ -174,6 +174,13 @@ Add to `~/.gemini/settings.json`:
 ```
 
 > **Note:** `trust: true` is required to suppress confirmation dialogs for Relic tools. Without it, dialogs will appear on every call even if you select "Allow for all future sessions" — this is a known bug in Gemini CLI where the tool name is saved in the wrong format (`mcp_relic_relic_inbox_write` instead of `relic_inbox_write`), causing the saved rule to never match.
+
+On the **first run** of `relic gemini`, two one-time setups happen automatically:
+
+1. **AfterAgent hook** — registers `~/.relic/hooks/gemini-after-agent.js` in `~/.gemini/settings.json` to log each conversation turn without going through the LLM
+2. **Default system prompt cache** — captures Gemini CLI's built-in system prompt to `~/.relic/gemini-system-default.md` via `GEMINI_WRITE_SYSTEM_MD`
+
+The Engram persona is then appended to the cached default prompt and injected via `GEMINI_SYSTEM_MD` on every launch.
 
 #### Codex CLI
 
