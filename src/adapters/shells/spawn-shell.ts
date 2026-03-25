@@ -13,12 +13,14 @@ import { tmpdir } from "node:os";
 export function spawnShell(
   command: string,
   args: string[],
-  cwd?: string
+  cwd?: string,
+  env?: Record<string, string>
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       stdio: "inherit",
       cwd,
+      env: env ? { ...process.env, ...env } : undefined,
     });
 
     child.on("error", (err) => {
