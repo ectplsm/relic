@@ -116,7 +116,7 @@ relic claude --engram motoko
 |-------|---------|---------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt`（直接上書き） |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `--prompt-interactive`（初回メッセージ） |
-| [Codex CLI](https://github.com/openai/codex) | `relic codex` | `PROMPT` 引数（初回メッセージ） |
+| [Codex CLI](https://github.com/openai/codex) | `relic codex` | `-c developer_instructions`（developerロールメッセージ） |
 
 すべてのShellコマンドで以下のオプションが使えます:
 - `--engram <id>` — 注入するEngram（`defaultEngram` が設定済みなら省略可）

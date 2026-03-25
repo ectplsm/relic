@@ -8,14 +8,14 @@ const execAsync = promisify(exec);
 
 /**
  * Codex CLI アダプター
- * [PROMPT] 引数でEngramを初回メッセージとして注入し、
- * インタラクティブモードを継続する。
+ * `-c developer_instructions=<prompt>` でEngramをdeveloperロールとして注入する。
+ * user-messageよりシステムプロンプトに近い強度で注入できる。
  *
  * inboxへの書き込みはMCPサーバー(relic_inbox_write)が担う。
  */
 export class CodexShell implements ShellLauncher {
   readonly name = "Codex CLI";
-  readonly injectionMode: InjectionMode = "user-message";
+  readonly injectionMode: InjectionMode = "developer-message";
 
   constructor(private readonly command = "codex") {}
 
@@ -30,8 +30,8 @@ export class CodexShell implements ShellLauncher {
 
   async launch(prompt: string, options?: ShellLaunchOptions): Promise<void> {
     const args: string[] = [
+      "-c", `developer_instructions=${JSON.stringify(wrapWithOverride(prompt))}`,
       ...(options?.extraArgs ?? []),
-      wrapWithOverride(prompt),
     ];
     await spawnShell(this.command, args, options?.cwd);
   }
