@@ -127,11 +127,15 @@ Extra arguments are passed through to the underlying CLI.
 
 ## MCP Server
 
-Relic operates as an [MCP](https://modelcontextprotocol.io/) server paired with CLI injection to handle memory management. The CLI injects the Engram persona at session start, while the MCP server provides the running Construct with the means to read and write memory data.
+Relic operates as an [MCP](https://modelcontextprotocol.io/) server paired with CLI injection to handle memory management. The CLI injects the Engram persona at session start, while the MCP server provides the running Construct with the means to persist memory data.
+
+Session logs (every conversation turn) are written automatically by a **background hook** — without going through the LLM. The Construct only calls `relic_inbox_write` directly when it wants to persist a `[memory]` entry for an important fact.
 
 ```
 relic claude --engram johnny   →  injects persona into Claude Code
 relic-mcp (MCP server)        →  gives the Construct relic_inbox_write + relic_inbox_search
+Stop hook (Claude Code)        →  logs each turn directly to inbox, bypassing the LLM
+AfterAgent hook (Gemini CLI)   →  logs each turn directly to inbox, bypassing the LLM
 ```
 
 ### Setup
@@ -157,6 +161,10 @@ To suppress confirmation dialogs and auto-approve Relic tools across all project
 ```
 
 > **Note:** The "Always allow" option in the confirmation dialog saves to `~/.claude.json` (project-scoped cache) — it does **not** persist globally. For global auto-approval, `~/.claude/settings.json` is the right place.
+
+On the **first run** of `relic claude`, a one-time setup happens automatically:
+
+- **Stop hook** — registers `~/.relic/hooks/claude-stop.js` in `~/.claude/settings.json` to log each conversation turn directly to the inbox, without going through the LLM
 
 #### Gemini CLI
 
@@ -192,10 +200,10 @@ codex mcp add relic -- relic-mcp
 
 | Tool | Description |
 |------|-------------|
-| `relic_inbox_write` | Write session logs and `[memory]` entries to the Engram's inbox |
+| `relic_inbox_write` | Write `[memory]` entries to the Engram's inbox for long-term persistence |
 | `relic_inbox_search` | Search the Engram's raw inbox by keyword (newest-first) |
 
-The Construct calls these tools automatically during the session — `relic_inbox_write` after every response, `relic_inbox_search` when it needs to recall past context.
+Session logs are written automatically by background hooks (Stop hook for Claude Code, AfterAgent hook for Gemini CLI) — the Construct does not need to call `relic_inbox_write` for regular logs. It only calls `relic_inbox_write` directly when it wants to persist a `[memory]` entry for an important fact.
 
 ## OpenClaw Integration
 

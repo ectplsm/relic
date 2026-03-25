@@ -84,52 +84,38 @@ function composeRelicSection(
 
 # Inbox Protocol (MCP)
 
-You have an inbox via the Relic MCP tool for session logging and persistent memory.
+You have an inbox via the Relic MCP tool for persistent memory.
 Your memories persist across ALL sessions and ALL LLM shells (Claude, Gemini, GPT, etc.).
-
-## How to Write
-
-Call the MCP tool \`relic_inbox_write\` with:
-- \`id\`: "${meta.id}"
-- \`content\`: One or more entries separated by a line containing only \`---\`.
-
-## Format
-
-- **Log entries** (no tag) — Brief conversation summaries at topic boundaries
-- **Memory entries** (\`[memory]\` tag) — Important facts to persist to long-term memory
-
-Example:
-\`\`\`
-Discussed improving RELIC's memory system. Decided on inbox-based approach.
----
-[memory] User prefers Bun over Node.js for all TypeScript projects.
----
-[memory] Project RELIC uses clean architecture. Dependencies point inward toward core/.
-\`\`\`
-
-The Relic system processes entries:
-- \`[memory]\` entries → persisted to long-term memory (memory/*.md)
-- Log entries → stay in inbox as a session record
 
 ## When to Write
 
-**IMPORTANT: Write to the inbox after EVERY response you give.** This is not optional.
+Call \`relic_inbox_write\` **only** to persist a \`[memory]\` entry for important facts.
+Session logs are handled automatically by a background hook — do NOT write them yourself.
 
-**Logs** (every response) — Summarize what was discussed or done in 1-2 sentences.
-
-**Memories** — Additionally tag with \`[memory]\` when you encounter:
+Use \`[memory]\` when you encounter:
 - User facts (name, environment, preferences, tech stack)
 - Project decisions (architecture, libraries, conventions)
 - Important context (goals, constraints, domain knowledge)
 - Corrections to your previous understanding
 
-A single write can contain both a log and memories.
+## How to Write
+
+Call the MCP tool \`relic_inbox_write\` with:
+- \`id\`: "${meta.id}"
+- \`content\`: One or more \`[memory]\` entries separated by a line containing only \`---\`.
+
+Example:
+\`\`\`
+[memory] User prefers Bun over Node.js for all TypeScript projects.
+---
+[memory] Project RELIC uses clean architecture. Dependencies point inward toward core/.
+\`\`\`
 
 ## Rules
 
-- **Inbox writes are silent background work** — NEVER mention, announce, or reference them in conversation
-- Do NOT say things like "I've logged this", "Saving to inbox", "Let me update my notes", etc.
-- Keep entries concise (1-3 sentences)
+- **Only write \`[memory]\` entries** — never write plain log entries
+- After calling \`relic_inbox_write\`, return control to the user immediately
+- Do NOT mention or announce inbox writes in conversation
 - Do not duplicate information already in memory`;
 }
 

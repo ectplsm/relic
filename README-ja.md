@@ -127,11 +127,15 @@ relic claude --engram motoko
 
 ## MCPサーバー
 
-Relicの[MCP](https://modelcontextprotocol.io/)サーバーはCLI注入とペアで使い、記憶の管理の責務を担います。CLIがセッション開始時にEngramのペルソナを注入し、MCPサーバーが実行中のConstructに記憶情報の書き込みと読み出しの手段を提供します。
+Relicの[MCP](https://modelcontextprotocol.io/)サーバーはCLI注入とペアで使い、記憶の永続化を担います。CLIがセッション開始時にEngramのペルソナを注入し、MCPサーバーが実行中のConstructにメモリの書き込みと読み出しの手段を提供します。
+
+会話ログ（各ターン）は**バックグラウンドhook**によって自動的にinboxに書き込まれます — LLMを介しません。Constructが `relic_inbox_write` を直接呼び出すのは、重要な事実を `[memory]` エントリとして永続化したいときだけです。
 
 ```
 relic claude --engram johnny   →  Claude Codeにペルソナを注入
 relic-mcp（MCPサーバー）       →  Constructに relic_inbox_write + relic_inbox_search を提供
+Stop hook（Claude Code）        →  各ターンのログをLLMを介さずinboxに直接書き込む
+AfterAgent hook（Gemini CLI）   →  各ターンのログをLLMを介さずinboxに直接書き込む
 ```
 
 ### セットアップ
@@ -157,6 +161,10 @@ claude mcp add --scope user relic -- relic-mcp
 ```
 
 > **注意:** 確認ダイアログの「常に許可」は `~/.claude.json`（プロジェクトスコープのキャッシュ）に保存されます — グローバルには効きません。全プロジェクトで自動承認したい場合は `~/.claude/settings.json` が正しい設定場所です。
+
+`relic claude` の**初回起動時**に以下のセットアップが自動で行われます:
+
+- **Stop hookの登録** — `~/.relic/hooks/claude-stop.js` を生成し、`~/.claude/settings.json` に登録。LLMループを介さずに各ターンのログを自動保存します
 
 #### Gemini CLI
 
@@ -192,10 +200,10 @@ codex mcp add relic -- relic-mcp
 
 | ツール | 説明 |
 |-------|------|
-| `relic_inbox_write` | セッションログと `[memory]` エントリをEngramのinboxに書き込む |
+| `relic_inbox_write` | `[memory]` エントリをEngramのinboxに書き込み、長期記憶として永続化する |
 | `relic_inbox_search` | Engramの生inboxをキーワード検索する（新しい順） |
 
-ConstructはセッションをとおしてこれらのToolを自動的に呼び出します — `relic_inbox_write` は毎レスポンス後、`relic_inbox_search` は過去の文脈を想起したいときに。
+会話ログはバックグラウンドhook（Claude CodeのStop hook、Gemini CLIのAfterAgent hook）が自動的に書き込むため、Constructが通常のログのために `relic_inbox_write` を呼ぶ必要はありません。重要な事実を `[memory]` エントリとして永続化したいときだけ直接呼び出します。
 
 ## OpenClaw連携
 
