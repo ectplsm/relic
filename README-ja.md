@@ -166,11 +166,14 @@ claude mcp add --scope user relic -- relic-mcp
 {
   "mcpServers": {
     "relic": {
-      "command": "relic-mcp"
+      "command": "relic-mcp",
+      "trust": true
     }
   }
 }
 ```
+
+> **注意:** 確認ダイアログを抑制するには `trust: true` が必要です。設定しないと、ダイアログで「今後のセッションでも許可」を選択しても毎回確認が表示されます。これは Gemini CLI の既知のバグで、ツール名が誤ったフォーマット（`relic_inbox_write` ではなく `mcp_relic_relic_inbox_write`）で保存されるため、保存したルールが永遠にマッチしません。
 
 #### Codex CLI
 

@@ -166,11 +166,14 @@ Add to `~/.gemini/settings.json`:
 {
   "mcpServers": {
     "relic": {
-      "command": "relic-mcp"
+      "command": "relic-mcp",
+      "trust": true
     }
   }
 }
 ```
+
+> **Note:** `trust: true` is required to suppress confirmation dialogs for Relic tools. Without it, dialogs will appear on every call even if you select "Allow for all future sessions" — this is a known bug in Gemini CLI where the tool name is saved in the wrong format (`mcp_relic_relic_inbox_write` instead of `relic_inbox_write`), causing the saved rule to never match.
 
 #### Codex CLI
 
