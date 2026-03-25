@@ -127,7 +127,7 @@ Extra arguments are passed through to the underlying CLI.
 
 ## MCP Server
 
-Relic runs as an [MCP](https://modelcontextprotocol.io/) server that pairs with CLI injection. The CLI injects the Engram persona at session start; the MCP server gives the running Construct tools for memory management.
+Relic operates as an [MCP](https://modelcontextprotocol.io/) server paired with CLI injection to handle memory management. The CLI injects the Engram persona at session start, while the MCP server provides the running Construct with the means to read and write memory data.
 
 ```
 relic claude --engram johnny   →  injects persona into Claude Code
@@ -148,6 +148,7 @@ To suppress confirmation dialogs and auto-approve Relic tools across all project
 {
   "permissions": {
     "allow": [
+      "Edit(~/.relic/engrams/**)",
       "mcp__relic__relic_inbox_write",
       "mcp__relic__relic_inbox_search"
     ]
@@ -191,7 +192,7 @@ The Construct calls these tools automatically during the session — `relic_inbo
 
 ## OpenClaw Integration
 
-Relic is fully compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces. **Agent name = Engram ID** — this simple convention eliminates the need for mapping configuration.
+Relic Engrams are fully compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces. They are mapped using a simple convention: Agent Name = Engram ID.
 
 ### Inject — Push an Engram into OpenClaw
 
