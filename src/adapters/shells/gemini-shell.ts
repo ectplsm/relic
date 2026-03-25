@@ -84,11 +84,6 @@ function composeSystemPrompt(defaultPrompt: string, engramPrompt: string): strin
   const engramSection = [
     RELIC_ENGRAM_START,
     engramPrompt,
-    "",
-    "## Relic Inbox Behavior (Gemini CLI)",
-    "Conversation logging is handled automatically by a background hook. Do NOT call relic_inbox_write for regular session logs.",
-    "Only call relic_inbox_write when you want to persist a [memory] entry for important facts.",
-    "After calling relic_inbox_write, do NOT generate any additional response or tool calls. Return control to the user immediately.",
     RELIC_ENGRAM_END,
   ].join("\n");
 

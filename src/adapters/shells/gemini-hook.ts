@@ -17,9 +17,9 @@ const HOOK_SCRIPT = `#!/usr/bin/env node
 // Relic AfterAgent hook for Gemini CLI
 // Automatically logs each conversation turn to the Engram inbox.
 // Receives AfterAgentInput JSON on stdin.
-import { appendFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
-import { homedir } from "node:os";
+const { appendFileSync, existsSync } = require("node:fs");
+const { join } = require("node:path");
+const { homedir } = require("node:os");
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
