@@ -13,7 +13,7 @@
 
 **Inject AI personas into any coding CLI.**
 
-Relic manages AI personalities (called **Engrams**) and injects them into coding assistants like Claude Code, Gemini CLI, Codex CLI, and GitHub Copilot CLI. One persona, any shell.
+Relic manages AI personalities (called **Engrams**) and injects them into coding assistants like Claude Code, Gemini CLI, Codex CLI. One persona, any shell.
 
 ```bash
 # Initialize Relic (creates ~/.relic/ with sample Engrams)
@@ -44,7 +44,7 @@ relic claude --engram motoko
    SOUL.md                                  claude
    IDENTITY.md                              gemini
    MEMORY.md                                codex
-   ...                                      copilot
+   ...
 ```
 
 1. **Engram** — A persona defined as a set of Markdown files (OpenClaw-compatible)
@@ -117,7 +117,6 @@ relic claude --engram motoko
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt` (direct override) |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `--prompt-interactive` (first message) |
 | [Codex CLI](https://github.com/openai/codex) | `relic codex` | `PROMPT` argument (first message) |
-| [Copilot CLI](https://github.com/github/copilot-cli) | `relic copilot` | `--interactive` (first message) |
 
 All shell commands support:
 - `--engram <id>` — Engram to inject (optional if `defaultEngram` is configured)
@@ -374,7 +373,7 @@ src/
 │   └── ports/       # Abstract interfaces (EngramRepository, ShellLauncher)
 ├── adapters/        # Concrete implementations
 │   ├── local/       # Local filesystem EngramRepository
-│   └── shells/      # Claude, Gemini, Codex, Copilot launchers
+│   └── shells/      # Claude, Gemini, Codex launchers
 ├── interfaces/      # Entry points
 │   ├── cli/         # Commander-based CLI
 │   └── mcp/         # MCP Server (stdio transport)
@@ -394,7 +393,7 @@ src/
 ## Roadmap
 
 - [x] CLI with init, list, show commands
-- [x] Shell injection: Claude Code, Gemini CLI, Codex CLI, Copilot CLI
+- [x] Shell injection: Claude Code, Gemini CLI, Codex CLI
 - [x] MCP Server interface
 - [x] OpenClaw integration (inject / extract)
 - [x] `relic sync` — watch OpenClaw agents and auto-sync (`--cloud` for Mikoshi: planned)

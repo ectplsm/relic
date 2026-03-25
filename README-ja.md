@@ -13,7 +13,7 @@
 
 **AIペルソナを、あらゆるコーディングCLIに注入する。**
 
-Relicは、AIの人格（**Engram**）を管理し、Claude Code・Gemini CLI・Codex CLI・GitHub Copilot CLIといったコーディングアシスタントに注入します。ひとつの人格を、あらゆるShellへ。
+Relicは、AIの人格（**Engram**）を管理し、Claude Code・Gemini CLI・Codex CLIといったコーディングアシスタントに注入します。ひとつの人格を、あらゆるShellへ。
 
 ```bash
 # Relicを初期化（~/.relic/ にサンプルEngramを生成）
@@ -44,7 +44,7 @@ relic claude --engram motoko
    SOUL.md                                  claude
    IDENTITY.md                              gemini
    MEMORY.md                                codex
-   ...                                      copilot
+   ...
 ```
 
 1. **Engram** — Markdownファイル群で定義されたペルソナ（OpenClaw互換）
@@ -117,7 +117,6 @@ relic claude --engram motoko
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt`（直接上書き） |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `--prompt-interactive`（初回メッセージ） |
 | [Codex CLI](https://github.com/openai/codex) | `relic codex` | `PROMPT` 引数（初回メッセージ） |
-| [Copilot CLI](https://github.com/github/copilot-cli) | `relic copilot` | `--interactive`（初回メッセージ） |
 
 すべてのShellコマンドで以下のオプションが使えます:
 - `--engram <id>` — 注入するEngram（`defaultEngram` が設定済みなら省略可）
@@ -374,7 +373,7 @@ src/
 │   └── ports/       # 抽象インターフェース（EngramRepository, ShellLauncher）
 ├── adapters/        # 具象実装
 │   ├── local/       # ローカルファイルシステム EngramRepository
-│   └── shells/      # Claude, Gemini, Codex, Copilot ランチャー
+│   └── shells/      # Claude, Gemini, Codex ランチャー
 ├── interfaces/      # エントリポイント
 │   ├── cli/         # Commander ベースの CLI
 │   └── mcp/         # MCPサーバー（stdio transport）
@@ -394,7 +393,7 @@ src/
 ## ロードマップ
 
 - [x] CLI（init, list, show コマンド）
-- [x] Shell注入: Claude Code, Gemini CLI, Codex CLI, Copilot CLI
+- [x] Shell注入: Claude Code, Gemini CLI, Codex CLI
 - [x] MCPサーバーインターフェース
 - [x] OpenClaw連携（inject / extract）
 - [x] `relic sync` — OpenClawのagentsを監視して自動同期（`--cloud` でMikoshi連携: 計画中）
