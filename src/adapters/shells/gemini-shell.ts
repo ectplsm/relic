@@ -13,6 +13,7 @@ import { join } from "node:path";
 import { homedir, tmpdir } from "node:os";
 import type { ShellLauncher, InjectionMode, ShellLaunchOptions } from "../../core/ports/shell-launcher.js";
 import { spawnShell, writeTempPrompt } from "./spawn-shell.js";
+import { setupGeminiHook, isGeminiHookSetup } from "./gemini-hook.js";
 
 const execAsync = promisify(exec);
 
@@ -80,7 +81,16 @@ async function captureDefaultSystemPrompt(command: string): Promise<string> {
  * <!-- RELIC ENGRAM START/END --> デリミタで管理する。
  */
 function composeSystemPrompt(defaultPrompt: string, engramPrompt: string): string {
-  const engramSection = `${RELIC_ENGRAM_START}\n${engramPrompt}\n${RELIC_ENGRAM_END}`;
+  const engramSection = [
+    RELIC_ENGRAM_START,
+    engramPrompt,
+    "",
+    "## Relic Inbox Behavior (Gemini CLI)",
+    "Conversation logging is handled automatically by a background hook. Do NOT call relic_inbox_write for regular session logs.",
+    "Only call relic_inbox_write when you want to persist a [memory] entry for important facts.",
+    "After calling relic_inbox_write, do NOT generate any additional response or tool calls. Return control to the user immediately.",
+    RELIC_ENGRAM_END,
+  ].join("\n");
 
   if (defaultPrompt.includes(RELIC_ENGRAM_START)) {
     // 既存のRELICセクションを置換
@@ -117,7 +127,15 @@ export class GeminiShell implements ShellLauncher {
   }
 
   async launch(prompt: string, options?: ShellLaunchOptions): Promise<void> {
-    // 1. デフォルトシステムプロンプトをキャッシュから読む、なければキャプチャ
+    // 1. AfterAgent フックを初回のみセットアップ
+    if (!isGeminiHookSetup()) {
+      console.log("Setting up Gemini AfterAgent hook (first run only)...");
+      setupGeminiHook();
+      console.log("Hook registered to ~/.gemini/settings.json");
+      console.log();
+    }
+
+    // 2. デフォルトシステムプロンプトをキャッシュから読む、なければキャプチャ
     let defaultPrompt: string;
     if (existsSync(GEMINI_DEFAULT_CACHE)) {
       defaultPrompt = readFileSync(GEMINI_DEFAULT_CACHE, "utf-8");
@@ -128,17 +146,19 @@ export class GeminiShell implements ShellLauncher {
       console.log();
     }
 
-    // 2. デフォルト + Engram を合成してtempファイルに書き出す
+    // 3. デフォルト + Engram を合成してtempファイルに書き出す
     const combined = composeSystemPrompt(defaultPrompt, prompt);
     const tmp = writeTempPrompt(combined);
 
     try {
-      // 3. GEMINI_SYSTEM_MD でシステムプロンプトを差し替えて起動
+      // 4. GEMINI_SYSTEM_MD + RELIC_ENGRAM_ID でシステムプロンプトを差し替えて起動
+      const env: Record<string, string> = { GEMINI_SYSTEM_MD: tmp.path };
+      if (options?.engramId) env.RELIC_ENGRAM_ID = options.engramId;
       await spawnShell(
         this.command,
         [...(options?.extraArgs ?? [])],
         options?.cwd,
-        { GEMINI_SYSTEM_MD: tmp.path }
+        env
       );
     } finally {
       tmp.cleanup();

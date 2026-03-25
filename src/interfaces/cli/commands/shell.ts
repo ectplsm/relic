@@ -75,7 +75,7 @@ export function registerShellCommands(program: Command): void {
           // --engram, --path, --cwd 以外の引数をShellにパススルー
           const extraArgs = cmd.args;
           const cwd = opts.cwd ? resolve(opts.cwd) : process.cwd();
-          await launcher.launch(result.prompt, { extraArgs, cwd });
+          await launcher.launch(result.prompt, { extraArgs, cwd, engramId });
         } catch (err) {
           if (err instanceof EngramNotFoundError) {
             console.error(`Error: ${err.message}`);
