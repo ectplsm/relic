@@ -2,10 +2,11 @@
  * 注入モード — ShellがEngramをどの経路で受け取るか
  *
  * - system-prompt: システムプロンプトとして直接上書き（最も強力）
+ * - developer-message: developerロールのメッセージとして注入（system-promptに準じる強度）
  * - instruction-file: 設定ファイルに書き出して補助指示として注入
  * - user-message: 初回ユーザーメッセージとして送り込む
  */
-export type InjectionMode = "system-prompt" | "instruction-file" | "user-message";
+export type InjectionMode = "system-prompt" | "developer-message" | "instruction-file" | "user-message";
 
 /**
  * Shell起動オプション

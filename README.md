@@ -116,7 +116,7 @@ relic claude --engram motoko
 |-------|---------|-----------------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt` (direct override) |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `--prompt-interactive` (first message) |
-| [Codex CLI](https://github.com/openai/codex) | `relic codex` | `PROMPT` argument (first message) |
+| [Codex CLI](https://github.com/openai/codex) | `relic codex` | `-c developer_instructions` (developer-role message) |
 
 All shell commands support:
 - `--engram <id>` — Engram to inject (optional if `defaultEngram` is configured)
