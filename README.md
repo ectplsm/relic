@@ -37,18 +37,21 @@ relic claude --engram motoko
 |  (backend)   |     |  (injector)  |     |   (AI CLI)   |
 +--------------+     +--------------+     +--------------+
        ^                   |                    |
-       |            sync full Engram            v
-       |                   |               +---------+
-       |             compose & inject      |Construct|
-       |                   |               | (live)  |
+       |            sync full Engram            |
+       |                   |                    |
+       |             compose & inject           |
+       |                   v                    v
        |              +---------+          +---------+
-       +--------------| Engram  |<--------- claude / codex / gemini
-                      |(persona)|               |
-                      +---------+               | hooks append logs
-                      SOUL.md                   v
-                      IDENTITY.md         +-----------+
-                      MEMORY.md           |archive.md |
-                      memory/*.md         | raw logs  |
+       +--------------| Engram  |--------->|Construct|
+                      |(persona)|          | (live)  |
+                      +---------+          +---------+
+                      SOUL.md              claude / codex / gemini
+                      IDENTITY.md               |
+                      MEMORY.md                 | hooks append logs
+                      memory/*.md               v
+                                          +-----------+
+                                          |archive.md |
+                                          | raw logs  |
                                           +-----------+
                                                 |
                            MCP recall           | user-triggered
