@@ -74,12 +74,12 @@ relic show motoko
 
 # Shellを起動（--engram 省略時はデフォルトEngramを使用）
 relic claude
-relic gemini
 relic codex
+relic gemini
 
 # 明示的に指定することも可能
 relic claude --engram motoko
-relic gemini --engram johnny
+relic codex --engram johnny
 ```
 
 ## サンプルEngram
@@ -125,18 +125,60 @@ relic claude --engram motoko
 
 追加の引数はそのまま元のCLIに渡されます。
 
+## 対話ログの記録
+
+各Shellの `hook` 機構を使い、プロンプトと応答のたびに会話内容を `archive.md` に追記します。
+
+各Shellでは以下のhookを使用します:
+
+| Shell | Hook |
+|-------|---------|
+| [Claude Code](https://github.com/anthropics/claude-code) | Stop hook |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | AfterAgent hook |
+| [Codex CLI](https://github.com/openai/codex) | Stop hook |
+
+#### Claude Code
+
+`relic claude` の**初回起動時**に、以下のワンタイムセットアップが自動で行われます:
+
+- **Stop hook** — `~/.relic/hooks/claude-stop.js` を `~/.claude/settings.json` に登録し、LLMを介さずに各会話ターンをarchiveへ直接記録します
+
+#### Codex CLI
+
+`relic codex` の**初回起動時**に、以下のワンタイムセットアップが自動で行われます:
+
+- **Stop hook** — `~/.relic/hooks/codex-stop.js` を `~/.codex/hooks.json` に登録し、LLMを介さずに各会話ターンをarchiveへ直接記録します
+
+> **注意:** Codexのhookは実験的機能フラグ `features.codex_hooks=true` が必要です。`relic codex` は毎回の起動時に `-c features.codex_hooks=true` を自動付与します。不安定機能の警告が邪魔なら、`~/.codex/config.toml` に以下を追加してください:
+>
+> ```toml
+> # トップレベルに記載すること（[section] の下ではない）
+> suppress_unstable_features_warning = true
+> ```
+
+#### Gemini CLI
+
+`relic gemini` の**初回起動時**に、以下2つのワンタイムセットアップが自動で行われます:
+
+1. **AfterAgent hook** — `~/.relic/hooks/gemini-after-agent.js` を `~/.gemini/settings.json` に登録し、LLMを介さずに各会話ターンを記録します
+2. **デフォルトシステムプロンプトのキャッシュ** — `GEMINI_WRITE_SYSTEM_MD` を使って Gemini CLI の組み込みシステムプロンプトを `~/.relic/gemini-system-default.md` に保存します
+
+以後の起動では、キャッシュ済みのデフォルトプロンプトにEngramペルソナを追記したものを、毎回 `GEMINI_SYSTEM_MD` で注入します。
+
 ## MCPサーバー
 
 Relicの[MCP](https://modelcontextprotocol.io/)サーバーはCLI注入とペアで使い、記憶の呼び覚ましを担います。
-会話ログとメモリエントリは**バックグラウンドhook**によって自動的にarchiveに書き込まれ、これにはLLMを介しません。一方、記憶の呼び覚ましはMCPサーバーを使って行います。
+会話ログとメモリエントリは**バックグラウンドhook**によって自動的にarchiveに書き込まれ、これにはLLMを介しません。一方、記憶の蒸留と呼び覚ましはMCPサーバーを使って行います。
 
-```
-relic xxx --engram johnny   →  AI CLIにペルソナを注入
-relic-mcp（MCPサーバー）       →  Constructに記憶を提供
-Stop hook（Claude Code）        →  各ターンのログをLLMを介さずarchiveに直接書き込む
-AfterAgent hook（Gemini CLI）   →  各ターンのログをLLMを介さずarchiveに直接書き込む
-Stop hook（Codex CLI）          →  各ターンのログをLLMを介さずarchiveに直接書き込む
-```
+### 利用可能なツール
+
+| ツール | 説明 |
+|-------|------|
+| `relic_archive_search` | Engramの生archiveをキーワード検索する（新しい順） |
+| `relic_archive_pending` | 前回の蒸留以降の未蒸留archiveエントリを取得する（最大30件） |
+| `relic_memory_write` | 蒸留した記憶を `memory/*.md` に書き込み、任意で `MEMORY.md` にも追記し、archiveカーソルを進める |
+
+会話ログはバックグラウンドhook（Claude CodeとCodex CLIのStop hook、Gemini CLIのAfterAgent hook）によって自動でarchiveに書き込まれます。記憶の蒸留はユーザーがトリガーします。Constructに「記憶を整理して」と指示すれば、未蒸留エントリを取得し、重要な知見を蒸留して `memory/*.md` に書き出します。特に重要な事実は `long_term` パラメータで `MEMORY.md` に昇格でき、これは全セッションで読み込まれる長期記憶になります。
 
 ### セットアップ
 
@@ -163,10 +205,6 @@ claude mcp add --scope user relic -- relic-mcp
 
 > **注意:** 確認ダイアログの「常に許可」は `~/.claude.json`（プロジェクトスコープのキャッシュ）に保存されます — グローバルには効きません。全プロジェクトで自動承認したい場合は `~/.claude/settings.json` が正しい設定場所です。
 
-`relic claude` の**初回起動時**に以下のセットアップが自動で行われます:
-
-- **Stop hookの登録** — `~/.relic/hooks/claude-stop.js` を生成し、`~/.claude/settings.json` に登録。LLMループを介さずに各ターンのログを自動保存します
-
 #### Gemini CLI
 
 `~/.gemini/settings.json` に追加:
@@ -184,39 +222,11 @@ claude mcp add --scope user relic -- relic-mcp
 
 > **注意:** 確認ダイアログを抑制するには `trust: true` が必要です。設定しないと、ダイアログで「今後のセッションでも許可」を選択しても毎回確認が表示されます。これは Gemini CLI の既知のバグで、ツール名が誤ったフォーマットで保存されるため、保存したルールが永遠にマッチしません。
 
-`relic gemini` の**初回起動時**に以下の2つのセットアップが自動で行われます:
-
-1. **AfterAgent hook の登録** — `~/.relic/hooks/gemini-after-agent.js` を生成し、`~/.gemini/settings.json` に登録。LLMループを介さずに各ターンのログを自動保存します
-2. **デフォルトシステムプロンプトのキャッシュ** — `GEMINI_WRITE_SYSTEM_MD` で Gemini CLI の組み込みプロンプトを `~/.relic/gemini-system-default.md` にキャプチャします
-
-以降の起動では、キャッシュしたデフォルトプロンプトに Engram を追記したものを `GEMINI_SYSTEM_MD` で毎回注入します。
-
 #### Codex CLI
 
 ```bash
 codex mcp add relic -- relic-mcp
 ```
-
-`relic codex` の**初回起動時**に以下のセットアップが自動で行われます:
-
-- **Stop hookの登録** — `~/.relic/hooks/codex-stop.js` を生成し、`~/.codex/hooks.json` に登録。LLMループを介さずに各ターンのログを自動保存します
-
-> **注意:** Codexのhooksは実験的機能フラグ `features.codex_hooks=true` が必要です。`relic codex` は毎回の起動時に `-c features.codex_hooks=true` を自動付与します。不安定機能の警告が気になる場合は、`~/.codex/config.toml` に以下を追加してください:
->
-> ```toml
-> # トップレベルに記載すること（[section] の下ではない）
-> suppress_unstable_features_warning = true
-> ```
-
-### 利用可能なツール
-
-| ツール | 説明 |
-|-------|------|
-| `relic_archive_search` | Engramの生archiveをキーワード検索する（新しい順） |
-| `relic_archive_pending` | 前回の蒸留以降の未蒸留archiveエントリを取得する（最大30件） |
-| `relic_memory_write` | 蒸留した記憶を `memory/*.md` に書き込み、任意で `MEMORY.md` にも追記し、archiveカーソルを進める |
-
-会話ログはバックグラウンドhook（Claude Code・Codex CLIのStop hook、Gemini CLIのAfterAgent hook）が自動的にarchiveに書き込みます。記憶の蒸留はユーザーのトリガーで実行します — Constructに「記憶を整理して」と指示すると、未蒸留エントリを取得し、重要な知見を蒸留して `memory/*.md` に書き出します。特に重要な事実は `long_term` パラメータで `MEMORY.md`（全セッションで読み込まれる長期記憶）に昇格できます。
 
 ## OpenClaw連携
 
@@ -295,7 +305,7 @@ relic sync --openclaw /path/to/.openclaw
 Relicは OpenClaw と同じ **スライディングウィンドウ** でメモリエントリを管理します（デフォルト: 2日分）:
 
 - `MEMORY.md` — 常にプロンプトに含まれる（キュレーション済み長期記憶）
-- `memory/今日.md` + `memory/昨日.md` — 常にプロンプトに含まれる（ウィンドウ幅は変更可能）
+- `memory/today.md` + `memory/yesterday.md` — 常にプロンプトに含まれる（ウィンドウ幅は変更可能）
 - それ以前のエントリ — **プロンプトには含まれない**が、MCPで検索可能
 
 プロンプトをコンパクトに保ちつつ、全履歴を保持します。ConstructはMCPツールで過去の文脈の想起と蒸留を行えます:
