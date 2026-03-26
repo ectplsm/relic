@@ -22,9 +22,9 @@ export interface ComposeOptions {
  * 4. AGENTS.md     — エージェント設定
  * 5. MEMORY.md     — 記憶インデックス（常にロード）
  * 6. memory/*.md   — 直近2日分のみロード（OpenClaw互換スライディングウィンドウ）
- * 7. RELIC        — システム情報（Engram ID、日付、Inbox Protocol）
+ * 7. RELIC        — システム情報（Engram ID、日付、Archive Protocol）
  *
- * inboxへの書き込みはバックグラウンドhookが自動で行う。
+ * archiveへの書き込みはバックグラウンドhookが自動で行う。
  */
 export function composeEngram(
   files: EngramFiles,
@@ -67,7 +67,7 @@ export function composeEngram(
 /**
  * RELICシステムセクションを生成する。
  *
- * inboxへの書き込みはバックグラウンドhookが自動で行う。
+ * archiveへの書き込みはバックグラウンドhookが自動で行う。
  * [memory] タグ付きエントリだけが memory/*.md に永続化される。
  */
 function composeRelicSection(
@@ -82,13 +82,13 @@ function composeRelicSection(
 - engramName: ${meta.name}
 - currentDate: ${today}
 
-# Inbox Protocol (MCP)
+# Archive Protocol (MCP)
 
-You have an inbox via the Relic MCP tool for persistent memory.
+You have an archive via the Relic MCP tool for persistent memory.
 Your memories persist across ALL sessions and ALL LLM shells (Claude, Gemini, GPT, etc.).
 
 Session logs and memory entries are written automatically by a background hook — do NOT write them yourself.
-To recall past context, use \`relic_inbox_search\` to search your inbox by keyword.`;
+To recall past context, use \`relic_archive_search\` to search your archive by keyword.`;
 }
 
 /**

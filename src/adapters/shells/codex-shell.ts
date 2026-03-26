@@ -13,7 +13,7 @@ const execAsync = promisify(exec);
  * user-messageよりシステムプロンプトに近い強度で注入できる。
  *
  * 初回起動時に Stop フックを ~/.codex/hooks.json に登録し、
- * 各ターン終了後に会話ログを Engram inbox に自動記録する。
+ * 各ターン終了後に会話ログを Engram archive に自動記録する。
  */
 export class CodexShell implements ShellLauncher {
   readonly name = "Codex CLI";

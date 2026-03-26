@@ -6,16 +6,16 @@ const RELIC_DIR = join(homedir(), ".relic");
 const HOOKS_DIR = join(RELIC_DIR, "hooks");
 export const GEMINI_HOOK_SCRIPT_PATH = join(HOOKS_DIR, "gemini-after-agent.js");
 const GEMINI_SETTINGS_PATH = join(homedir(), ".gemini", "settings.json");
-const RELIC_HOOK_NAME = "relic-inbox-log";
+const RELIC_HOOK_NAME = "relic-archive-log";
 
 /**
  * AfterAgent hook スクリプトの内容。
- * Gemini CLI の各ターン終了後に発火し、会話ログを Engram inbox に追記する。
+ * Gemini CLI の各ターン終了後に発火し、会話ログを Engram archive に追記する。
  * RELIC_ENGRAM_ID 環境変数で対象 Engram ID を受け取る。
  */
 const HOOK_SCRIPT = `#!/usr/bin/env node
 // Relic AfterAgent hook for Gemini CLI
-// Automatically logs each conversation turn to the Engram inbox.
+// Automatically logs each conversation turn to the Engram archive.
 // Receives AfterAgentInput JSON on stdin.
 const { appendFileSync, existsSync } = require("node:fs");
 const { join } = require("node:path");
@@ -34,13 +34,13 @@ process.stdin.on("end", () => {
     const response = (input.prompt_response || "").trim();
     if (!prompt && !response) process.exit(0);
 
-    const inboxPath = join(homedir(), ".relic", "engrams", engramId, "inbox.md");
-    if (!existsSync(inboxPath)) process.exit(0);
+    const archivePath = join(homedir(), ".relic", "engrams", engramId, "archive.md");
+    if (!existsSync(archivePath)) process.exit(0);
 
     const date = new Date().toISOString().split("T")[0];
     const summary = prompt.slice(0, 80).replace(/\\n/g, " ");
     const entry = \`\\n---\\n\${date} | \${summary}\\n\${response}\\n\`;
-    appendFileSync(inboxPath, entry, "utf-8");
+    appendFileSync(archivePath, entry, "utf-8");
   } catch {
     // silently ignore
   }
