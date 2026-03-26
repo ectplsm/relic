@@ -4,9 +4,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import {
-  InboxSearch,
-  InboxSearchEngramNotFoundError,
-} from "../../core/usecases/inbox-search.js";
+  ArchiveSearch,
+  ArchiveSearchEngramNotFoundError,
+} from "../../core/usecases/archive-search.js";
 import { resolveEngramsPath } from "../../shared/config.js";
 
 const server = new McpServer({
@@ -14,10 +14,10 @@ const server = new McpServer({
   version: "0.1.0",
 });
 
-// --- relic_inbox_search ---
+// --- relic_archive_search ---
 server.tool(
-  "relic_inbox_search",
-  "Search an Engram's inbox for entries matching a keyword. Searches raw session logs — more complete than memory/*.md.",
+  "relic_archive_search",
+  "Search an Engram's archive for entries matching a keyword. Searches raw session logs — more complete than memory/*.md.",
   {
     id: z.string().describe("Engram ID"),
     query: z.string().describe("Search keyword"),
@@ -32,10 +32,10 @@ server.tool(
   },
   async (args) => {
     const engramsPath = await resolveEngramsPath(args.path);
-    const inboxSearch = new InboxSearch(engramsPath);
+    const archiveSearch = new ArchiveSearch(engramsPath);
 
     try {
-      const results = await inboxSearch.search(
+      const results = await archiveSearch.search(
         args.id,
         args.query,
         args.limit ?? 5
@@ -46,7 +46,7 @@ server.tool(
           content: [
             {
               type: "text" as const,
-              text: `No inbox entries matching "${args.query}" found.`,
+              text: `No archive entries matching "${args.query}" found.`,
             },
           ],
         };
@@ -60,7 +60,7 @@ server.tool(
         content: [{ type: "text" as const, text }],
       };
     } catch (err) {
-      if (err instanceof InboxSearchEngramNotFoundError) {
+      if (err instanceof ArchiveSearchEngramNotFoundError) {
         return {
           content: [{ type: "text" as const, text: err.message }],
           isError: true,
