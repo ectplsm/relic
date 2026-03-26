@@ -202,6 +202,7 @@ On the **first run** of `relic codex`, a one-time setup happens automatically:
 > **Note:** Codex hooks require the experimental feature flag `features.codex_hooks=true`. This is automatically enabled by `relic codex` on every launch via `-c features.codex_hooks=true`. If the unstable feature warning is distracting, add the following to `~/.codex/config.toml`:
 >
 > ```toml
+> # Must be at the top level (not under any [section])
 > suppress_unstable_features_warning = true
 > ```
 

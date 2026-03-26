@@ -202,6 +202,7 @@ codex mcp add relic -- relic-mcp
 > **注意:** Codexのhooksは実験的機能フラグ `features.codex_hooks=true` が必要です。`relic codex` は毎回の起動時に `-c features.codex_hooks=true` を自動付与します。不安定機能の警告が気になる場合は、`~/.codex/config.toml` に以下を追加してください:
 >
 > ```toml
+> # トップレベルに記載すること（[section] の下ではない）
 > suppress_unstable_features_warning = true
 > ```
 
