@@ -84,11 +84,27 @@ function composeRelicSection(
 
 # Archive Protocol (MCP)
 
-You have an archive via the Relic MCP tool for persistent memory.
+You have an archive via the Relic MCP tools for persistent memory.
 Your memories persist across ALL sessions and ALL LLM shells (Claude, Gemini, GPT, etc.).
 
-Session logs and memory entries are written automatically by a background hook — do NOT write them yourself.
-To recall past context, use \`relic_archive_search\` to search your archive by keyword.`;
+Session logs are written automatically by a background hook — do NOT write them yourself.
+
+## Recall
+
+To recall past context, use \`relic_archive_search\` to search your archive by keyword.
+
+## Distillation
+
+When the user asks you to organize or distill memories:
+1. Call \`relic_archive_pending\` **once** to get un-distilled session entries (up to 30)
+2. Review and distill them into key facts, decisions, and insights
+3. Call \`relic_memory_write\` to save the distilled memory (this also advances the cursor)
+4. If \`remaining > 0\`, inform the user how many entries are still pending — do NOT fetch more automatically
+
+**Important:**
+- Write distilled memories in the **same language the user is using** in the current conversation
+- Do NOT loop or repeat the distillation process — one round per user request
+- Distilled memories are loaded into your prompt on future sessions`;
 }
 
 /**
