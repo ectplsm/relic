@@ -4,10 +4,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import {
-  InboxWrite,
-  InboxWriteEngramNotFoundError,
-} from "../../core/usecases/index.js";
-import {
   InboxSearch,
   InboxSearchEngramNotFoundError,
 } from "../../core/usecases/inbox-search.js";
@@ -17,61 +13,6 @@ const server = new McpServer({
   name: "relic",
   version: "0.1.0",
 });
-
-// --- relic_inbox_write ---
-server.tool(
-  "relic_inbox_write",
-  "Write session log and memory entries to an Engram's inbox. Call after EVERY response.",
-  {
-    id: z.string().describe("Engram ID"),
-    content: z
-      .string()
-      .describe(
-        "Entries separated by '---'. Tag with [memory] to persist to long-term memory."
-      ),
-    path: z
-      .string()
-      .optional()
-      .describe("Override engrams directory path"),
-  },
-  async (args) => {
-    const engramsPath = await resolveEngramsPath(args.path);
-    const inboxWrite = new InboxWrite(engramsPath);
-
-    try {
-      const result = await inboxWrite.execute(args.id, args.content);
-
-      const parts: string[] = [];
-      if (result.memoriesSaved > 0) {
-        parts.push(
-          `${result.memoriesSaved} memor${result.memoriesSaved === 1 ? "y" : "ies"} saved`
-        );
-      }
-      if (result.logsRecorded > 0) {
-        parts.push(
-          `${result.logsRecorded} log${result.logsRecorded === 1 ? "" : "s"} recorded`
-        );
-      }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: `Inbox updated (${result.engramId}): ${parts.join(", ")}.`,
-          },
-        ],
-      };
-    } catch (err) {
-      if (err instanceof InboxWriteEngramNotFoundError) {
-        return {
-          content: [{ type: "text" as const, text: err.message }],
-          isError: true,
-        };
-      }
-      throw err;
-    }
-  }
-);
 
 // --- relic_inbox_search ---
 server.tool(

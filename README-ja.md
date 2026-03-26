@@ -127,13 +127,12 @@ relic claude --engram motoko
 
 ## MCPサーバー
 
-Relicの[MCP](https://modelcontextprotocol.io/)サーバーはCLI注入とペアで使い、記憶の永続化を担います。CLIがセッション開始時にEngramのペルソナを注入し、MCPサーバーが実行中のConstructにメモリの書き込みと読み出しの手段を提供します。
-
-会話ログ（各ターン）は**バックグラウンドhook**によって自動的にinboxに書き込まれます — LLMを介しません。Constructが `relic_inbox_write` を直接呼び出すのは、重要な事実を `[memory]` エントリとして永続化したいときだけです。
+Relicの[MCP](https://modelcontextprotocol.io/)サーバーはCLI注入とペアで使い、記憶の呼び覚ましを担います。
+会話ログとメモリエントリは**バックグラウンドhook**によって自動的にinboxに書き込まれ、これにはLLMを介しません。一方、記憶の呼び覚ましはMCPサーバーを使って行います。
 
 ```
-relic claude --engram johnny   →  Claude Codeにペルソナを注入
-relic-mcp（MCPサーバー）       →  Constructに relic_inbox_write + relic_inbox_search を提供
+relic xxx --engram johnny   →  AI CLIにペルソナを注入
+relic-mcp（MCPサーバー）       →  Constructに記憶を提供
 Stop hook（Claude Code）        →  各ターンのログをLLMを介さずinboxに直接書き込む
 AfterAgent hook（Gemini CLI）   →  各ターンのログをLLMを介さずinboxに直接書き込む
 Stop hook（Codex CLI）          →  各ターンのログをLLMを介さずinboxに直接書き込む
@@ -154,7 +153,6 @@ claude mcp add --scope user relic -- relic-mcp
   "permissions": {
     "allow": [
       "Edit(~/.relic/engrams/**)",
-      "mcp__relic__relic_inbox_write",
       "mcp__relic__relic_inbox_search"
     ]
   }
@@ -182,7 +180,7 @@ claude mcp add --scope user relic -- relic-mcp
 }
 ```
 
-> **注意:** 確認ダイアログを抑制するには `trust: true` が必要です。設定しないと、ダイアログで「今後のセッションでも許可」を選択しても毎回確認が表示されます。これは Gemini CLI の既知のバグで、ツール名が誤ったフォーマット（`relic_inbox_write` ではなく `mcp_relic_relic_inbox_write`）で保存されるため、保存したルールが永遠にマッチしません。
+> **注意:** 確認ダイアログを抑制するには `trust: true` が必要です。設定しないと、ダイアログで「今後のセッションでも許可」を選択しても毎回確認が表示されます。これは Gemini CLI の既知のバグで、ツール名が誤ったフォーマットで保存されるため、保存したルールが永遠にマッチしません。
 
 `relic gemini` の**初回起動時**に以下の2つのセットアップが自動で行われます:
 
@@ -204,6 +202,7 @@ codex mcp add relic -- relic-mcp
 > **注意:** Codexのhooksは実験的機能フラグ `features.codex_hooks=true` が必要です。`relic codex` は毎回の起動時に `-c features.codex_hooks=true` を自動付与します。不安定機能の警告が気になる場合は、`~/.codex/config.toml` に以下を追加してください:
 >
 > ```toml
+> # トップレベルに記載すること（[section] の下ではない）
 > suppress_unstable_features_warning = true
 > ```
 
@@ -211,10 +210,9 @@ codex mcp add relic -- relic-mcp
 
 | ツール | 説明 |
 |-------|------|
-| `relic_inbox_write` | `[memory]` エントリをEngramのinboxに書き込み、長期記憶として永続化する |
 | `relic_inbox_search` | Engramの生inboxをキーワード検索する（新しい順） |
 
-会話ログはバックグラウンドhook（Claude Code・Codex CLIのStop hook、Gemini CLIのAfterAgent hook）が自動的に書き込むため、Constructが通常のログのために `relic_inbox_write` を呼ぶ必要はありません。重要な事実を `[memory]` エントリとして永続化したいときだけ直接呼び出します。
+会話ログとメモリエントリはバックグラウンドhook（Claude Code・Codex CLIのStop hook、Gemini CLIのAfterAgent hook）が自動的に書き込むため、Constructが書き込みツールを呼ぶ必要はありません。
 
 ## OpenClaw連携
 

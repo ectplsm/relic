@@ -21,11 +21,6 @@ export {
   type MemoryWriteResult,
 } from "./memory-write.js";
 export {
-  InboxWrite,
-  InboxWriteEngramNotFoundError,
-  type InboxWriteResult,
-} from "./inbox-write.js";
-export {
   Sync,
   SyncAgentsDirNotFoundError,
   type SyncTarget,

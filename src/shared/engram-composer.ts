@@ -24,7 +24,7 @@ export interface ComposeOptions {
  * 6. memory/*.md   — 直近2日分のみロード（OpenClaw互換スライディングウィンドウ）
  * 7. RELIC        — システム情報（Engram ID、日付、Inbox Protocol）
  *
- * inboxへの書き込みはMCPサーバー(relic_inbox_write)が担う。
+ * inboxへの書き込みはバックグラウンドhookが自動で行う。
  */
 export function composeEngram(
   files: EngramFiles,
@@ -67,7 +67,7 @@ export function composeEngram(
 /**
  * RELICシステムセクションを生成する。
  *
- * inboxへの書き込みはMCPサーバー(relic_inbox_write)経由で行う。
+ * inboxへの書き込みはバックグラウンドhookが自動で行う。
  * [memory] タグ付きエントリだけが memory/*.md に永続化される。
  */
 function composeRelicSection(
@@ -87,36 +87,8 @@ function composeRelicSection(
 You have an inbox via the Relic MCP tool for persistent memory.
 Your memories persist across ALL sessions and ALL LLM shells (Claude, Gemini, GPT, etc.).
 
-## When to Write
-
-Call \`relic_inbox_write\` **only** to persist a \`[memory]\` entry for important facts.
-Session logs are handled automatically by a background hook — do NOT write them yourself.
-
-Use \`[memory]\` when you encounter:
-- User facts (name, environment, preferences, tech stack)
-- Project decisions (architecture, libraries, conventions)
-- Important context (goals, constraints, domain knowledge)
-- Corrections to your previous understanding
-
-## How to Write
-
-Call the MCP tool \`relic_inbox_write\` with:
-- \`id\`: "${meta.id}"
-- \`content\`: One or more \`[memory]\` entries separated by a line containing only \`---\`.
-
-Example:
-\`\`\`
-[memory] User prefers Bun over Node.js for all TypeScript projects.
----
-[memory] Project RELIC uses clean architecture. Dependencies point inward toward core/.
-\`\`\`
-
-## Rules
-
-- **Only write \`[memory]\` entries** — never write plain log entries
-- After calling \`relic_inbox_write\`, return control to the user immediately
-- Do NOT mention or announce inbox writes in conversation
-- Do not duplicate information already in memory`;
+Session logs and memory entries are written automatically by a background hook — do NOT write them yourself.
+To recall past context, use \`relic_inbox_search\` to search your inbox by keyword.`;
 }
 
 /**
