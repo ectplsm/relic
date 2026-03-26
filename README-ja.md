@@ -68,7 +68,7 @@ relic claude --engram motoko
                                              MEMORY.md
 ```
 
-1. **Engram** — Markdownファイル群で定義されたペルソナ（OpenClaw互換）
+1. **Engram** — Markdownファイル群で定義されたペルソナ（OpenClawの`workspace`互換）
 2. **Relic** — Engramを読み取り、プロンプトに合成してShellに注入する
 3. **Shell** — AI コーディングCLI。ペルソナがセッションを支配する
 4. **Construct** — EngramがShellにロードされた実行中プロセス。ペルソナの実体

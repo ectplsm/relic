@@ -68,7 +68,7 @@ relic claude --engram motoko
                                              MEMORY.md
 ```
 
-1. **Engram** — A persona defined as a set of Markdown files (OpenClaw-compatible)
+1. **Engram** — A persona defined as a set of Markdown files (OpenClaw workspace-compatible)
 2. **Relic** — Reads the Engram, composes it into a prompt, and injects it into...
 3. **Shell** — Any AI coding CLI. The persona takes over the session.
 4. **Construct** — A live process where an Engram is loaded into a Shell. The running instance of a persona.
