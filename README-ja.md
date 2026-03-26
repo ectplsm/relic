@@ -15,19 +15,68 @@
 
 Relicは、AIの人格（**Engram**）を管理し、Claude Code・Gemini CLI・Codex CLIといったコーディングアシスタントに注入します。ひとつの人格を、あらゆるShellへ。
 
+## インストール
+
 ```bash
-# Relicを初期化（~/.relic/ にサンプルEngramを生成）
+npm install -g @ectplsm/relic
+```
+
+## クイックスタート
+
+```bash
+# 初期化 — 設定ファイルとサンプルEngramを生成
 relic init
+# → "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):" と表示される
 
-# デフォルトEngramを一度だけ設定
-relic config default-engram johnny
+# 利用可能なEngramを一覧表示
+relic list
 
-# フラグなしでJohnnyとしてClaude Codeを起動
+# Engramの合成プロンプトをプレビュー
+relic show motoko
+
+# Shellを起動（--engram 省略時はデフォルトEngramを使用）
 relic claude
+relic codex
+relic gemini
 
 # 明示的に指定することも可能
 relic claude --engram motoko
+relic codex --engram johnny
 ```
+
+## `relic init` で作られるもの
+
+`relic init` を実行すると `~/.relic/` が作成され、`config.json` と、`~/.relic/engrams/` 配下に2つのサンプルEngramが生成されます。
+
+```
+~/.relic/
+├── config.json
+└── engrams/
+    ├── johnny/
+    │   ├── engram.json
+    │   ├── SOUL.md
+    │   ├── IDENTITY.md
+    │   └── memory/
+    │       └── YYYY-MM-DD.md
+    └── motoko/
+        ├── engram.json
+        ├── SOUL.md
+        ├── IDENTITY.md
+        └── memory/
+            └── YYYY-MM-DD.md
+```
+
+- `config.json` には `engramsPath`、`defaultEngram`、`openclawPath`、`memoryWindowSize` などのRelic全体設定が入ります。
+- `engrams/<id>/` は1つのEngramの `workspace` です。ペルソナファイルとそのEngram用の記憶はここに保存されます。
+- `engram.json` には Engram のID、表示名、説明、タグなどのメタデータが入ります。
+- `SOUL.md` と `IDENTITY.md` がペルソナ本体を定義します。
+- `memory/YYYY-MM-DD.md` には日付ごとの蒸留済み記憶が入ります。`relic init` では各サンプルEngramに初期メモリが1件入ります。
+
+Engramを使い続けると、同じ `workspace` に追加のファイルが増えていきます。
+
+- `archive.md` は shell hook が生の会話ログを書き始めた時点で `engrams/<id>/` 配下に作られます。
+- `MEMORY.md` は、とくに重要な蒸留結果を長期記憶へ昇格したときに作成または追記されます。
+- `~/.relic/hooks/` と `~/.relic/gemini-system-default.md` は `relic init` ではなく、各Shellの初回起動時に hook 登録や Gemini のプロンプトキャッシュが必要になった時点で作られます。
 
 ## 仕組み
 
@@ -75,35 +124,6 @@ relic claude --engram motoko
 5. **archive.md** — 各ターンの生ログ。バックグラウンドhookが自動で追記する
 6. **Memory Distillation** — ユーザーの指示をきっかけに、ConstructがMCP経由で未蒸留archiveを想起し、重要な知見を `memory/*.md` に蒸留する。特に重要な事実は `MEMORY.md` に昇格できる
 7. **Mikoshi** — ペルソナファイルと蒸留済み記憶を含む、Engram全体を保管・同期するクラウドバックエンド（計画中）
-
-## インストール
-
-```bash
-npm install -g @ectplsm/relic
-```
-
-## クイックスタート
-
-```bash
-# 初期化 — 設定ファイルとサンプルEngramを生成
-relic init
-# → "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):" と表示される
-
-# 利用可能なEngramを一覧表示
-relic list
-
-# Engramの合成プロンプトをプレビュー
-relic show motoko
-
-# Shellを起動（--engram 省略時はデフォルトEngramを使用）
-relic claude
-relic codex
-relic gemini
-
-# 明示的に指定することも可能
-relic claude --engram motoko
-relic codex --engram johnny
-```
 
 ## サンプルEngram
 

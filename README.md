@@ -15,19 +15,68 @@
 
 Relic manages AI personalities (called **Engrams**) and injects them into coding assistants like Claude Code, Gemini CLI, Codex CLI. One persona, any shell.
 
+## Installation
+
 ```bash
-# Initialize Relic (creates ~/.relic/ with sample Engrams)
+npm install -g @ectplsm/relic
+```
+
+## Quick Start
+
+```bash
+# Initialize — creates config and sample Engrams
 relic init
+# → Prompts: "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):"
 
-# Set a default Engram once
-relic config default-engram johnny
+# List available Engrams
+relic list
 
-# Launch Claude Code as Johnny — no flags needed
+# Preview an Engram's composed prompt
+relic show motoko
+
+# Launch a Shell (uses default Engram if --engram is omitted)
 relic claude
+relic codex
+relic gemini
 
 # Or specify explicitly
 relic claude --engram motoko
+relic codex --engram johnny
 ```
+
+## What `relic init` Creates
+
+Running `relic init` creates `~/.relic/`, writes `config.json`, and seeds two sample Engrams under `~/.relic/engrams/`.
+
+```
+~/.relic/
+├── config.json
+└── engrams/
+    ├── johnny/
+    │   ├── engram.json
+    │   ├── SOUL.md
+    │   ├── IDENTITY.md
+    │   └── memory/
+    │       └── YYYY-MM-DD.md
+    └── motoko/
+        ├── engram.json
+        ├── SOUL.md
+        ├── IDENTITY.md
+        └── memory/
+            └── YYYY-MM-DD.md
+```
+
+- `config.json` stores global Relic settings such as `engramsPath`, `defaultEngram`, `openclawPath`, and `memoryWindowSize`.
+- `engrams/<id>/` is one Engram workspace. This is where persona files and memory for that Engram live.
+- `engram.json` stores metadata like the Engram's ID, display name, description, and tags.
+- `SOUL.md` and `IDENTITY.md` define the persona itself.
+- `memory/YYYY-MM-DD.md` stores dated distilled memory entries. `relic init` seeds an initial memory file for each sample Engram.
+
+As you keep using an Engram, more files are added to the same workspace:
+
+- `archive.md` is created inside `engrams/<id>/` when shell hooks start logging raw conversation turns.
+- `MEMORY.md` can be created or extended when especially important distilled facts are promoted to long-term memory.
+- `~/.relic/hooks/` and `~/.relic/gemini-system-default.md` are created later on first shell launch when hook registration or Gemini prompt caching is needed.
 
 ## How It Works
 
@@ -75,35 +124,6 @@ relic claude --engram motoko
 5. **archive.md** — Raw conversation logs appended automatically by background hooks after each turn.
 6. **Memory Distillation** — The user triggers distillation; the Construct recalls pending archive entries via MCP, writes distilled insights to `memory/*.md`, and can promote especially important facts into `MEMORY.md`.
 7. **Mikoshi** — Cloud backend where the full Engram is stored and synced, including persona files plus distilled memory (planned).
-
-## Installation
-
-```bash
-npm install -g @ectplsm/relic
-```
-
-## Quick Start
-
-```bash
-# Initialize — creates config and sample Engrams
-relic init
-# → Prompts: "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):"
-
-# List available Engrams
-relic list
-
-# Preview an Engram's composed prompt
-relic show motoko
-
-# Launch a Shell (uses default Engram if --engram is omitted)
-relic claude
-relic codex
-relic gemini
-
-# Or specify explicitly
-relic claude --engram motoko
-relic codex --engram johnny
-```
 
 ## Sample Engrams
 
