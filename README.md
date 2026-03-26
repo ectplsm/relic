@@ -446,25 +446,6 @@ After creating the directory, set it as default:
 relic config default-engram your-persona
 ```
 
-## Architecture
-
-Clean Architecture with dependency inversion:
-
-```
-src/
-├── core/            # Business logic (no external deps except Zod)
-│   ├── entities/    # Engram, Construct domain models
-│   ├── usecases/    # Summon, ListEngrams, Init
-│   └── ports/       # Abstract interfaces (EngramRepository, ShellLauncher)
-├── adapters/        # Concrete implementations
-│   ├── local/       # Local filesystem EngramRepository
-│   └── shells/      # Claude, Gemini, Codex launchers
-├── interfaces/      # Entry points
-│   ├── cli/         # Commander-based CLI
-│   └── mcp/         # MCP Server (stdio transport)
-└── shared/          # Engram composer, config management
-```
-
 ## Domain Glossary
 
 | Term | Role | Description |

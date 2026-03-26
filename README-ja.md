@@ -445,25 +445,6 @@ CLIフラグは常にconfig値より優先されます。
 relic config default-engram your-persona
 ```
 
-## アーキテクチャ
-
-依存性逆転によるクリーンアーキテクチャ:
-
-```
-src/
-├── core/            # ビジネスロジック（Zod以外の外部依存なし）
-│   ├── entities/    # Engram, Construct ドメインモデル
-│   ├── usecases/    # Summon, ListEngrams, Init
-│   └── ports/       # 抽象インターフェース（EngramRepository, ShellLauncher）
-├── adapters/        # 具象実装
-│   ├── local/       # ローカルファイルシステム EngramRepository
-│   └── shells/      # Claude, Gemini, Codex ランチャー
-├── interfaces/      # エントリポイント
-│   ├── cli/         # Commander ベースの CLI
-│   └── mcp/         # MCPサーバー（stdio transport）
-└── shared/          # Engramコンポーザー、設定管理
-```
-
 ## ドメイン用語集
 
 | 用語 | 役割 | 説明 |
