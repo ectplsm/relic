@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import type { ShellLauncher, InjectionMode, ShellLaunchOptions } from "../../core/ports/shell-launcher.js";
 import { spawnShell } from "./spawn-shell.js";
 import { wrapWithOverride } from "./override-preamble.js";
+import { setupCodexHook, isCodexHookSetup } from "./codex-hook.js";
 
 const execAsync = promisify(exec);
 
@@ -11,7 +12,8 @@ const execAsync = promisify(exec);
  * `-c developer_instructions=<prompt>` でEngramをdeveloperロールとして注入する。
  * user-messageよりシステムプロンプトに近い強度で注入できる。
  *
- * inboxへの書き込みはMCPサーバー(relic_inbox_write)が担う。
+ * 初回起動時に Stop フックを ~/.codex/hooks.json に登録し、
+ * 各ターン終了後に会話ログを Engram inbox に自動記録する。
  */
 export class CodexShell implements ShellLauncher {
   readonly name = "Codex CLI";
@@ -29,10 +31,23 @@ export class CodexShell implements ShellLauncher {
   }
 
   async launch(prompt: string, options?: ShellLaunchOptions): Promise<void> {
+    // Stop フックを初回のみセットアップ
+    if (!isCodexHookSetup()) {
+      console.log("Setting up Codex CLI Stop hook (first run only)...");
+      setupCodexHook();
+      console.log("Hook registered to ~/.codex/hooks.json");
+      console.log();
+    }
+
     const args: string[] = [
       "-c", `developer_instructions=${JSON.stringify(wrapWithOverride(prompt))}`,
+      "-c", "features.codex_hooks=true",
       ...(options?.extraArgs ?? []),
     ];
-    await spawnShell(this.command, args, options?.cwd);
+
+    const env: Record<string, string> = {};
+    if (options?.engramId) env.RELIC_ENGRAM_ID = options.engramId;
+
+    await spawnShell(this.command, args, options?.cwd, Object.keys(env).length > 0 ? env : undefined);
   }
 }
