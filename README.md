@@ -127,13 +127,12 @@ Extra arguments are passed through to the underlying CLI.
 
 ## MCP Server
 
-Relic operates as an [MCP](https://modelcontextprotocol.io/) server paired with CLI injection to handle memory management. The CLI injects the Engram persona at session start, while the MCP server provides the running Construct with the means to persist memory data.
-
-Session logs (every conversation turn) are written automatically by a **background hook** — without going through the LLM. The Construct only calls `relic_inbox_write` directly when it wants to persist a `[memory]` entry for an important fact.
+Relic's [MCP](https://modelcontextprotocol.io/) server is paired with CLI injection to handle memory recall.
+Session logs and memory entries are written automatically by a **background hook** — without going through the LLM. Memory recall, on the other hand, is performed via the MCP server.
 
 ```
-relic claude --engram johnny   →  injects persona into Claude Code
-relic-mcp (MCP server)        →  gives the Construct relic_inbox_write + relic_inbox_search
+relic xxx --engram johnny      →  injects persona into AI CLI
+relic-mcp (MCP server)        →  provides the Construct with memory recall
 Stop hook (Claude Code)        →  logs each turn directly to inbox, bypassing the LLM
 AfterAgent hook (Gemini CLI)   →  logs each turn directly to inbox, bypassing the LLM
 Stop hook (Codex CLI)          →  logs each turn directly to inbox, bypassing the LLM
@@ -154,7 +153,6 @@ To suppress confirmation dialogs and auto-approve Relic tools across all project
   "permissions": {
     "allow": [
       "Edit(~/.relic/engrams/**)",
-      "mcp__relic__relic_inbox_write",
       "mcp__relic__relic_inbox_search"
     ]
   }
@@ -182,7 +180,7 @@ Add to `~/.gemini/settings.json`:
 }
 ```
 
-> **Note:** `trust: true` is required to suppress confirmation dialogs for Relic tools. Without it, dialogs will appear on every call even if you select "Allow for all future sessions" — this is a known bug in Gemini CLI where the tool name is saved in the wrong format (`mcp_relic_relic_inbox_write` instead of `relic_inbox_write`), causing the saved rule to never match.
+> **Note:** `trust: true` is required to suppress confirmation dialogs for Relic tools. Without it, dialogs will appear on every call even if you select "Allow for all future sessions" — this is a known bug in Gemini CLI where the tool name is saved in the wrong format, causing the saved rule to never match.
 
 On the **first run** of `relic gemini`, two one-time setups happen automatically:
 
@@ -211,10 +209,9 @@ On the **first run** of `relic codex`, a one-time setup happens automatically:
 
 | Tool | Description |
 |------|-------------|
-| `relic_inbox_write` | Write `[memory]` entries to the Engram's inbox for long-term persistence |
 | `relic_inbox_search` | Search the Engram's raw inbox by keyword (newest-first) |
 
-Session logs are written automatically by background hooks (Stop hook for Claude Code and Codex CLI, AfterAgent hook for Gemini CLI) — the Construct does not need to call `relic_inbox_write` for regular logs. It only calls `relic_inbox_write` directly when it wants to persist a `[memory]` entry for an important fact.
+Session logs and memory entries are written automatically by background hooks (Stop hook for Claude Code and Codex CLI, AfterAgent hook for Gemini CLI) — the Construct does not need to call any write tool.
 
 ## OpenClaw Integration
 
