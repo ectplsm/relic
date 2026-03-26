@@ -133,9 +133,9 @@ Session logs and memory entries are written automatically by a **background hook
 ```
 relic xxx --engram johnny      →  injects persona into AI CLI
 relic-mcp (MCP server)        →  provides the Construct with memory recall
-Stop hook (Claude Code)        →  logs each turn directly to inbox, bypassing the LLM
-AfterAgent hook (Gemini CLI)   →  logs each turn directly to inbox, bypassing the LLM
-Stop hook (Codex CLI)          →  logs each turn directly to inbox, bypassing the LLM
+Stop hook (Claude Code)        →  logs each turn directly to archive, bypassing the LLM
+AfterAgent hook (Gemini CLI)   →  logs each turn directly to archive, bypassing the LLM
+Stop hook (Codex CLI)          →  logs each turn directly to archive, bypassing the LLM
 ```
 
 ### Setup
@@ -153,7 +153,7 @@ To suppress confirmation dialogs and auto-approve Relic tools across all project
   "permissions": {
     "allow": [
       "Edit(~/.relic/engrams/**)",
-      "mcp__relic__relic_inbox_search"
+      "mcp__relic__relic_archive_search"
     ]
   }
 }
@@ -163,7 +163,7 @@ To suppress confirmation dialogs and auto-approve Relic tools across all project
 
 On the **first run** of `relic claude`, a one-time setup happens automatically:
 
-- **Stop hook** — registers `~/.relic/hooks/claude-stop.js` in `~/.claude/settings.json` to log each conversation turn directly to the inbox, without going through the LLM
+- **Stop hook** — registers `~/.relic/hooks/claude-stop.js` in `~/.claude/settings.json` to log each conversation turn directly to the archive, without going through the LLM
 
 #### Gemini CLI
 
@@ -197,7 +197,7 @@ codex mcp add relic -- relic-mcp
 
 On the **first run** of `relic codex`, a one-time setup happens automatically:
 
-- **Stop hook** — registers `~/.relic/hooks/codex-stop.js` in `~/.codex/hooks.json` to log each conversation turn directly to the inbox, without going through the LLM
+- **Stop hook** — registers `~/.relic/hooks/codex-stop.js` in `~/.codex/hooks.json` to log each conversation turn directly to the archive, without going through the LLM
 
 > **Note:** Codex hooks require the experimental feature flag `features.codex_hooks=true`. This is automatically enabled by `relic codex` on every launch via `-c features.codex_hooks=true`. If the unstable feature warning is distracting, add the following to `~/.codex/config.toml`:
 >
@@ -210,7 +210,7 @@ On the **first run** of `relic codex`, a one-time setup happens automatically:
 
 | Tool | Description |
 |------|-------------|
-| `relic_inbox_search` | Search the Engram's raw inbox by keyword (newest-first) |
+| `relic_archive_search` | Search the Engram's raw archive by keyword (newest-first) |
 
 Session logs and memory entries are written automatically by background hooks (Stop hook for Claude Code and Codex CLI, AfterAgent hook for Gemini CLI) — the Construct does not need to call any write tool.
 
@@ -297,10 +297,10 @@ Relic uses a **sliding window** for memory entries (default: 2 days), matching O
 This keeps prompts compact while preserving full history. The Construct can search past context on demand using the MCP tool:
 
 ```
-relic_inbox_search  → keyword search across the full raw inbox (all sessions)
+relic_archive_search  → keyword search across the full raw archive (all sessions)
 ```
 
-The inbox (`inbox.md`) is the primary data store — it contains all session logs and memory entries as written. The `memory/*.md` files are a distilled subset (only `[memory]`-tagged entries), used for cloud sync with Mikoshi.
+The archive (`archive.md`) is the primary data store — it contains all session logs and memory entries as written. The `memory/*.md` files are a distilled subset (only `[memory]`-tagged entries), used for cloud sync with Mikoshi.
 
 ## Configuration
 
