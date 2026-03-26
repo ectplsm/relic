@@ -26,3 +26,13 @@ export {
   type SyncTarget,
   type SyncInitialResult,
 } from "./sync.js";
+export {
+  ArchivePending,
+  ArchivePendingEngramNotFoundError,
+  type ArchivePendingResult,
+} from "./archive-pending.js";
+export {
+  ArchiveCursorUpdate,
+  ArchiveCursorUpdateEngramNotFoundError,
+  type ArchiveCursorUpdateResult,
+} from "./archive-cursor-update.js";
