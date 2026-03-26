@@ -201,7 +201,11 @@ codex mcp add relic -- relic-mcp
 
 - **Stop hookの登録** — `~/.relic/hooks/codex-stop.js` を生成し、`~/.codex/hooks.json` に登録。LLMループを介さずに各ターンのログを自動保存します
 
-> **注意:** Codexのhooksは実験的機能フラグ `features.codex_hooks=true` が必要です。`relic codex` は毎回の起動時に `-c features.codex_hooks=true` を自動付与します。
+> **注意:** Codexのhooksは実験的機能フラグ `features.codex_hooks=true` が必要です。`relic codex` は毎回の起動時に `-c features.codex_hooks=true` を自動付与します。不安定機能の警告が気になる場合は、`~/.codex/config.toml` に以下を追加してください:
+>
+> ```toml
+> suppress_unstable_features_warning = true
+> ```
 
 ### 利用可能なツール
 
