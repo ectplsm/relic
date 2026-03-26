@@ -153,9 +153,11 @@ To suppress confirmation dialogs and auto-approve Relic tools across all project
   "permissions": {
     "allow": [
       "Edit(~/.relic/engrams/**)",
-      "mcp__relic__relic_archive_search"
+      "mcp__relic__relic_archive_search",
+      "mcp__relic__relic_archive_pending",
+      "mcp__relic__relic_memory_write"
     ]
-  }
+  },
 }
 ```
 

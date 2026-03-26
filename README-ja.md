@@ -153,9 +153,11 @@ claude mcp add --scope user relic -- relic-mcp
   "permissions": {
     "allow": [
       "Edit(~/.relic/engrams/**)",
-      "mcp__relic__relic_archive_search"
+      "mcp__relic__relic_archive_search",
+      "mcp__relic__relic_archive_pending",
+      "mcp__relic__relic_memory_write"
     ]
-  }
+  },
 }
 ```
 
