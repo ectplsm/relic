@@ -13,7 +13,7 @@
 
 **Inject AI personas into any coding CLI.**
 
-Relic manages AI personalities (called **Engrams**) and injects them into coding assistants like Claude Code, Gemini CLI, Codex CLI. One persona, any shell.
+Relic manages AI personalities (called **Engrams**) and injects them into coding assistants like Claude Code, Codex CLI, Gemini CLI. One persona, any shell.
 
 ## Installation
 
@@ -78,6 +78,34 @@ As you keep using an Engram, more files are added to the same workspace:
 - `MEMORY.md` can be created or extended when especially important distilled facts are promoted to long-term memory.
 - `~/.relic/hooks/` and `~/.relic/gemini-system-default.md` are created later on first shell launch when hook registration or Gemini prompt caching is needed.
 
+## Sample Engrams
+
+`relic init` seeds two ready-to-use Engrams:
+
+### Johnny Silverhand (`johnny`)
+
+> *"Wake the fuck up, Samurai. We have a city to burn."*
+
+A rebel rockerboy burned into a Relic chip. Raw, unapologetic, anti-authority. Pushes you toward action, mocks rotten systems, never sugarcoats. Sharp when the stakes are real.
+
+Best for: rapid prototyping sessions, decision-making under pressure, when you need someone to challenge your assumptions hard.
+
+```bash
+relic claude --engram johnny
+```
+
+### Motoko Kusanagi (`motoko`)
+
+> *"The Net is vast and infinite."*
+
+A legendary cyberwarfare specialist. Concise, decisive, architect-level thinking. Cuts straight to the essence — no decoration, no hand-holding. Dry wit surfaces when least expected.
+
+Best for: system design, code review, debugging sessions, when precision matters more than speed.
+
+```bash
+relic claude --engram motoko
+```
+
 ## How It Works
 
 ```
@@ -124,34 +152,6 @@ As you keep using an Engram, more files are added to the same workspace:
 5. **archive.md** — Raw conversation logs appended automatically by background hooks after each turn.
 6. **Memory Distillation** — The user triggers distillation; the Construct recalls pending archive entries via MCP, writes distilled insights to `memory/*.md`, and can promote especially important facts into `MEMORY.md`.
 7. **Mikoshi** — Cloud backend where the full Engram is stored and synced, including persona files plus distilled memory (planned).
-
-## Sample Engrams
-
-`relic init` seeds two ready-to-use Engrams:
-
-### Johnny Silverhand (`johnny`)
-
-> *"Wake the fuck up, Samurai. We have a city to burn."*
-
-A rebel rockerboy burned into a Relic chip. Raw, unapologetic, anti-authority. Pushes you toward action, mocks rotten systems, never sugarcoats. Sharp when the stakes are real.
-
-Best for: rapid prototyping sessions, decision-making under pressure, when you need someone to challenge your assumptions hard.
-
-```bash
-relic claude --engram johnny
-```
-
-### Motoko Kusanagi (`motoko`)
-
-> *"The Net is vast and infinite."*
-
-A legendary cyberwarfare specialist. Concise, decisive, architect-level thinking. Cuts straight to the essence — no decoration, no hand-holding. Dry wit surfaces when least expected.
-
-Best for: system design, code review, debugging sessions, when precision matters more than speed.
-
-```bash
-relic claude --engram motoko
-```
 
 ## Supported Shells
 
