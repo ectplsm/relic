@@ -39,6 +39,9 @@ process.stdin.on("end", () => {
     const lastResponse = (input.last_assistant_message || "").trim();
 
     // transcript から最後のユーザー入力を取得
+    // Codex transcript format:
+    //   { type: "response_item", payload: { type: "message", role: "user", content: [{ type: "input_text", text: "..." }] } }
+    // <environment_context> で始まるエントリはシステム注入なのでスキップする
     let lastPrompt = "";
     const transcriptPath = input.transcript_path;
     if (transcriptPath && existsSync(transcriptPath)) {
@@ -50,21 +53,17 @@ process.stdin.on("end", () => {
 
       for (let i = lines.length - 1; i >= 0; i--) {
         const entry = lines[i];
-        const msg = entry.message;
-        if (msg && msg.role === "user") {
-          const content = msg.content;
-          if (typeof content === "string" && content.trim()) {
-            lastPrompt = content.trim();
+        if (entry.type !== "response_item") continue;
+        const p = entry.payload;
+        if (!p || p.role !== "user" || p.type !== "message") continue;
+        const content = p.content;
+        if (Array.isArray(content)) {
+          const texts = content
+            .filter((c) => c.type === "input_text" && c.text && !c.text.trimStart().startsWith("<environment_context>"))
+            .map((c) => c.text.trim());
+          if (texts.length > 0) {
+            lastPrompt = texts.join("\\n").trim();
             break;
-          }
-          if (Array.isArray(content)) {
-            const texts = content
-              .filter((c) => c.type === "text" && c.text)
-              .map((c) => c.text.trim());
-            if (texts.length > 0) {
-              lastPrompt = texts.join("\\n").trim();
-              break;
-            }
           }
         }
       }
