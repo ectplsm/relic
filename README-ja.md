@@ -36,22 +36,42 @@ relic claude --engram motoko
 |   Mikoshi    |     |    Relic     |     |    Shell     |
 |  (backend)   |     |  (injector)  |     |   (AI CLI)   |
 +--------------+     +--------------+     +--------------+
-       |                   |                    |
-   +---------+        compose &            +---------+
-   | Engram  |------> inject ------------->|Construct|
-   |(persona)|                             | (live)  |
-   +---------+                             +---------+
-   SOUL.md                                  claude
-   IDENTITY.md                              gemini
-   MEMORY.md                                codex
-   ...
+       ^                   |                    |
+       |            sync full Engram            v
+       |                   |               +---------+
+       |             compose & inject      |Construct|
+       |                   |               | (live)  |
+       |              +---------+          +---------+
+       +--------------| Engram  |<--------- claude / codex / gemini
+                      |(persona)|               |
+                      +---------+               | hooks append logs
+                      SOUL.md                   v
+                      IDENTITY.md         +-----------+
+                      MEMORY.md           |archive.md |
+                      memory/*.md         | raw logs  |
+                                          +-----------+
+                                                |
+                           MCP recall           | user-triggered
+                          search/pending        | distillation
+                                                v
+                                          +-----------+
+                                          | distilled |
+                                          |memory/*.md|
+                                          +-----------+
+                                                |
+                                           promote key
+                                             insights
+                                                v
+                                             MEMORY.md
 ```
 
 1. **Engram** — Markdownファイル群で定義されたペルソナ（OpenClaw互換）
 2. **Relic** — Engramを読み取り、プロンプトに合成してShellに注入する
 3. **Shell** — AI コーディングCLI。ペルソナがセッションを支配する
 4. **Construct** — EngramがShellにロードされた実行中プロセス。ペルソナの実体
-5. **Mikoshi** — Engramを保管・同期するクラウドバックエンド（計画中）
+5. **archive.md** — 各ターンの生ログ。バックグラウンドhookが自動で追記する
+6. **Memory Distillation** — ユーザーの指示をきっかけに、ConstructがMCP経由で未蒸留archiveを想起し、重要な知見を `memory/*.md` に蒸留する。特に重要な事実は `MEMORY.md` に昇格できる
+7. **Mikoshi** — ペルソナファイルと蒸留済み記憶を含む、Engram全体を保管・同期するクラウドバックエンド（計画中）
 
 ## インストール
 
