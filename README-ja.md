@@ -214,9 +214,9 @@ codex mcp add relic -- relic-mcp
 |-------|------|
 | `relic_archive_search` | Engramの生archiveをキーワード検索する（新しい順） |
 | `relic_archive_pending` | 前回の蒸留以降の未蒸留archiveエントリを取得する（最大30件） |
-| `relic_memory_write` | 蒸留した記憶をmemory/*.mdに書き込み、archiveカーソルを進める |
+| `relic_memory_write` | 蒸留した記憶を `memory/*.md` に書き込み、任意で `MEMORY.md` にも追記し、archiveカーソルを進める |
 
-会話ログはバックグラウンドhook（Claude Code・Codex CLIのStop hook、Gemini CLIのAfterAgent hook）が自動的にarchiveに書き込みます。記憶の蒸留はユーザーのトリガーで実行します — Constructに「記憶を整理して」と指示すると、未蒸留エントリを取得し、重要な知見を蒸留して `memory/*.md` に書き出します。
+会話ログはバックグラウンドhook（Claude Code・Codex CLIのStop hook、Gemini CLIのAfterAgent hook）が自動的にarchiveに書き込みます。記憶の蒸留はユーザーのトリガーで実行します — Constructに「記憶を整理して」と指示すると、未蒸留エントリを取得し、重要な知見を蒸留して `memory/*.md` に書き出します。特に重要な事実は `long_term` パラメータで `MEMORY.md`（全セッションで読み込まれる長期記憶）に昇格できます。
 
 ## OpenClaw連携
 
