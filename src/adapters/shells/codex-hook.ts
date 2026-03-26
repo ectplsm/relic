@@ -10,14 +10,14 @@ const RELIC_HOOK_COMMAND = `node ${join(HOOKS_DIR, "codex-stop.js")}`;
 
 /**
  * Stop hook スクリプトの内容。
- * Codex CLI の各ターン終了後に発火し、会話ログを Engram inbox に追記する。
+ * Codex CLI の各ターン終了後に発火し、会話ログを Engram archive に追記する。
  * RELIC_ENGRAM_ID 環境変数で対象 Engram ID を受け取る。
  * stdin には { last_assistant_message, transcript_path, session_id, ... } が渡される。
  * Claude の Stop hook と異なり last_assistant_message が直接取得できるため wait 不要。
  */
 const HOOK_SCRIPT = `#!/usr/bin/env node
 // Relic Stop hook for Codex CLI
-// Automatically logs each conversation turn to the Engram inbox.
+// Automatically logs each conversation turn to the Engram archive.
 // Receives Stop hook JSON on stdin.
 const { appendFileSync, existsSync, readFileSync } = require("node:fs");
 const { join } = require("node:path");
@@ -32,8 +32,8 @@ process.stdin.on("end", () => {
     const engramId = process.env.RELIC_ENGRAM_ID;
     if (!engramId) process.exit(0);
 
-    const inboxPath = join(homedir(), ".relic", "engrams", engramId, "inbox.md");
-    if (!existsSync(inboxPath)) process.exit(0);
+    const archivePath = join(homedir(), ".relic", "engrams", engramId, "archive.md");
+    if (!existsSync(archivePath)) process.exit(0);
 
     // Codex Stop hook は last_assistant_message を直接提供する
     const lastResponse = (input.last_assistant_message || "").trim();
@@ -74,7 +74,7 @@ process.stdin.on("end", () => {
     const date = new Date().toISOString().split("T")[0];
     const summary = lastPrompt.slice(0, 80).replace(/\\n/g, " ");
     const entry = \`\\n---\\n\${date} | \${summary}\\n\${lastResponse}\\n\`;
-    appendFileSync(inboxPath, entry, "utf-8");
+    appendFileSync(archivePath, entry, "utf-8");
   } catch {
     // silently ignore
   }

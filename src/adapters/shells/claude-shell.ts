@@ -11,7 +11,7 @@ const execAsync = promisify(exec);
  * --system-prompt フラグでEngramを直接注入する。
  *
  * 初回起動時に Stop フックを ~/.claude/settings.json に登録し、
- * 各ターン終了後に会話ログを Engram inbox に自動記録する。
+ * 各ターン終了後に会話ログを Engram archive に自動記録する。
  */
 export class ClaudeShell implements ShellLauncher {
   readonly name = "Claude Code";

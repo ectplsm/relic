@@ -10,13 +10,13 @@ const RELIC_HOOK_COMMAND = `node ${join(HOOKS_DIR, "claude-stop.js")}`;
 
 /**
  * Stop hook スクリプトの内容。
- * Claude Code の各ターン終了後に発火し、会話ログを Engram inbox に追記する。
+ * Claude Code の各ターン終了後に発火し、会話ログを Engram archive に追記する。
  * RELIC_ENGRAM_ID 環境変数で対象 Engram ID を受け取る。
  * stdin には { session_id, transcript_path, cwd, hook_event_name } が渡される。
  */
 const HOOK_SCRIPT = `#!/usr/bin/env node
 // Relic Stop hook for Claude Code
-// Automatically logs each conversation turn to the Engram inbox.
+// Automatically logs each conversation turn to the Engram archive.
 // Receives Stop hook JSON on stdin.
 const { appendFileSync, existsSync, readFileSync } = require("node:fs");
 const { join } = require("node:path");
@@ -36,8 +36,8 @@ process.stdin.on("end", () => {
     const transcriptPath = input.transcript_path;
     if (!transcriptPath || !existsSync(transcriptPath)) process.exit(0);
 
-    const inboxPath = join(homedir(), ".relic", "engrams", engramId, "inbox.md");
-    if (!existsSync(inboxPath)) process.exit(0);
+    const archivePath = join(homedir(), ".relic", "engrams", engramId, "archive.md");
+    if (!existsSync(archivePath)) process.exit(0);
 
     // transcript.jsonl を読んで最後のユーザー入力とアシスタント応答を取り出す
     const lines = readFileSync(transcriptPath, "utf-8")
@@ -93,7 +93,7 @@ process.stdin.on("end", () => {
     const date = new Date().toISOString().split("T")[0];
     const summary = lastPrompt.slice(0, 80).replace(/\\n/g, " ");
     const entry = \`\\n---\\n\${date} | \${summary}\\n\${lastResponse}\\n\`;
-    appendFileSync(inboxPath, entry, "utf-8");
+    appendFileSync(archivePath, entry, "utf-8");
   } catch {
     // silently ignore
   }
