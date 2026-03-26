@@ -213,8 +213,10 @@ On the **first run** of `relic codex`, a one-time setup happens automatically:
 | Tool | Description |
 |------|-------------|
 | `relic_archive_search` | Search the Engram's raw archive by keyword (newest-first) |
+| `relic_archive_pending` | Get un-distilled archive entries since the last distillation (up to 30) |
+| `relic_memory_write` | Write distilled memory and advance the archive cursor |
 
-Session logs and memory entries are written automatically by background hooks (Stop hook for Claude Code and Codex CLI, AfterAgent hook for Gemini CLI) — the Construct does not need to call any write tool.
+Session logs are written automatically by background hooks (Stop hook for Claude Code and Codex CLI, AfterAgent hook for Gemini CLI). Memory distillation is triggered by the user — ask the Construct to "organize memories" and it will fetch pending entries, distill key insights, and write them to `memory/*.md`.
 
 ## OpenClaw Integration
 
@@ -296,13 +298,15 @@ Relic uses a **sliding window** for memory entries (default: 2 days), matching O
 - `memory/today.md` + `memory/yesterday.md` — Always included (configurable window)
 - Older entries — **Not included in the prompt**, but searchable via MCP
 
-This keeps prompts compact while preserving full history. The Construct can search past context on demand using the MCP tool:
+This keeps prompts compact while preserving full history. The Construct can recall and distill past context using MCP tools:
 
 ```
-relic_archive_search  → keyword search across the full raw archive (all sessions)
+relic_archive_search   → keyword search across the full raw archive (all sessions)
+relic_archive_pending  → get un-distilled entries for memory distillation
+relic_memory_write     → write distilled memory and advance the cursor
 ```
 
-The archive (`archive.md`) is the primary data store — it contains all session logs and memory entries as written. The `memory/*.md` files are a distilled subset (only `[memory]`-tagged entries), used for cloud sync with Mikoshi.
+The archive (`archive.md`) is the primary data store — it contains all session logs as written. The `memory/*.md` files are distilled from the archive by the Construct when the user triggers memory organization, and are used for cloud sync with Mikoshi.
 
 ## Configuration
 
