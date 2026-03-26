@@ -136,6 +136,7 @@ relic claude --engram johnny   →  Claude Codeにペルソナを注入
 relic-mcp（MCPサーバー）       →  Constructに relic_inbox_write + relic_inbox_search を提供
 Stop hook（Claude Code）        →  各ターンのログをLLMを介さずinboxに直接書き込む
 AfterAgent hook（Gemini CLI）   →  各ターンのログをLLMを介さずinboxに直接書き込む
+Stop hook（Codex CLI）          →  各ターンのログをLLMを介さずinboxに直接書き込む
 ```
 
 ### セットアップ
@@ -196,6 +197,12 @@ claude mcp add --scope user relic -- relic-mcp
 codex mcp add relic -- relic-mcp
 ```
 
+`relic codex` の**初回起動時**に以下のセットアップが自動で行われます:
+
+- **Stop hookの登録** — `~/.relic/hooks/codex-stop.js` を生成し、`~/.codex/hooks.json` に登録。LLMループを介さずに各ターンのログを自動保存します
+
+> **注意:** Codexのhooksは実験的機能フラグ `features.codex_hooks=true` が必要です。`relic codex` は毎回の起動時に `-c features.codex_hooks=true` を自動付与します。
+
 ### 利用可能なツール
 
 | ツール | 説明 |
@@ -203,7 +210,7 @@ codex mcp add relic -- relic-mcp
 | `relic_inbox_write` | `[memory]` エントリをEngramのinboxに書き込み、長期記憶として永続化する |
 | `relic_inbox_search` | Engramの生inboxをキーワード検索する（新しい順） |
 
-会話ログはバックグラウンドhook（Claude CodeのStop hook、Gemini CLIのAfterAgent hook）が自動的に書き込むため、Constructが通常のログのために `relic_inbox_write` を呼ぶ必要はありません。重要な事実を `[memory]` エントリとして永続化したいときだけ直接呼び出します。
+会話ログはバックグラウンドhook（Claude Code・Codex CLIのStop hook、Gemini CLIのAfterAgent hook）が自動的に書き込むため、Constructが通常のログのために `relic_inbox_write` を呼ぶ必要はありません。重要な事実を `[memory]` エントリとして永続化したいときだけ直接呼び出します。
 
 ## OpenClaw連携
 

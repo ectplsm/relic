@@ -136,6 +136,7 @@ relic claude --engram johnny   →  injects persona into Claude Code
 relic-mcp (MCP server)        →  gives the Construct relic_inbox_write + relic_inbox_search
 Stop hook (Claude Code)        →  logs each turn directly to inbox, bypassing the LLM
 AfterAgent hook (Gemini CLI)   →  logs each turn directly to inbox, bypassing the LLM
+Stop hook (Codex CLI)          →  logs each turn directly to inbox, bypassing the LLM
 ```
 
 ### Setup
@@ -196,6 +197,12 @@ The Engram persona is then appended to the cached default prompt and injected vi
 codex mcp add relic -- relic-mcp
 ```
 
+On the **first run** of `relic codex`, a one-time setup happens automatically:
+
+- **Stop hook** — registers `~/.relic/hooks/codex-stop.js` in `~/.codex/hooks.json` to log each conversation turn directly to the inbox, without going through the LLM
+
+> **Note:** Codex hooks require the experimental feature flag `features.codex_hooks=true`. This is automatically enabled by `relic codex` on every launch via `-c features.codex_hooks=true`.
+
 ### Available Tools
 
 | Tool | Description |
@@ -203,7 +210,7 @@ codex mcp add relic -- relic-mcp
 | `relic_inbox_write` | Write `[memory]` entries to the Engram's inbox for long-term persistence |
 | `relic_inbox_search` | Search the Engram's raw inbox by keyword (newest-first) |
 
-Session logs are written automatically by background hooks (Stop hook for Claude Code, AfterAgent hook for Gemini CLI) — the Construct does not need to call `relic_inbox_write` for regular logs. It only calls `relic_inbox_write` directly when it wants to persist a `[memory]` entry for an important fact.
+Session logs are written automatically by background hooks (Stop hook for Claude Code and Codex CLI, AfterAgent hook for Gemini CLI) — the Construct does not need to call `relic_inbox_write` for regular logs. It only calls `relic_inbox_write` directly when it wants to persist a `[memory]` entry for an important fact.
 
 ## OpenClaw Integration
 
