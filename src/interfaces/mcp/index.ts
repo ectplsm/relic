@@ -18,6 +18,9 @@ import {
   MemoryWrite,
   MemoryWriteEngramNotFoundError,
 } from "../../core/usecases/memory-write.js";
+import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
 import { resolveEngramsPath } from "../../shared/config.js";
 
 const server = new McpServer({
@@ -141,10 +144,14 @@ server.tool(
   "Write distilled memory to an Engram's memory file and advance the archive cursor. Call this after reviewing pending archive entries and distilling them into key insights.",
   {
     id: z.string().describe("Engram ID"),
-    content: z.string().describe("Distilled memory content to write"),
+    content: z.string().describe("Distilled memory content to write to memory/YYYY-MM-DD.md"),
     count: z
       .number()
       .describe("Number of archive entries distilled (from relic_archive_pending returned count)"),
+    long_term: z
+      .string()
+      .optional()
+      .describe("Especially important facts to append to MEMORY.md (long-term memory that persists across all sessions)"),
     date: z
       .string()
       .optional()
@@ -158,7 +165,7 @@ server.tool(
     const engramsPath = await resolveEngramsPath(args.path);
 
     try {
-      // Step 1: Write memory
+      // Step 1: Write daily memory
       const memoryWrite = new MemoryWrite(engramsPath);
       const writeResult = await memoryWrite.execute(
         args.id,
@@ -166,15 +173,37 @@ server.tool(
         args.date
       );
 
-      // Step 2: Advance cursor by the number of distilled entries
+      // Step 2: Append to MEMORY.md if long_term is provided
+      let longTermWritten = false;
+      if (args.long_term) {
+        const memoryMdPath = join(engramsPath, args.id, "MEMORY.md");
+        if (existsSync(memoryMdPath)) {
+          const existing = await readFile(memoryMdPath, "utf-8");
+          const separator = existing.endsWith("\n") ? "\n" : "\n\n";
+          await writeFile(memoryMdPath, existing + separator + args.long_term + "\n", "utf-8");
+        } else {
+          await writeFile(memoryMdPath, args.long_term + "\n", "utf-8");
+        }
+        longTermWritten = true;
+      }
+
+      // Step 3: Advance cursor by the number of distilled entries
       const cursorUpdate = new ArchiveCursorUpdate(engramsPath);
       const cursorResult = await cursorUpdate.execute(args.id, args.count);
+
+      const parts = [
+        `Memory written to ${writeResult.date} (${writeResult.appended ? "appended" : "created"}).`,
+      ];
+      if (longTermWritten) {
+        parts.push("Long-term memory (MEMORY.md) updated.");
+      }
+      parts.push(`Archive cursor advanced: ${cursorResult.previousCursor} → ${cursorResult.newCursor}.`);
 
       return {
         content: [
           {
             type: "text" as const,
-            text: `Memory written to ${writeResult.date} (${writeResult.appended ? "appended" : "created"}). Archive cursor advanced: ${cursorResult.previousCursor} → ${cursorResult.newCursor}.`,
+            text: parts.join(" "),
           },
         ],
       };

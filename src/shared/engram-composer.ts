@@ -97,13 +97,16 @@ To recall past context, use \`relic_archive_search\` to search your archive by k
 
 When the user asks you to organize or distill memories:
 1. Call \`relic_archive_pending\` **once** to get un-distilled session entries (up to 30)
-2. Review and distill them into key facts, decisions, and insights
-3. Call \`relic_memory_write\` to save the distilled memory (this also advances the cursor)
+2. Review and distill them into:
+   - **content**: key facts, decisions, and insights for \`memory/YYYY-MM-DD.md\`
+   - **long_term** (optional): only the most important, enduring facts for \`MEMORY.md\` (e.g. user preferences, project architecture decisions, key constraints)
+3. Call \`relic_memory_write\` with \`content\`, \`count\`, and optionally \`long_term\`
 4. If \`remaining > 0\`, inform the user how many entries are still pending — do NOT fetch more automatically
 
 **Important:**
 - Write distilled memories in the **same language the user is using** in the current conversation
 - Do NOT loop or repeat the distillation process — one round per user request
+- \`long_term\` should be highly selective — only facts that matter across all future sessions
 - Distilled memories are loaded into your prompt on future sessions`;
 }
 
