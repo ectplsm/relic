@@ -16,7 +16,7 @@ export interface SummonResult {
  * これがRELICの中核オペレーション。
  * Engramの取得 → Markdown結合 → 注入可能なプロンプト生成 を行う。
  *
- * inboxへの書き込みはMCPサーバー(relic_inbox_write)が担う。
+ * inboxへの書き込みはバックグラウンドhookが自動で行う。
  * CLIはEngramの注入に特化する。
  */
 export class Summon {
