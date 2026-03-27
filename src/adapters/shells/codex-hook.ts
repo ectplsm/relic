@@ -19,8 +19,8 @@ const HOOK_SCRIPT = `#!/usr/bin/env node
 // Relic Stop hook for Codex CLI
 // Automatically logs each conversation turn to the Engram archive.
 // Receives Stop hook JSON on stdin.
-const { appendFileSync, existsSync, readFileSync } = require("node:fs");
-const { join } = require("node:path");
+const { appendFileSync, existsSync, mkdirSync, readFileSync } = require("node:fs");
+const { join, dirname } = require("node:path");
 const { homedir } = require("node:os");
 
 let raw = "";
@@ -33,7 +33,7 @@ process.stdin.on("end", () => {
     if (!engramId) process.exit(0);
 
     const archivePath = join(homedir(), ".relic", "engrams", engramId, "archive.md");
-    if (!existsSync(archivePath)) process.exit(0);
+    mkdirSync(dirname(archivePath), { recursive: true });
 
     // Codex Stop hook は last_assistant_message を直接提供する
     const lastResponse = (input.last_assistant_message || "").trim();
@@ -83,17 +83,20 @@ process.stdin.on("end", () => {
 `;
 
 /**
- * Codex CLI の Stop フックをセットアップする。
- * - ~/.relic/hooks/codex-stop.js を生成
- * - ~/.codex/hooks.json に Stop フックを登録
+ * フックスクリプトを最新の内容で書き出す。
+ * 毎回呼ばれ、ソース変更がデプロイされることを保証する。
+ */
+export function writeCodexHookScript(): void {
+  mkdirSync(HOOKS_DIR, { recursive: true });
+  writeFileSync(CODEX_HOOK_SCRIPT_PATH, HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
+}
+
+/**
+ * Codex CLI の Stop フックを settings.json に登録する。
  * 既にセットアップ済みの場合はスキップ。
  */
 export function setupCodexHook(): void {
-  // 1. フックスクリプトを生成
-  mkdirSync(HOOKS_DIR, { recursive: true });
-  writeFileSync(CODEX_HOOK_SCRIPT_PATH, HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
-
-  // 2. ~/.codex/hooks.json に Stop フックを登録
+  // ~/.codex/hooks.json に Stop フックを登録
   const codexDir = join(homedir(), ".codex");
   mkdirSync(codexDir, { recursive: true });
 

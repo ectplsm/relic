@@ -17,8 +17,8 @@ const HOOK_SCRIPT = `#!/usr/bin/env node
 // Relic AfterAgent hook for Gemini CLI
 // Automatically logs each conversation turn to the Engram archive.
 // Receives AfterAgentInput JSON on stdin.
-const { appendFileSync, existsSync } = require("node:fs");
-const { join } = require("node:path");
+const { appendFileSync, existsSync, mkdirSync } = require("node:fs");
+const { join, dirname } = require("node:path");
 const { homedir } = require("node:os");
 
 let raw = "";
@@ -35,7 +35,7 @@ process.stdin.on("end", () => {
     if (!prompt && !response) process.exit(0);
 
     const archivePath = join(homedir(), ".relic", "engrams", engramId, "archive.md");
-    if (!existsSync(archivePath)) process.exit(0);
+    mkdirSync(dirname(archivePath), { recursive: true });
 
     const date = new Date().toISOString().split("T")[0];
     const summary = prompt.slice(0, 80).replace(/\\n/g, " ");
@@ -49,17 +49,20 @@ process.stdin.on("end", () => {
 `;
 
 /**
- * Gemini CLI の AfterAgent フックをセットアップする。
- * - ~/.relic/hooks/gemini-after-agent.js を生成
- * - ~/.gemini/settings.json に AfterAgent フックを登録
+ * フックスクリプトを最新の内容で書き出す。
+ * 毎回呼ばれ、ソース変更がデプロイされることを保証する。
+ */
+export function writeGeminiHookScript(): void {
+  mkdirSync(HOOKS_DIR, { recursive: true });
+  writeFileSync(GEMINI_HOOK_SCRIPT_PATH, HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
+}
+
+/**
+ * Gemini CLI の AfterAgent フックを settings.json に登録する。
  * 既にセットアップ済みの場合はスキップ。
  */
 export function setupGeminiHook(): void {
-  // 1. フックスクリプトを生成
-  mkdirSync(HOOKS_DIR, { recursive: true });
-  writeFileSync(GEMINI_HOOK_SCRIPT_PATH, HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
-
-  // 2. ~/.gemini/settings.json にフックを登録
+  // ~/.gemini/settings.json にフックを登録
   const geminiDir = join(homedir(), ".gemini");
   mkdirSync(geminiDir, { recursive: true });
 

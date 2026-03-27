@@ -3,7 +3,7 @@ import { promisify } from "node:util";
 import type { ShellLauncher, InjectionMode, ShellLaunchOptions } from "../../core/ports/shell-launcher.js";
 import { spawnShell } from "./spawn-shell.js";
 import { wrapWithOverride } from "./override-preamble.js";
-import { setupCodexHook, isCodexHookSetup } from "./codex-hook.js";
+import { setupCodexHook, isCodexHookSetup, writeCodexHookScript } from "./codex-hook.js";
 
 const execAsync = promisify(exec);
 
@@ -31,7 +31,10 @@ export class CodexShell implements ShellLauncher {
   }
 
   async launch(prompt: string, options?: ShellLaunchOptions): Promise<void> {
-    // Stop フックを初回のみセットアップ
+    // フックスクリプトを毎回最新に更新
+    writeCodexHookScript();
+
+    // hooks.json への登録は初回のみ
     if (!isCodexHookSetup()) {
       console.log("Setting up Codex CLI Stop hook (first run only)...");
       setupCodexHook();
