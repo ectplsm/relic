@@ -255,6 +255,21 @@ To suppress confirmation dialogs and auto-approve Relic tools across all project
 codex mcp add relic -- relic-mcp
 ```
 
+To suppress confirmation dialogs and auto-approve Relic tools, add the following to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.relic.tools.relic_archive_search]
+approval_mode = "approve"
+
+[mcp_servers.relic.tools.relic_archive_pending]
+approval_mode = "approve"
+
+[mcp_servers.relic.tools.relic_memory_write]
+approval_mode = "approve"
+```
+
+> **Note:** `trust_level = "trusted"` in `[projects."..."]` does **not** cover MCP tool approvals. Per-tool `approval_mode` is the only reliable way to auto-approve MCP tools in Codex CLI.
+
 #### Gemini CLI
 
 Add to `~/.gemini/settings.json`:

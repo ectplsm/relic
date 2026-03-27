@@ -271,6 +271,21 @@ claude mcp add --scope user relic -- relic-mcp
 codex mcp add relic -- relic-mcp
 ```
 
+確認ダイアログを抑制し、Relicツールを自動承認するには、`~/.codex/config.toml` に以下を追加します:
+
+```toml
+[mcp_servers.relic.tools.relic_archive_search]
+approval_mode = "approve"
+
+[mcp_servers.relic.tools.relic_archive_pending]
+approval_mode = "approve"
+
+[mcp_servers.relic.tools.relic_memory_write]
+approval_mode = "approve"
+```
+
+> **注意:** `[projects."..."]` の `trust_level = "trusted"` はMCPツールの承認には効きません。Codex CLIでMCPツールを自動承認するには、ツールごとの `approval_mode` 設定が唯一の確実な方法です。
+
 ## OpenClaw連携
 
 Relicのエングラムは [OpenClaw](https://github.com/openclaw/openclaw) のワークスペースと完全互換です。**エージェント名 = Engram ID** というシンプルな規約でマッピングされます。
