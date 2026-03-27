@@ -18,8 +18,8 @@ const HOOK_SCRIPT = `#!/usr/bin/env node
 // Relic Stop hook for Claude Code
 // Automatically logs each conversation turn to the Engram archive.
 // Receives Stop hook JSON on stdin.
-const { appendFileSync, existsSync, readFileSync } = require("node:fs");
-const { join } = require("node:path");
+const { appendFileSync, existsSync, mkdirSync, readFileSync } = require("node:fs");
+const { join, dirname } = require("node:path");
 const { homedir } = require("node:os");
 
 let raw = "";
@@ -37,7 +37,7 @@ process.stdin.on("end", () => {
     if (!transcriptPath || !existsSync(transcriptPath)) process.exit(0);
 
     const archivePath = join(homedir(), ".relic", "engrams", engramId, "archive.md");
-    if (!existsSync(archivePath)) process.exit(0);
+    mkdirSync(dirname(archivePath), { recursive: true });
 
     // transcript.jsonl を読んで最後のユーザー入力とアシスタント応答を取り出す
     const lines = readFileSync(transcriptPath, "utf-8")

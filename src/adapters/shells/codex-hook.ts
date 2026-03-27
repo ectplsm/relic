@@ -19,8 +19,8 @@ const HOOK_SCRIPT = `#!/usr/bin/env node
 // Relic Stop hook for Codex CLI
 // Automatically logs each conversation turn to the Engram archive.
 // Receives Stop hook JSON on stdin.
-const { appendFileSync, existsSync, readFileSync } = require("node:fs");
-const { join } = require("node:path");
+const { appendFileSync, existsSync, mkdirSync, readFileSync } = require("node:fs");
+const { join, dirname } = require("node:path");
 const { homedir } = require("node:os");
 
 let raw = "";
@@ -33,7 +33,7 @@ process.stdin.on("end", () => {
     if (!engramId) process.exit(0);
 
     const archivePath = join(homedir(), ".relic", "engrams", engramId, "archive.md");
-    if (!existsSync(archivePath)) process.exit(0);
+    mkdirSync(dirname(archivePath), { recursive: true });
 
     // Codex Stop hook は last_assistant_message を直接提供する
     const lastResponse = (input.last_assistant_message || "").trim();
