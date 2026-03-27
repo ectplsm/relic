@@ -49,17 +49,20 @@ process.stdin.on("end", () => {
 `;
 
 /**
- * Gemini CLI の AfterAgent フックをセットアップする。
- * - ~/.relic/hooks/gemini-after-agent.js を生成
- * - ~/.gemini/settings.json に AfterAgent フックを登録
+ * フックスクリプトを最新の内容で書き出す。
+ * 毎回呼ばれ、ソース変更がデプロイされることを保証する。
+ */
+export function writeGeminiHookScript(): void {
+  mkdirSync(HOOKS_DIR, { recursive: true });
+  writeFileSync(GEMINI_HOOK_SCRIPT_PATH, HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
+}
+
+/**
+ * Gemini CLI の AfterAgent フックを settings.json に登録する。
  * 既にセットアップ済みの場合はスキップ。
  */
 export function setupGeminiHook(): void {
-  // 1. フックスクリプトを生成
-  mkdirSync(HOOKS_DIR, { recursive: true });
-  writeFileSync(GEMINI_HOOK_SCRIPT_PATH, HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
-
-  // 2. ~/.gemini/settings.json にフックを登録
+  // ~/.gemini/settings.json にフックを登録
   const geminiDir = join(homedir(), ".gemini");
   mkdirSync(geminiDir, { recursive: true });
 

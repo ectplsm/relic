@@ -2,7 +2,7 @@ import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import type { ShellLauncher, InjectionMode, ShellLaunchOptions } from "../../core/ports/shell-launcher.js";
 import { spawnShell } from "./spawn-shell.js";
-import { setupClaudeHook, isClaudeHookSetup } from "./claude-hook.js";
+import { setupClaudeHook, isClaudeHookSetup, writeClaudeHookScript } from "./claude-hook.js";
 
 const execAsync = promisify(exec);
 
@@ -29,7 +29,10 @@ export class ClaudeShell implements ShellLauncher {
   }
 
   async launch(prompt: string, options?: ShellLaunchOptions): Promise<void> {
-    // Stop フックを初回のみセットアップ
+    // フックスクリプトを毎回最新に更新
+    writeClaudeHookScript();
+
+    // settings.json への登録は初回のみ
     if (!isClaudeHookSetup()) {
       console.log("Setting up Claude Code Stop hook (first run only)...");
       setupClaudeHook();

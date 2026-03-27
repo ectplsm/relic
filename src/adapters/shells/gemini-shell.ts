@@ -13,7 +13,7 @@ import { join } from "node:path";
 import { homedir, tmpdir } from "node:os";
 import type { ShellLauncher, InjectionMode, ShellLaunchOptions } from "../../core/ports/shell-launcher.js";
 import { spawnShell, writeTempPrompt } from "./spawn-shell.js";
-import { setupGeminiHook, isGeminiHookSetup } from "./gemini-hook.js";
+import { setupGeminiHook, isGeminiHookSetup, writeGeminiHookScript } from "./gemini-hook.js";
 
 const execAsync = promisify(exec);
 
@@ -122,7 +122,10 @@ export class GeminiShell implements ShellLauncher {
   }
 
   async launch(prompt: string, options?: ShellLaunchOptions): Promise<void> {
-    // 1. AfterAgent フックを初回のみセットアップ
+    // 1. フックスクリプトを毎回最新に更新
+    writeGeminiHookScript();
+
+    // settings.json への登録は初回のみ
     if (!isGeminiHookSetup()) {
       console.log("Setting up Gemini AfterAgent hook (first run only)...");
       setupGeminiHook();

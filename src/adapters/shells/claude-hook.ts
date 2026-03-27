@@ -102,17 +102,20 @@ process.stdin.on("end", () => {
 `;
 
 /**
- * Claude Code の Stop フックをセットアップする。
- * - ~/.relic/hooks/claude-stop.js を生成
- * - ~/.claude/settings.json に Stop フックを登録
+ * フックスクリプトを最新の内容で書き出す。
+ * 毎回呼ばれ、ソース変更がデプロイされることを保証する。
+ */
+export function writeClaudeHookScript(): void {
+  mkdirSync(HOOKS_DIR, { recursive: true });
+  writeFileSync(CLAUDE_HOOK_SCRIPT_PATH, HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
+}
+
+/**
+ * Claude Code の Stop フックを settings.json に登録する。
  * 既にセットアップ済みの場合はスキップ。
  */
 export function setupClaudeHook(): void {
-  // 1. フックスクリプトを生成
-  mkdirSync(HOOKS_DIR, { recursive: true });
-  writeFileSync(CLAUDE_HOOK_SCRIPT_PATH, HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
-
-  // 2. ~/.claude/settings.json に Stop フックを登録
+  // ~/.claude/settings.json に Stop フックを登録
   const claudeDir = join(homedir(), ".claude");
   mkdirSync(claudeDir, { recursive: true });
 

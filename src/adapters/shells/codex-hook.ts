@@ -83,17 +83,20 @@ process.stdin.on("end", () => {
 `;
 
 /**
- * Codex CLI の Stop フックをセットアップする。
- * - ~/.relic/hooks/codex-stop.js を生成
- * - ~/.codex/hooks.json に Stop フックを登録
+ * フックスクリプトを最新の内容で書き出す。
+ * 毎回呼ばれ、ソース変更がデプロイされることを保証する。
+ */
+export function writeCodexHookScript(): void {
+  mkdirSync(HOOKS_DIR, { recursive: true });
+  writeFileSync(CODEX_HOOK_SCRIPT_PATH, HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
+}
+
+/**
+ * Codex CLI の Stop フックを settings.json に登録する。
  * 既にセットアップ済みの場合はスキップ。
  */
 export function setupCodexHook(): void {
-  // 1. フックスクリプトを生成
-  mkdirSync(HOOKS_DIR, { recursive: true });
-  writeFileSync(CODEX_HOOK_SCRIPT_PATH, HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
-
-  // 2. ~/.codex/hooks.json に Stop フックを登録
+  // ~/.codex/hooks.json に Stop フックを登録
   const codexDir = join(homedir(), ".codex");
   mkdirSync(codexDir, { recursive: true });
 
