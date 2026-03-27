@@ -473,7 +473,7 @@ relic config default-engram your-persona
 ## ロードマップ
 
 - [x] CLI（init, list, show コマンド）
-- [x] Shell注入: Claude Code, Gemini CLI, Codex CLI
+- [x] Shell注入: Claude Code, Codex CLI, Gemini CLI
 - [x] MCPサーバーインターフェース
 - [x] OpenClaw連携（inject / extract）
 - [x] `relic sync` — OpenClawのagentsを監視して自動同期（`--cloud` でMikoshi連携: 計画中）

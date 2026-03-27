@@ -177,8 +177,8 @@ The following hooks are used for each shell:
 | Shell | Hook |
 |-------|------|
 | [Claude Code](https://github.com/anthropics/claude-code) | Stop hook |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | AfterAgent hook |
 | [Codex CLI](https://github.com/openai/codex) | Stop hook |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | AfterAgent hook |
 
 #### Claude Code
 
@@ -474,7 +474,7 @@ relic config default-engram your-persona
 ## Roadmap
 
 - [x] CLI with init, list, show commands
-- [x] Shell injection: Claude Code, Gemini CLI, Codex CLI
+- [x] Shell injection: Claude Code, Codex CLI, Gemini CLI
 - [x] MCP Server interface
 - [x] OpenClaw integration (inject / extract)
 - [x] `relic sync` — watch OpenClaw agents and auto-sync (`--cloud` for Mikoshi: planned)
