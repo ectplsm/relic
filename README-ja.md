@@ -158,8 +158,8 @@ relic claude --engram motoko
 | Shell | コマンド | 注入方式 |
 |-------|---------|---------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt`（直接上書き） |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `GEMINI_SYSTEM_MD`（システムプロンプト） |
 | [Codex CLI](https://github.com/openai/codex) | `relic codex` | `-c developer_instructions`（developerロールメッセージ） |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `GEMINI_SYSTEM_MD`（システムプロンプト） |
 
 すべてのShellコマンドで以下のオプションが使えます:
 - `--engram <id>` — 注入するEngram（`defaultEngram` が設定済みなら省略可）
@@ -177,8 +177,8 @@ relic claude --engram motoko
 | Shell | Hook |
 |-------|---------|
 | [Claude Code](https://github.com/anthropics/claude-code) | Stop hook |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | AfterAgent hook |
 | [Codex CLI](https://github.com/openai/codex) | Stop hook |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | AfterAgent hook |
 
 #### Claude Code
 
@@ -248,23 +248,6 @@ claude mcp add --scope user relic -- relic-mcp
 
 > **注意:** 確認ダイアログの「常に許可」は `~/.claude.json`（プロジェクトスコープのキャッシュ）に保存されます — グローバルには効きません。全プロジェクトで自動承認したい場合は `~/.claude/settings.json` が正しい設定場所です。
 
-#### Gemini CLI
-
-`~/.gemini/settings.json` に追加:
-
-```json
-{
-  "mcpServers": {
-    "relic": {
-      "command": "relic-mcp",
-      "trust": true
-    }
-  }
-}
-```
-
-> **注意:** 確認ダイアログを抑制するには `trust: true` が必要です。設定しないと、ダイアログで「今後のセッションでも許可」を選択しても毎回確認が表示されます。これは Gemini CLI の既知のバグで、ツール名が誤ったフォーマットで保存されるため、保存したルールが永遠にマッチしません。
-
 #### Codex CLI
 
 ```bash
@@ -285,6 +268,23 @@ approval_mode = "approve"
 ```
 
 > **注意:** `[projects."..."]` の `trust_level = "trusted"` はMCPツールの承認には効きません。Codex CLIでMCPツールを自動承認するには、ツールごとの `approval_mode` 設定が唯一の確実な方法です。
+
+#### Gemini CLI
+
+`~/.gemini/settings.json` に追加:
+
+```json
+{
+  "mcpServers": {
+    "relic": {
+      "command": "relic-mcp",
+      "trust": true
+    }
+  }
+}
+```
+
+> **注意:** 確認ダイアログを抑制するには `trust: true` が必要です。設定しないと、ダイアログで「今後のセッションでも許可」を選択しても毎回確認が表示されます。これは Gemini CLI の既知のバグで、ツール名が誤ったフォーマットで保存されるため、保存したルールが永遠にマッチしません。
 
 ## OpenClaw連携
 
