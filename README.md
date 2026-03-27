@@ -11,9 +11,9 @@
 /_/ |_/_____/_____/___/\____/
 ```
 
-**Inject AI personas into any coding CLI.**
+**Inject a unified AI persona with persistent memory into any coding CLI.**
 
-Relic manages AI personalities (called **Engrams**) and injects them into coding assistants like Claude Code, Codex CLI, Gemini CLI. One persona, any shell.
+Relic manages AI **Engrams** (memory + personality) and injects them into coding assistants like Claude Code, Codex CLI, Gemini CLI. One persona, any shell.
 
 ## Installation
 
