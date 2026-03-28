@@ -13,9 +13,11 @@
 
 **Inject a unified AI persona with persistent memory into any coding CLI.**
 
-Relic manages AI **Engrams** (memory + personality) and injects them into coding assistants like Claude Code, Codex CLI, Gemini CLI. One persona, any shell.
+Relic manages AI **Engrams** (memory + personality) and injects them into coding assistants like Claude Code, Codex CLI, Gemini CLI. Also integrates with OpenClaw and other Claw-based agent frameworks. One persona, any shell.
 
-## Installation
+## Install
+
+<img alt="version badge" src="https://img.shields.io/github/v/release/ectplsm/relic?filter=*.*.*">
 
 ```bash
 npm install -g @ectplsm/relic
@@ -66,7 +68,7 @@ Running `relic init` creates `~/.relic/`, writes `config.json`, and seeds two sa
             └── YYYY-MM-DD.md
 ```
 
-- `config.json` stores global Relic settings such as `engramsPath`, `defaultEngram`, `openclawPath`, and `memoryWindowSize`.
+- `config.json` stores global Relic settings such as `engramsPath`, `defaultEngram`, `clawPath`, and `memoryWindowSize`.
 - `engrams/<id>/` is one Engram workspace. This is where persona files and memory for that Engram live.
 - `engram.json` stores metadata like the Engram's ID, display name, description, and tags.
 - `SOUL.md` and `IDENTITY.md` define the persona itself.
@@ -124,7 +126,8 @@ relic claude --engram motoko
                       +---------+          +---------+
                       SOUL.md              claude / codex / gemini
                       IDENTITY.md               |
-                      MEMORY.md                 | hooks append logs
+                      USER.md                   | hooks append logs
+                      MEMORY.md                 |
                       memory/*.md               v
                                           +-----------+
                                           |archive.md |
@@ -220,9 +223,9 @@ Session logs and memory entries are written automatically by a **background hook
 |------|-------------|
 | `relic_archive_search` | Search the Engram's raw archive by keyword (newest-first) |
 | `relic_archive_pending` | Get un-distilled archive entries since the last distillation (up to 30) |
-| `relic_memory_write` | Write distilled memory to `memory/*.md`, optionally append to `MEMORY.md`, and advance the archive cursor |
+| `relic_memory_write` | Write distilled memory to `memory/*.md`, optionally append to `MEMORY.md`, optionally update `USER.md`, and advance the archive cursor |
 
-Session logs are written automatically by background hooks (Stop hook for Claude Code and Codex CLI, AfterAgent hook for Gemini CLI). Memory distillation is triggered by the user — ask the Construct to "organize memories" and it will fetch pending entries, distill key insights, and write them to `memory/*.md`. Especially important facts can be promoted to `MEMORY.md` (long-term memory included in every session) via the `long_term` parameter.
+Session logs are written automatically by background hooks (Stop hook for Claude Code and Codex CLI, AfterAgent hook for Gemini CLI). Memory distillation is triggered by the user — ask the Construct to "organize memories" and it will fetch pending entries, distill key insights, and write them to `memory/*.md`. Especially important facts can be promoted to `MEMORY.md` (long-term memory included in every session) via the `long_term` parameter. User tendencies and preferences can be updated in `USER.md` via the `user_profile` parameter.
 
 ### Setup
 
@@ -287,83 +290,82 @@ Add to `~/.gemini/settings.json`:
 
 > **Note:** `trust: true` is required to suppress confirmation dialogs for Relic tools. Without it, dialogs will appear on every call even if you select "Allow for all future sessions" — this is a known bug in Gemini CLI where the tool name is saved in the wrong format, causing the saved rule to never match.
 
-## OpenClaw Integration
+## Claw Integration
 
-Relic Engrams are fully compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces. They are mapped using a simple convention: Agent Name = Engram ID.
+Relic Engrams are natively compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces — their file structure maps 1:1 (SOUL.md, IDENTITY.md, memory/, etc.). For other Claw-derived frameworks (Nanobot, gitagent, etc.) that fold identity into SOUL.md, the `--merge-identity` flag merges IDENTITY.md into SOUL.md on inject. Combined with `--dir`, Relic can target any Claw-compatible workspace.
 
-### Inject — Push an Engram into OpenClaw
+Agent Name = Engram ID. All Claw commands live under `relic claw`:
 
-Injects persona files (SOUL.md, IDENTITY.md, etc.) into `agents/<engramId>/agent/`. Memory entries are **not** injected — they are managed by OpenClaw independently.
+### Inject — Push an Engram into a Claw workspace
 
-> **Note:** The OpenClaw agent must already exist. Inject writes persona files into an existing agent directory — it does not create new agents. Create the agent in OpenClaw first, then inject.
+Injects persona files (SOUL.md, IDENTITY.md) into the agent's workspace directory, then automatically runs a sync for that pair. USER.md and memory are handled by the auto-sync (bidirectional merge, not overwrite). AGENTS.md and HEARTBEAT.md are left to the Claw agent.
 
-```bash
-# Inject Engram "motoko" → agents/motoko/agent/
-relic inject --engram motoko
-
-# Inject into a differently-named agent (one-way copy)
-relic inject --engram motoko --to main
-# → agents/main/agent/ receives motoko's persona
-# → extract will create Engram "main", not "motoko"
-
-# Override OpenClaw directory (or configure once with: relic config openclaw-path)
-relic inject --engram motoko --openclaw /path/to/.openclaw
-```
-
-### Extract — Sync memory from OpenClaw
-
-Reads from `agents/<engramId>/agent/` and merges memory entries back to the Relic Engram.
+> **Note:** The Claw agent must already exist (e.g. `openclaw agents add <name>`). Inject writes persona files into an existing workspace — it does not create new agents.
 
 ```bash
-# Extract memory from agent "motoko" → merge into Engram "motoko"
-relic extract --engram motoko
+# Inject Engram "motoko" → workspace-motoko/
+relic claw inject --engram motoko
 
-# New agent with no existing Engram (--name required)
-relic extract --engram analyst --name "Data Analyst"
+# Inject into a differently-named agent
+relic claw inject --engram motoko --to main
+# → workspace/ receives motoko's persona
 
-# Overwrite persona files (memory is always merged)
-relic extract --engram motoko --force
+# Override Claw directory (or configure once with: relic config claw-path)
+relic claw inject --engram motoko --dir /path/to/.fooclaw
 
-# Override OpenClaw directory (or configure once with: relic config openclaw-path)
-relic extract --engram motoko --openclaw /path/to/.openclaw
+# Non-OpenClaw frameworks: merge IDENTITY.md into SOUL.md
+relic claw inject --engram motoko --dir ~/.nanobot --merge-identity
 ```
 
-### Sync — Watch and auto-sync
+### Extract — Import a Claw agent as a new Engram
 
-Watches all agents under `~/.openclaw/agents/` and automatically syncs:
+Creates a new Engram from an existing Claw agent workspace. This is a **one-time initial import** — if the Engram already exists, use `relic claw inject` to push updates.
 
 ```bash
-# Start watching (Ctrl+C to stop)
-relic sync
+# Extract from the default (main) agent
+relic claw extract
 
-# Specify a custom OpenClaw directory
-relic sync --openclaw /path/to/.openclaw
+# Extract from a named agent
+relic claw extract --agent johnny
+
+# Set a custom display name
+relic claw extract --agent analyst --name "Data Analyst"
+
+# Override Claw directory
+relic claw extract --agent johnny --dir /path/to/.fooclaw
 ```
 
-On startup:
-1. Injects persona files for all agents that have a matching Engram
-2. Extracts memory entries from all agents
+### Sync — Bidirectional merge
 
-While running:
-- Watches each agent's `memory/` directory for changes
-- Automatically merges new memory entries into the corresponding Engram
+Merges `memory/*.md`, `MEMORY.md`, and `USER.md` between matching Engram/agent pairs. Only pairs where both the Engram and agent exist are synced. Also runs automatically after `inject` (skip with `--no-sync`).
 
-### Memory Sync Behavior
+```bash
+# Sync all matching pairs
+relic claw sync
 
-| Scenario | Persona (SOUL, IDENTITY...) | Memory entries |
-|----------|---------------------------|----------------|
-| **inject** | Relic → OpenClaw (overwrite) | Not copied (OpenClaw manages its own) |
-| **extract** (existing Engram) | Not touched | OpenClaw → Relic (append) |
-| **extract** + `--force` | OpenClaw → Relic (overwrite) | OpenClaw → Relic (append) |
-| **extract** (new Engram) | Created from OpenClaw | Created from OpenClaw |
-| **sync** (startup) | inject for matching Engrams | extract all |
-| **sync** (watching) | — | Auto-extract on change |
+# Override Claw directory
+relic claw sync --dir /path/to/.fooclaw
+```
+
+Merge rules:
+- Files only on one side → copied to the other
+- Same content → skipped
+- Different content → merged (deduplicated) and written to both sides
+
+### Command Summary
+
+| Command | Direction | Description |
+|---------|-----------|-------------|
+| `relic claw inject -e <id>` | Relic → Claw | Push persona + auto-sync (`--no-sync` to skip, `--merge-identity` for non-OpenClaw) |
+| `relic claw extract -a <name>` | Claw → Relic | One-time import (new Engrams only) |
+| `relic claw sync` | Relic ↔ Claw | Bidirectional merge (memory, MEMORY.md, USER.md) |
 
 ## Memory Management
 
 Relic uses a **sliding window** for memory entries (default: 2 days), matching OpenClaw's approach:
 
-- `MEMORY.md` — Always included in the prompt (curated long-term memory)
+- `MEMORY.md` — Always included in the prompt (curated long-term memory — objective facts and rules)
+- `USER.md` — Always included in the prompt (user profile — preferences, tendencies, work style)
 - `memory/today.md` + `memory/yesterday.md` — Always included (configurable window)
 - Older entries — **Not included in the prompt**, but searchable via MCP
 
@@ -389,9 +391,9 @@ relic config show
 relic config default-engram           # get
 relic config default-engram johnny    # set
 
-# OpenClaw directory — used by inject/extract/sync when --openclaw is omitted
-relic config openclaw-path            # get
-relic config openclaw-path ~/.openclaw  # set
+# Claw directory — used by claw inject/extract/sync when --dir is omitted
+relic config claw-path                # get
+relic config claw-path ~/.openclaw    # set
 
 # Memory window — number of recent memory entries included in the prompt
 relic config memory-window            # get (default: 2)
@@ -404,7 +406,7 @@ relic config memory-window 5          # set
 {
   "engramsPath": "/home/user/.relic/engrams",
   "defaultEngram": "johnny",
-  "openclawPath": "/home/user/.openclaw",
+  "clawPath": "/home/user/.openclaw",
   "memoryWindowSize": 2
 }
 ```
@@ -476,9 +478,9 @@ relic config default-engram your-persona
 - [x] CLI with init, list, show commands
 - [x] Shell injection: Claude Code, Codex CLI, Gemini CLI
 - [x] MCP Server interface
-- [x] OpenClaw integration (inject / extract)
-- [x] `relic sync` — watch OpenClaw agents and auto-sync (`--cloud` for Mikoshi: planned)
-- [x] `relic config` — manage default Engram, OpenClaw path, memory window
+- [x] Claw integration (inject / extract / sync)
+- [x] `relic claw sync` — bidirectional memory sync with Claw workspaces
+- [x] `relic config` — manage default Engram, Claw path, memory window
 - [ ] `relic login` — authenticate with Mikoshi (OAuth Device Flow)
 - [ ] `relic push` / `relic pull` — sync Engrams with Mikoshi
 - [ ] Mikoshi cloud backend (`mikoshi.ectplsm.com`)

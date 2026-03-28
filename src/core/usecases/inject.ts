@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { EngramFiles } from "../entities/engram.js";
-import { FILE_MAP, resolveAgentPath } from "../../shared/openclaw.js";
+import { INJECT_FILE_MAP, resolveWorkspacePath } from "../../shared/openclaw.js";
 
 export interface InjectResult {
   engramId: string;
@@ -15,7 +15,8 @@ export interface InjectResult {
 /**
  * Inject — EngramのファイルをOpenClawワークスペースに注入する
  *
- * agent名 = Engram ID の規約に基づき、agents/<engramId>/agent/ に書き込む。
+ * OpenClawではエージェントごとに workspace-<name>/ を使い、
+ * デフォルト(main)エージェントのみ workspace/ を使う。
  * memoryEntries はOpenClaw側の管理に委ねるため注入しない。
  */
 export class Inject {
@@ -26,6 +27,7 @@ export class Inject {
     options?: {
       to?: string;
       openclawDir?: string;
+      mergeIdentity?: boolean;
     }
   ): Promise<InjectResult> {
     const engram = await this.repository.get(engramId);
@@ -33,12 +35,23 @@ export class Inject {
       throw new InjectEngramNotFoundError(engramId);
     }
 
-    const agentName = options?.to ?? engramId;
-    const targetPath = resolveAgentPath(agentName, options?.openclawDir);
-    if (!existsSync(targetPath)) {
-      throw new InjectAgentNotFoundError(agentName, targetPath);
+    // ベースディレクトリ（--dir）の存在チェック
+    if (options?.openclawDir && !existsSync(options.openclawDir)) {
+      throw new InjectClawDirNotFoundError(options.openclawDir);
     }
-    const filesWritten = await this.writeFiles(targetPath, engram.files);
+
+    const agentName = options?.to ?? engramId;
+    const targetPath = resolveWorkspacePath(agentName, options?.openclawDir);
+
+    if (!existsSync(targetPath)) {
+      throw new InjectWorkspaceNotFoundError(agentName);
+    }
+
+    const filesWritten = await this.writeFiles(
+      targetPath,
+      engram.files,
+      options?.mergeIdentity ?? false
+    );
 
     return {
       engramId: engram.meta.id,
@@ -50,12 +63,24 @@ export class Inject {
 
   private async writeFiles(
     targetPath: string,
-    files: EngramFiles
+    files: EngramFiles,
+    mergeIdentity: boolean
   ): Promise<string[]> {
     const written: string[] = [];
 
-    for (const [key, filename] of Object.entries(FILE_MAP)) {
-      const content = files[key as keyof typeof FILE_MAP];
+    for (const [key, filename] of Object.entries(INJECT_FILE_MAP)) {
+      // --merge-identity: skip IDENTITY.md (merged into SOUL.md below)
+      if (mergeIdentity && key === "identity") {
+        continue;
+      }
+
+      let content = files[key as keyof typeof INJECT_FILE_MAP];
+
+      // --merge-identity: append IDENTITY.md content to SOUL.md
+      if (mergeIdentity && key === "soul" && files.identity) {
+        content = content + "\n" + files.identity;
+      }
+
       if (content !== undefined) {
         await writeFile(join(targetPath, filename), content, "utf-8");
         written.push(filename);
@@ -73,11 +98,18 @@ export class InjectEngramNotFoundError extends Error {
   }
 }
 
-export class InjectAgentNotFoundError extends Error {
-  constructor(engramId: string, path: string) {
+export class InjectClawDirNotFoundError extends Error {
+  constructor(path: string) {
+    super(`Claw directory not found at ${path}`);
+    this.name = "InjectClawDirNotFoundError";
+  }
+}
+
+export class InjectWorkspaceNotFoundError extends Error {
+  constructor(engramId: string) {
     super(
-      `OpenClaw agent "${engramId}" not found at ${path}. The agent must exist before injecting.`
+      `OpenClaw agent "${engramId}" has not been created yet. Run "openclaw agents add ${engramId}" first, then try again.`
     );
-    this.name = "InjectAgentNotFoundError";
+    this.name = "InjectWorkspaceNotFoundError";
   }
 }

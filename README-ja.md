@@ -13,9 +13,11 @@
 
 **同一人格・同一記憶のAIペルソナを、あらゆるコーディングCLIに注入。**
 
-Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code・Codex CLI・Gemini CLIといったコーディングアシスタントに注入します。ひとつの人格を、あらゆるShellへ。
+Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code・Codex CLI・Gemini CLIといったコーディングアシスタントに注入します。OpenClawをはじめとするClaw系エージェントフレームワークとも連携可能。ひとつの人格を、あらゆるShellへ。
 
 ## インストール
+
+<img alt="version badge" src="https://img.shields.io/github/v/release/ectplsm/relic?filter=*.*.*">
 
 ```bash
 npm install -g @ectplsm/relic
@@ -66,7 +68,7 @@ relic codex --engram johnny
             └── YYYY-MM-DD.md
 ```
 
-- `config.json` には `engramsPath`、`defaultEngram`、`openclawPath`、`memoryWindowSize` などのRelic全体設定が入ります。
+- `config.json` には `engramsPath`、`defaultEngram`、`clawPath`、`memoryWindowSize` などのRelic全体設定が入ります。
 - `engrams/<id>/` は1つのEngramの `workspace` です。ペルソナファイルとそのEngram用の記憶はここに保存されます。
 - `engram.json` には Engram のID、表示名、説明、タグなどのメタデータが入ります。
 - `SOUL.md` と `IDENTITY.md` がペルソナ本体を定義します。
@@ -124,7 +126,8 @@ relic claude --engram motoko
                       +---------+          +---------+
                       SOUL.md              claude / codex / gemini
                       IDENTITY.md               |
-                      MEMORY.md                 | hooks append logs
+                      USER.md                   | hooks append logs
+                      MEMORY.md                 |
                       memory/*.md               v
                                           +-----------+
                                           |archive.md |
@@ -219,9 +222,9 @@ Relicの[MCP](https://modelcontextprotocol.io/)サーバーはCLI注入とペア
 |-------|------|
 | `relic_archive_search` | Engramの生archiveをキーワード検索する（新しい順） |
 | `relic_archive_pending` | 前回の蒸留以降の未蒸留archiveエントリを取得する（最大30件） |
-| `relic_memory_write` | 蒸留した記憶を `memory/*.md` に書き込み、任意で `MEMORY.md` にも追記し、archiveカーソルを進める |
+| `relic_memory_write` | 蒸留した記憶を `memory/*.md` に書き込み、任意で `MEMORY.md` への追記や `USER.md` の更新も行い、archiveカーソルを進める |
 
-会話ログはバックグラウンドhook（Claude CodeとCodex CLIのStop hook、Gemini CLIのAfterAgent hook）によって自動でarchiveに書き込まれます。記憶の蒸留はユーザーがトリガーします。Constructに「記憶を整理して」と指示すれば、未蒸留エントリを取得し、重要な知見を蒸留して `memory/*.md` に書き出します。特に重要な事実は `long_term` パラメータで `MEMORY.md` に昇格でき、これは全セッションで読み込まれる長期記憶になります。
+会話ログはバックグラウンドhook（Claude CodeとCodex CLIのStop hook、Gemini CLIのAfterAgent hook）によって自動でarchiveに書き込まれます。記憶の蒸留はユーザーがトリガーします。Constructに「記憶を整理して」と指示すれば、未蒸留エントリを取得し、重要な知見を蒸留して `memory/*.md` に書き出します。特に重要な事実は `long_term` パラメータで `MEMORY.md` に昇格でき、これは全セッションで読み込まれる長期記憶になります。ユーザーの傾向や好みは `user_profile` パラメータで `USER.md` に記録できます。
 
 ### セットアップ
 
@@ -286,83 +289,82 @@ approval_mode = "approve"
 
 > **注意:** 確認ダイアログを抑制するには `trust: true` が必要です。設定しないと、ダイアログで「今後のセッションでも許可」を選択しても毎回確認が表示されます。これは Gemini CLI の既知のバグで、ツール名が誤ったフォーマットで保存されるため、保存したルールが永遠にマッチしません。
 
-## OpenClaw連携
+## Claw連携
 
-Relicのエングラムは [OpenClaw](https://github.com/openclaw/openclaw) のワークスペースと完全互換です。**エージェント名 = Engram ID** というシンプルな規約でマッピングされます。
+Relicのエングラムは [OpenClaw](https://github.com/openclaw/openclaw) のワークスペースとネイティブ互換です — ファイル構造が1:1で対応します（SOUL.md, IDENTITY.md, memory/ 等）。Nanobot・gitagentなど、IDENTITYをSOULに統合する他のClaw派生フレームワークには、`--merge-identity` フラグでIDENTITY.mdをSOUL.mdに統合してinjectできます。`--dir` と組み合わせることで、あらゆるClaw互換ワークスペースに対応可能です。
 
-### Inject — EngramをOpenClawに注入
+**エージェント名 = Engram ID**。すべてのClawコマンドは `relic claw` 配下にあります:
 
-ペルソナファイル（SOUL.md, IDENTITY.md等）を `agents/<engramId>/agent/` に書き込みます。メモリエントリは**注入しません** — OpenClaw側で独立して管理されます。
+### Inject — EngramをClawワークスペースに注入
 
-> **注意:** OpenClawのエージェントが事前に存在する必要があります。injectは既存のエージェントディレクトリにペルソナファイルを書き込みます — 新しいエージェントは作成しません。先にOpenClawでエージェントを作成してからinjectしてください。
+ペルソナファイル（SOUL.md, IDENTITY.md）をエージェントのワークスペースディレクトリに書き込み、続けてそのペアの自動syncを実行します。USER.mdとメモリはauto-syncで双方向マージされます。AGENTS.md・HEARTBEAT.mdはClaw側の管理に委ねます。
 
-```bash
-# Engram "motoko" を注入 → agents/motoko/agent/
-relic inject --engram motoko
-
-# 別名のエージェントに注入（一方通行のコピー）
-relic inject --engram motoko --to main
-# → agents/main/agent/ にmotokoのペルソナをコピー
-# → extractすると Engram "main" として抽出される
-
-# OpenClawディレクトリを指定（または relic config openclaw-path で一度だけ設定）
-relic inject --engram motoko --openclaw /path/to/.openclaw
-```
-
-### Extract — OpenClawからメモリを同期
-
-`agents/<engramId>/agent/` から読み取り、メモリエントリをRelicのEngramにマージします。
+> **注意:** Clawエージェントが事前に存在する必要があります（例: `openclaw agents add <name>`）。injectは既存ワークスペースにペルソナファイルを書き込みます — 新しいエージェントは作成しません。
 
 ```bash
-# エージェント "motoko" のメモリを抽出 → Engram "motoko" にマージ
-relic extract --engram motoko
+# Engram "motoko" を注入 → workspace-motoko/
+relic claw inject --engram motoko
 
-# 既存Engramがない新規エージェント（--name が必須）
-relic extract --engram analyst --name "Data Analyst"
+# 別名のエージェントに注入
+relic claw inject --engram motoko --to main
+# → workspace/ にmotokoのペルソナをコピー
 
-# ペルソナファイルも上書き（メモリは常にマージ）
-relic extract --engram motoko --force
+# Clawディレクトリを指定（または relic config claw-path で一度だけ設定）
+relic claw inject --engram motoko --dir /path/to/.fooclaw
 
-# OpenClawディレクトリを指定（または relic config openclaw-path で一度だけ設定）
-relic extract --engram motoko --openclaw /path/to/.openclaw
+# 非OpenClaw系: IDENTITY.mdをSOUL.mdに統合してinject
+relic claw inject --engram motoko --dir ~/.nanobot --merge-identity
 ```
 
-### Sync — 監視と自動同期
+### Extract — ClawエージェントをEngramとして取り込む
 
-`~/.openclaw/agents/` 配下の全エージェントを監視し、自動で同期します:
+既存のClawエージェントのワークスペースから新しいEngramを作成します。これは**初回の取り込み専用**です — Engramが既に存在する場合は `relic claw inject` で更新してください。
 
 ```bash
-# 監視を開始（Ctrl+C で停止）
-relic sync
+# デフォルト（main）エージェントから取り込む
+relic claw extract
 
-# OpenClawディレクトリを指定
-relic sync --openclaw /path/to/.openclaw
+# 指定エージェントから取り込む
+relic claw extract --agent johnny
+
+# 表示名を指定
+relic claw extract --agent analyst --name "Data Analyst"
+
+# Clawディレクトリを指定
+relic claw extract --agent johnny --dir /path/to/.fooclaw
 ```
 
-起動時:
-1. 一致するEngramがあるエージェントにペルソナファイルを注入
-2. 全エージェントからメモリエントリを抽出
+### Sync — 双方向マージ
 
-監視中:
-- 各エージェントの `memory/` ディレクトリの変更を検知
-- 自動的に対応するEngramにメモリエントリをマージ
+Engram/agentのマッチングペア間で `memory/*.md`・`MEMORY.md`・`USER.md` をマージします。Engramとagentの両方が存在するペアのみが対象です。`inject` の後にも自動実行されます（`--no-sync` でスキップ可）。
 
-### メモリ同期の動作
+```bash
+# マッチするペアをすべて同期
+relic claw sync
 
-| シナリオ | ペルソナ（SOUL, IDENTITY...） | メモリエントリ |
-|---------|------------------------------|---------------|
-| **inject** | Relic → OpenClaw（上書き） | コピーしない（OpenClaw側で管理） |
-| **extract**（既存Engram） | 変更しない | OpenClaw → Relic（追記） |
-| **extract** + `--force` | OpenClaw → Relic（上書き） | OpenClaw → Relic（追記） |
-| **extract**（新規Engram） | OpenClawから作成 | OpenClawから作成 |
-| **sync**（起動時） | 一致するEngramをinject | 全agentからextract |
-| **sync**（監視中） | — | 変更検知で自動extract |
+# Clawディレクトリを指定
+relic claw sync --dir /path/to/.fooclaw
+```
+
+マージルール:
+- 片方にだけある → もう片方にコピー
+- 内容が同じ → スキップ
+- 内容が異なる → マージ（重複除外）して両方に書き戻し
+
+### コマンド一覧
+
+| コマンド | 方向 | 説明 |
+|---------|------|------|
+| `relic claw inject -e <id>` | Relic → Claw | ペルソナ注入 + 自動sync（`--no-sync` でスキップ、非OpenClawは `--merge-identity`） |
+| `relic claw extract -a <name>` | Claw → Relic | 初回取り込み（新規Engramのみ） |
+| `relic claw sync` | Relic ↔ Claw | 双方向マージ（memory, MEMORY.md, USER.md） |
 
 ## メモリ管理
 
 Relicは OpenClaw と同じ **スライディングウィンドウ** でメモリエントリを管理します（デフォルト: 2日分）:
 
-- `MEMORY.md` — 常にプロンプトに含まれる（キュレーション済み長期記憶）
+- `MEMORY.md` — 常にプロンプトに含まれる（キュレーション済み長期記憶 — 客観的事実・ルール）
+- `USER.md` — 常にプロンプトに含まれる（ユーザープロフィール — 傾向・好み・作業スタイル）
 - `memory/today.md` + `memory/yesterday.md` — 常にプロンプトに含まれる（ウィンドウ幅は変更可能）
 - それ以前のエントリ — **プロンプトには含まれない**が、MCPで検索可能
 
@@ -388,9 +390,9 @@ relic config show
 relic config default-engram           # 取得
 relic config default-engram johnny    # 設定
 
-# OpenClawディレクトリ — inject/extract/sync の --openclaw 省略時に使用
-relic config openclaw-path            # 取得
-relic config openclaw-path ~/.openclaw  # 設定
+# Clawディレクトリ — claw inject/extract/sync の --dir 省略時に使用
+relic config claw-path                # 取得
+relic config claw-path ~/.openclaw    # 設定
 
 # メモリウィンドウ — プロンプトに含める直近メモリエントリ数
 relic config memory-window            # 取得（デフォルト: 2）
@@ -403,7 +405,7 @@ relic config memory-window 5          # 設定
 {
   "engramsPath": "/home/user/.relic/engrams",
   "defaultEngram": "johnny",
-  "openclawPath": "/home/user/.openclaw",
+  "clawPath": "/home/user/.openclaw",
   "memoryWindowSize": 2
 }
 ```
@@ -475,9 +477,9 @@ relic config default-engram your-persona
 - [x] CLI（init, list, show コマンド）
 - [x] Shell注入: Claude Code, Codex CLI, Gemini CLI
 - [x] MCPサーバーインターフェース
-- [x] OpenClaw連携（inject / extract）
-- [x] `relic sync` — OpenClawのagentsを監視して自動同期（`--cloud` でMikoshi連携: 計画中）
-- [x] `relic config` — デフォルトEngram・OpenClawパス・メモリウィンドウの管理
+- [x] Claw連携（inject / extract / sync）
+- [x] `relic claw sync` — Clawワークスペースとのメモリ双方向マージ
+- [x] `relic config` — デフォルトEngram・Clawパス・メモリウィンドウの管理
 - [ ] `relic login` — Mikoshi認証（OAuth Device Flow）
 - [ ] `relic push` / `relic pull` — MikoshiとのEngram同期
 - [ ] Mikoshi クラウドバックエンド（`mikoshi.ectplsm.com`）
