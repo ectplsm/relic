@@ -35,6 +35,11 @@ export class Inject {
       throw new InjectEngramNotFoundError(engramId);
     }
 
+    // ベースディレクトリ（--dir）の存在チェック
+    if (options?.openclawDir && !existsSync(options.openclawDir)) {
+      throw new InjectClawDirNotFoundError(options.openclawDir);
+    }
+
     const agentName = options?.to ?? engramId;
     const targetPath = resolveWorkspacePath(agentName, options?.openclawDir);
 
@@ -90,6 +95,13 @@ export class InjectEngramNotFoundError extends Error {
   constructor(id: string) {
     super(`Engram "${id}" not found`);
     this.name = "InjectEngramNotFoundError";
+  }
+}
+
+export class InjectClawDirNotFoundError extends Error {
+  constructor(path: string) {
+    super(`Claw directory not found at ${path}`);
+    this.name = "InjectClawDirNotFoundError";
   }
 }
 

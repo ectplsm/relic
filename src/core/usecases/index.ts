@@ -4,6 +4,7 @@ export { Init, type InitResult } from "./init.js";
 export {
   Inject,
   InjectEngramNotFoundError,
+  InjectClawDirNotFoundError,
   InjectWorkspaceNotFoundError,
   type InjectResult,
 } from "./inject.js";

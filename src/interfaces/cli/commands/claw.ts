@@ -3,6 +3,7 @@ import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import {
   Inject,
   InjectEngramNotFoundError,
+  InjectClawDirNotFoundError,
   InjectWorkspaceNotFoundError,
   Extract,
   WorkspaceNotFoundError,
@@ -84,6 +85,7 @@ export function registerClawCommand(program: Command): void {
         } catch (err) {
           if (
             err instanceof InjectEngramNotFoundError ||
+            err instanceof InjectClawDirNotFoundError ||
             err instanceof InjectWorkspaceNotFoundError
           ) {
             console.error(`Error: ${err.message}`);
