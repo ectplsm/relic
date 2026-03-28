@@ -42,26 +42,51 @@ npm install -g @ectplsm/relic
 
 ## クイックスタート
 
+### 1. 初期化
+
 ```bash
-# 初期化 — 設定ファイルとサンプルEngramを生成
 relic init
 # → "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):" と表示される
 
-# 利用可能なEngramを一覧表示
-relic list
+relic list          # 利用可能なEngramを一覧表示
+relic show motoko   # Engramの合成プロンプトをプレビュー
+```
 
-# Engramの合成プロンプトをプレビュー
-relic show motoko
+### 2. Shellを起動
 
-# Shellを起動（--engram 省略時はデフォルトEngramを使用）
-relic claude
+```bash
+relic claude                   # デフォルトEngramを使用
+relic claude --engram motoko   # 明示的に指定
 relic codex
 relic gemini
-
-# 明示的に指定することも可能
-relic claude --engram motoko
-relic codex --engram johnny
 ```
+
+### 3. 記憶機能のセットアップ (MCP)
+
+MCPサーバーを登録すると、Constructが過去の会話を検索したり、記憶を蒸留できるようになります。使用するShellに合わせて実行してください:
+
+```bash
+# Claude Code
+claude mcp add --scope user relic -- relic-mcp
+
+# Codex CLI
+codex mcp add relic -- relic-mcp
+
+# Gemini CLI — ~/.gemini/settings.json に追加:
+#   { "mcpServers": { "relic": { "command": "relic-mcp", "trust": true } } }
+```
+
+> 自動承認の設定やShellごとの詳細は [MCPサーバー](#mcpサーバー) を参照してください。
+
+### 4. 記憶を整理する
+
+Constructを使い続けると、会話ログがバックグラウンドhookで自動的に `archive.md` に保存されます。これを永続的な記憶に蒸留するには、時々Constructにこう伝えてください:
+
+> **「記憶を整理して」**
+
+Constructが最近の会話を振り返り、重要な事実や決定を `memory/*.md` に抽出し、特に重要な長期的知見を `MEMORY.md` に昇格させ、あなたの傾向や好みを `USER.md` に記録します。蒸留された記憶は、以降のセッションで自動的に読み込まれます。
+
+> 記憶システムの詳細は [記憶の管理](#記憶の管理) を参照してください。
 
 ## `relic init` で作られるもの
 

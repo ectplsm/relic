@@ -42,26 +42,51 @@ npm install -g @ectplsm/relic
 
 ## Quick Start
 
+### 1. Initialize
+
 ```bash
-# Initialize — creates config and sample Engrams
 relic init
 # → Prompts: "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):"
 
-# List available Engrams
-relic list
+relic list          # List available Engrams
+relic show motoko   # Preview an Engram's composed prompt
+```
 
-# Preview an Engram's composed prompt
-relic show motoko
+### 2. Launch a Shell
 
-# Launch a Shell (uses default Engram if --engram is omitted)
-relic claude
+```bash
+relic claude                   # Uses default Engram
+relic claude --engram motoko   # Specify explicitly
 relic codex
 relic gemini
-
-# Or specify explicitly
-relic claude --engram motoko
-relic codex --engram johnny
 ```
+
+### 3. Set Up Memory (MCP)
+
+Register the MCP server so the Construct can search past conversations and distill memories. Pick your shell:
+
+```bash
+# Claude Code
+claude mcp add --scope user relic -- relic-mcp
+
+# Codex CLI
+codex mcp add relic -- relic-mcp
+
+# Gemini CLI — add to ~/.gemini/settings.json:
+#   { "mcpServers": { "relic": { "command": "relic-mcp", "trust": true } } }
+```
+
+> For auto-approval setup and per-shell details, see [MCP Server](#mcp-server).
+
+### 4. Organize Memories
+
+As you use a Construct, conversation logs are automatically saved to `archive.md` by background hooks. To distill these into lasting memory, periodically tell the Construct:
+
+> **"Organize my memories"** (or 「記憶を整理して」)
+
+The Construct will review recent conversations, extract key facts and decisions into `memory/*.md`, promote important long-term insights to `MEMORY.md`, and update your preferences in `USER.md`. These distilled memories are then loaded into future sessions automatically.
+
+> For details on the memory system, see [Memory Management](#memory-management).
 
 ## What `relic init` Creates
 
