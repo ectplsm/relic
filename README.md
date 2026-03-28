@@ -78,6 +78,7 @@ As you keep using an Engram, more files are added to the same workspace:
 
 - `archive.md` is created inside `engrams/<id>/` when shell hooks start logging raw conversation turns.
 - `MEMORY.md` can be created or extended when especially important distilled facts are promoted to long-term memory.
+- `USER.md` is created or updated during memory distillation to record user preferences, tendencies, and work style.
 - `~/.relic/hooks/` and `~/.relic/gemini-system-default.md` are created later on first shell launch when hook registration or Gemini prompt caching is needed.
 
 ## Sample Engrams
