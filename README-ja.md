@@ -13,7 +13,7 @@
 
 **同一人格・同一記憶のAIペルソナを、あらゆるコーディングCLIに注入。**
 
-Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code・Codex CLI・Gemini CLIといったコーディングアシスタントに注入します。ひとつの人格を、あらゆるShellへ。
+Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code・Codex CLI・Gemini CLIといったコーディングアシスタントに注入します。OpenClawをはじめとするClaw系エージェントフレームワークとも連携可能。ひとつの人格を、あらゆるShellへ。
 
 ## インストール
 

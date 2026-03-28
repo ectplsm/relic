@@ -13,7 +13,7 @@
 
 **Inject a unified AI persona with persistent memory into any coding CLI.**
 
-Relic manages AI **Engrams** (memory + personality) and injects them into coding assistants like Claude Code, Codex CLI, Gemini CLI. One persona, any shell.
+Relic manages AI **Engrams** (memory + personality) and injects them into coding assistants like Claude Code, Codex CLI, Gemini CLI. Also integrates with OpenClaw and other Claw-based agent frameworks. One persona, any shell.
 
 ## Install
 
