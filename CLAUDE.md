@@ -1,42 +1,61 @@
 # PROJECT RELIC
 
-AIの人格(Engram)をクラウド要塞(Mikoshi)で管理し、あらゆるLLMインターフェース(Shell)へ動的に注入(Summon)するシステム。
+A system that manages AI personas (Engrams) on a cloud fortress (Mikoshi) and dynamically injects them into any LLM interface (Shell).
 
-## ドメイン用語 (The 5 Pillars)
+## Domain Glossary (The 5 Pillars)
 
-| 用語 | 役割 | 説明 |
-|------|------|------|
-| **Relic** | Injector | システムの中核。CLI/MCP/APIの複数の顔を持つアダプター |
-| **Mikoshi** | Backend | すべてのEngramが安置されるクラウドデータ要塞 (`mikoshi.ectplsm.com`) |
-| **Engram** | Data | OpenClaw互換の人格データセット (Markdown群) |
-| **Shell** | LLM | Claude, Gemini, GPT等。純粋な演算能力のみを持つ空の肉体 |
-| **Construct** | Process | ShellにEngramがロードされ稼働しているプロセス |
+| Term | Role | Description |
+|------|------|-------------|
+| **Relic** | Injector | The core system. An adapter with CLI, MCP, and API faces. |
+| **Mikoshi** | Backend | Cloud fortress where all Engrams are stored (`mikoshi.ectplsm.com`). |
+| **Engram** | Data | An OpenClaw `workspace`-compatible persona dataset (set of Markdown files). |
+| **Shell** | LLM | Claude, Gemini, GPT, etc. An empty vessel with pure compute. |
+| **Construct** | Process | A live process where an Engram is loaded into a Shell. |
 
-## アーキテクチャ
+## Architecture
 
-クリーンアーキテクチャ。依存の方向は常に内側(core)へ。
+Clean Architecture. Dependencies always point inward (toward `core/`).
 
 ```
 src/
-├── core/           # ビジネスロジック（外部依存なし、Zodのみ例外）
-│   ├── entities/   # Engram, Construct等のドメインモデル
-│   ├── usecases/   # summon, list, sync等のユースケース
-│   └── ports/      # 外部との境界インターフェース（抽象）
-├── adapters/       # ポートの具象実装 (Mikoshi API等)
-├── interfaces/     # エントリポイント (CLI, MCP Server)
-└── shared/         # 共有ユーティリティ
+├── core/           # Business logic (no external deps except Zod)
+│   ├── entities/   # Domain models: Engram, Construct, etc.
+│   ├── usecases/   # Use cases: summon, list, sync, archive, memory, etc.
+│   └── ports/      # Abstract boundary interfaces
+├── adapters/       # Concrete port implementations (Mikoshi API, shell launchers, hooks, etc.)
+├── interfaces/     # Entry points (CLI via Commander, MCP Server)
+└── shared/         # Shared utilities (config, path resolution, etc.)
 ```
 
-## 技術スタック
+## Tech Stack
 
-- **ランタイム**: Node.js (>=18)
-- **言語**: TypeScript (strict mode)
-- **バリデーション**: Zod
+- **Runtime**: Node.js (>=18)
+- **Language**: TypeScript (strict mode)
+- **Validation**: Zod
 - **CLI**: Commander
 - **MCP**: @modelcontextprotocol/sdk
+- **Build**: tsc (TypeScript compiler)
+- **Package Manager**: npm
 
-## コーディング規約
+## Key Files & Concepts
 
-- 変数名・型名にドメイン用語 (Engram, Mikoshi, Shell, Construct, Relic) を積極的に使用する
-- `core/` 内は外部ライブラリ(Zod以外)に依存しない
-- Engramのデータ構造はOpenClaw workspace互換を維持する
+- `templates/engrams/` — Sample Engram templates (johnny, motoko). Copied during `relic init`.
+- `src/shared/config.ts` — Central config, Engram seeding, path resolution via `import.meta.url`.
+- `src/adapters/shells/` — Shell launchers (claude, codex, gemini) and hook scripts.
+- `src/interfaces/mcp/` — MCP server with `relic_archive_search`, `relic_archive_pending`, `relic_memory_write` tools.
+- `src/interfaces/cli/` — CLI commands including `relic claw` subcommands (inject/extract/sync).
+
+## Coding Conventions
+
+- Use domain terms (Engram, Mikoshi, Shell, Construct, Relic) in variable and type names.
+- `core/` must not depend on external libraries (Zod is the only exception).
+- Engram data structure must remain OpenClaw `workspace`-compatible.
+- Keep small, focused changes. Respect module boundaries.
+- Build check: `npm run build` (runs `tsc`).
+
+## Git & PR Conventions
+
+- **Commits**: Follow [Conventional Commits](https://www.conventionalcommits.org/) (e.g. `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`).
+- **Pull Requests**: Always write PR titles and descriptions in **English**.
+- **PR template**: Use `## Summary` with bullet points and `## Test plan` with checklist.
+- Do not auto-merge PRs — wait for explicit user approval.
