@@ -290,9 +290,9 @@ approval_mode = "approve"
 
 ## Claw連携
 
-Relicのエングラムは [OpenClaw](https://github.com/openclaw/openclaw) のワークスペースおよび他のClaw互換エージェントフレームワークと完全互換です。**エージェント名 = Engram ID** というシンプルな規約でマッピングされます。
+Relicのエングラムは [OpenClaw](https://github.com/openclaw/openclaw) のワークスペースとネイティブ互換です — ファイル構造が1:1で対応します（SOUL.md, IDENTITY.md, memory/ 等）。Nanobot・gitagentなど、IDENTITYをSOULに統合する他のClaw派生フレームワークには、`--merge-identity` フラグでIDENTITY.mdをSOUL.mdに統合してinjectできます。`--dir` と組み合わせることで、あらゆるClaw互換ワークスペースに対応可能です。
 
-すべてのClawコマンドは `relic claw` 配下にあります:
+**エージェント名 = Engram ID**。すべてのClawコマンドは `relic claw` 配下にあります:
 
 ### Inject — EngramをClawワークスペースに注入
 
@@ -310,6 +310,9 @@ relic claw inject --engram motoko --to main
 
 # Clawディレクトリを指定（または relic config claw-path で一度だけ設定）
 relic claw inject --engram motoko --dir /path/to/.fooclaw
+
+# 非OpenClaw系: IDENTITY.mdをSOUL.mdに統合してinject
+relic claw inject --engram motoko --dir ~/.nanobot --merge-identity
 ```
 
 ### Extract — ClawエージェントをEngramとして取り込む
@@ -351,7 +354,7 @@ relic claw sync --dir /path/to/.fooclaw
 
 | コマンド | 方向 | 説明 |
 |---------|------|------|
-| `relic claw inject -e <id>` | Relic → Claw | ペルソナファイルをワークスペースに反映 |
+| `relic claw inject -e <id>` | Relic → Claw | ペルソナファイルをワークスペースに反映（非OpenClawは `--merge-identity`） |
 | `relic claw extract -a <name>` | Claw → Relic | 初回取り込み（新規Engramのみ） |
 | `relic claw sync` | Relic ↔ Claw | メモリの双方向マージ |
 

@@ -25,12 +25,14 @@ export function registerClawCommand(program: Command): void {
     .requiredOption("-e, --engram <id>", "Engram ID to inject")
     .option("--to <agent>", "Inject into a different agent name")
     .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
+    .option("--merge-identity", "Merge IDENTITY.md into SOUL.md (for non-OpenClaw Claw frameworks)")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(
       async (opts: {
         engram: string;
         to?: string;
         dir?: string;
+        mergeIdentity?: boolean;
         path?: string;
       }) => {
         const engramsPath = await resolveEngramsPath(opts.path);
@@ -42,6 +44,7 @@ export function registerClawCommand(program: Command): void {
           const result = await inject.execute(opts.engram, {
             to: opts.to,
             openclawDir: clawDir,
+            mergeIdentity: opts.mergeIdentity,
           });
 
           console.log(

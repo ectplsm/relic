@@ -291,9 +291,9 @@ Add to `~/.gemini/settings.json`:
 
 ## Claw Integration
 
-Relic Engrams are fully compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces and other Claw-compatible agent frameworks. They are mapped using a simple convention: Agent Name = Engram ID.
+Relic Engrams are natively compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces — their file structure maps 1:1 (SOUL.md, IDENTITY.md, memory/, etc.). For other Claw-derived frameworks (Nanobot, gitagent, etc.) that fold identity into SOUL.md, the `--merge-identity` flag merges IDENTITY.md into SOUL.md on inject. Combined with `--dir`, Relic can target any Claw-compatible workspace.
 
-All Claw commands live under `relic claw`:
+Agent Name = Engram ID. All Claw commands live under `relic claw`:
 
 ### Inject — Push an Engram into a Claw workspace
 
@@ -311,6 +311,9 @@ relic claw inject --engram motoko --to main
 
 # Override Claw directory (or configure once with: relic config claw-path)
 relic claw inject --engram motoko --dir /path/to/.fooclaw
+
+# Non-OpenClaw frameworks: merge IDENTITY.md into SOUL.md
+relic claw inject --engram motoko --dir ~/.nanobot --merge-identity
 ```
 
 ### Extract — Import a Claw agent as a new Engram
@@ -352,7 +355,7 @@ Merge rules:
 
 | Command | Direction | Description |
 |---------|-----------|-------------|
-| `relic claw inject -e <id>` | Relic → Claw | Push persona files to workspace |
+| `relic claw inject -e <id>` | Relic → Claw | Push persona files to workspace (`--merge-identity` for non-OpenClaw) |
 | `relic claw extract -a <name>` | Claw → Relic | One-time import (new Engrams only) |
 | `relic claw sync` | Relic ↔ Claw | Bidirectional memory merge |
 

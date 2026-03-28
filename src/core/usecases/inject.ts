@@ -27,6 +27,7 @@ export class Inject {
     options?: {
       to?: string;
       openclawDir?: string;
+      mergeIdentity?: boolean;
     }
   ): Promise<InjectResult> {
     const engram = await this.repository.get(engramId);
@@ -41,7 +42,11 @@ export class Inject {
       throw new InjectWorkspaceNotFoundError(agentName);
     }
 
-    const filesWritten = await this.writeFiles(targetPath, engram.files);
+    const filesWritten = await this.writeFiles(
+      targetPath,
+      engram.files,
+      options?.mergeIdentity ?? false
+    );
 
     return {
       engramId: engram.meta.id,
@@ -53,12 +58,24 @@ export class Inject {
 
   private async writeFiles(
     targetPath: string,
-    files: EngramFiles
+    files: EngramFiles,
+    mergeIdentity: boolean
   ): Promise<string[]> {
     const written: string[] = [];
 
     for (const [key, filename] of Object.entries(FILE_MAP)) {
-      const content = files[key as keyof typeof FILE_MAP];
+      // --merge-identity: skip IDENTITY.md (merged into SOUL.md below)
+      if (mergeIdentity && key === "identity") {
+        continue;
+      }
+
+      let content = files[key as keyof typeof FILE_MAP];
+
+      // --merge-identity: append IDENTITY.md content to SOUL.md
+      if (mergeIdentity && key === "soul" && files.identity) {
+        content = content + "\n" + files.identity;
+      }
+
       if (content !== undefined) {
         await writeFile(join(targetPath, filename), content, "utf-8");
         written.push(filename);
