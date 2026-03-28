@@ -15,6 +15,23 @@
 
 Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code・Codex CLI・Gemini CLIといったコーディングアシスタントに注入します。OpenClawをはじめとするClaw系エージェントフレームワークとも連携可能。ひとつの人格を、あらゆるShellへ。
 
+## 目次
+
+- [インストール](#インストール)
+- [クイックスタート](#クイックスタート)
+- [`relic init` で作られるもの](#relic-init-で作られるもの)
+- [サンプルEngram](#サンプルengram)
+- [仕組み](#仕組み)
+- [対応Shell](#対応shell)
+- [対話ログの記録](#対話ログの記録)
+- [MCPサーバー](#mcpサーバー)
+- [Claw連携](#claw連携)
+- [記憶の管理](#記憶の管理)
+- [設定](#設定)
+- [独自のEngramを作成する](#独自のengramを作成する)
+- [ドメイン用語集](#ドメイン用語集)
+- [ロードマップ](#ロードマップ)
+
 ## インストール
 
 <img alt="version badge" src="https://img.shields.io/github/v/release/ectplsm/relic?filter=*.*.*">

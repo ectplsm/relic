@@ -15,6 +15,23 @@
 
 Relic manages AI **Engrams** (memory + personality) and injects them into coding assistants like Claude Code, Codex CLI, Gemini CLI. Also integrates with OpenClaw and other Claw-based agent frameworks. One persona, any shell.
 
+## Table of Contents
+
+- [Install](#install)
+- [Quick Start](#quick-start)
+- [What `relic init` Creates](#what-relic-init-creates)
+- [Sample Engrams](#sample-engrams)
+- [How It Works](#how-it-works)
+- [Supported Shells](#supported-shells)
+- [Conversation Log Recording](#conversation-log-recording)
+- [MCP Server](#mcp-server)
+- [Claw Integration](#claw-integration)
+- [Memory Management](#memory-management)
+- [Configuration](#configuration)
+- [Creating Your Own Engram](#creating-your-own-engram)
+- [Domain Glossary](#domain-glossary)
+- [Roadmap](#roadmap)
+
 ## Install
 
 <img alt="version badge" src="https://img.shields.io/github/v/release/ectplsm/relic?filter=*.*.*">
@@ -214,7 +231,6 @@ On the **first run** of `relic gemini`, two one-time setups happen automatically
 2. **Default system prompt cache** — captures Gemini CLI's built-in system prompt to `~/.relic/gemini-system-default.md` via `GEMINI_WRITE_SYSTEM_MD`
 
 The Engram persona is then appended to the cached default prompt and injected via `GEMINI_SYSTEM_MD` on every launch.
-
 
 ## MCP Server
 
