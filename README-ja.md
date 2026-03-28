@@ -48,8 +48,8 @@ npm install -g @ectplsm/relic
 relic init
 # → "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):" と表示される
 
-relic list          # 利用可能なEngramを一覧表示
-relic show motoko   # Engramの合成プロンプトをプレビュー
+relic list                            # 利用可能なEngramを一覧表示
+relic config default-engram motoko   # デフォルトEngramを設定
 ```
 
 ### 2. 記憶機能のセットアップ (MCP)

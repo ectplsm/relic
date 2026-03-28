@@ -48,8 +48,8 @@ npm install -g @ectplsm/relic
 relic init
 # → Prompts: "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):"
 
-relic list          # List available Engrams
-relic show motoko   # Preview an Engram's composed prompt
+relic list                            # List available Engrams
+relic config default-engram motoko   # Set your default Engram
 ```
 
 ### 2. Set Up Memory (MCP)
