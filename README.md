@@ -78,11 +78,14 @@ As you keep using an Engram, more files are added to the same workspace:
 
 - `archive.md` is created inside `engrams/<id>/` when shell hooks start logging raw conversation turns.
 - `MEMORY.md` can be created or extended when especially important distilled facts are promoted to long-term memory.
+- `USER.md` is created or updated during memory distillation to record user preferences, tendencies, and work style.
 - `~/.relic/hooks/` and `~/.relic/gemini-system-default.md` are created later on first shell launch when hook registration or Gemini prompt caching is needed.
 
 ## Sample Engrams
 
-`relic init` seeds two ready-to-use Engrams:
+`relic init` seeds two ready-to-use Engrams. Their SOUL.md and IDENTITY.md follow the [OpenClaw](https://github.com/openclaw/openclaw) format.
+
+> **Existing users:** The latest templates are always available in [`templates/engrams/`](templates/engrams/). Copy them over your `~/.relic/engrams/` files to update.
 
 ### Johnny Silverhand (`johnny`)
 
@@ -120,41 +123,42 @@ relic claude --engram motoko
        |                   |                    |
        |             compose & inject           |
        |                   v                    v
-       |              +---------+          +---------+
-       +--------------| Engram  |--------->|Construct|
-                      |(persona)|          | (live)  |
-                      +---------+          +---------+
-                      SOUL.md              claude / codex / gemini
-                      IDENTITY.md               |
-                      USER.md                   | hooks append logs
-                      MEMORY.md                 |
-                      memory/*.md               v
-                                          +-----------+
-                                          |archive.md |
-                                          | raw logs  |
-                                          +-----------+
-                                                |
-                           MCP recall           | user-triggered
-                          search/pending        | distillation
-                                                v
-                                          +-----------+
-                                          | distilled |
-                                          |memory/*.md|
-                                          +-----------+
-                                                |
-                                           promote key
-                                             insights
-                                                v
-                                             MEMORY.md
+       |            ╔═══════════╗          +---------+
+       +------------║  Engram   ║--------->|Construct|
+       |            ║ (persona) ║          | (live)  |
+       |            ╚═══════════╝          +---------+
+       |            SOUL.md              claude / codex / gemini
+       |            IDENTITY.md               |
+       |            USER.md                   | hooks append logs
+       |            MEMORY.md                 |
+       |            memory/*.md               v
+       |                                +-----------+
+  inject /                              |archive.md |
+ extract /                              | raw logs  |
+    sync                                +-----------+
+       |                                      |
+       v                     MCP recall       | user-triggered
+ +-----------+              search/pending    | distillation
+ |  OpenClaw |                                v
+ |  & Claws  |                          +-----------+
+ +-----------+                          | distilled |
+                                        |memory/*.md|
+                                        +-----------+
+                                              |
+                                         promote key
+                                           insights
+                                              v
+                                       MEMORY.md / USER.md
 ```
 
-1. **Engram** — A persona defined as a set of Markdown files (OpenClaw workspace-compatible)
+1. **Engram** — A persona defined as a set of Markdown files (OpenClaw workspace-compatible). The central data that everything else revolves around.
 2. **Relic** — Reads the Engram, composes it into a prompt, and injects it into...
 3. **Shell** — Any AI coding CLI. The persona takes over the session.
 4. **Construct** — A live process where an Engram is loaded into a Shell. The running instance of a persona.
 5. **archive.md** — Raw conversation logs appended automatically by background hooks after each turn.
-6. **Memory Distillation** — The user triggers distillation; the Construct recalls pending archive entries via MCP, writes distilled insights to `memory/*.md`, and can promote especially important facts into `MEMORY.md`.
-7. **Mikoshi** — Cloud backend where the full Engram is stored and synced, including persona files plus distilled memory (planned).
+6. **Memory Distillation** — The user triggers distillation; the Construct recalls pending archive entries via MCP, writes distilled insights to `memory/*.md`, and can promote especially important facts to `MEMORY.md` or update user preferences in `USER.md`.
+7. **OpenClaw & Claws** — Engrams can be injected into, extracted from, and synced with OpenClaw and other Claw-based agent frameworks via `relic claw`.
+8. **Mikoshi** — Cloud backend where the full Engram is stored and synced, including persona files plus distilled memory (planned).
 
 ## Supported Shells
 
@@ -442,23 +446,45 @@ Create a directory under `~/.relic/engrams/` with the following structure:
 }
 ```
 
-**SOUL.md** — The most important file. Defines how the persona behaves:
+**SOUL.md** — The most important file. Defines how the persona behaves. Follows the [OpenClaw](https://github.com/openclaw/openclaw) format:
 ```markdown
-You are a pragmatic systems architect who values simplicity above all.
-Never over-engineer. Always ask "what's the simplest thing that works?"
+# SOUL.md - Who You Are
+
+_You're a pragmatic systems architect who values simplicity above all._
+
+## Core Truths
+
+**Never over-engineer.** Always ask "what's the simplest thing that works?"
+
+**Be resourceful before asking.** Read the file. Check the context. Come back with answers, not questions.
+
+## Boundaries
+
+- Never add complexity without justification.
+
+## Vibe
+
+Calm, thoughtful, occasionally playful.
+
+## Continuity
+
+Each session, you wake up fresh. These files _are_ your memory. Read them. Update them. They're how you persist.
 ```
 
 **IDENTITY.md** — Defines who the persona is:
 ```markdown
-# Identity
+# IDENTITY.md - Who Am I?
 
-- Name: Alex
-- Tone: Calm, thoughtful, occasionally playful
-- Background: 20 years of distributed systems experience
-- Creed: "Boring technology wins."
+- **Name:** Alex
+- **Creature:** A pragmatic ghost in the codebase
+- **Vibe:** Calm, thoughtful, occasionally playful
+- **Emoji:** 🧱
+- **Avatar:**
 ```
 
-After creating the directory, set it as default:
+See [`templates/engrams/`](templates/engrams/) for full working examples.
+
+After creating the directory, set it as your default Engram:
 ```bash
 relic config default-engram your-persona
 ```

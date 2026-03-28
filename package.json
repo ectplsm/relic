@@ -27,7 +27,8 @@
     "build": "tsc"
   },
   "files": [
-    "dist"
+    "dist",
+    "templates"
   ],
   "engines": {
     "node": ">=18"
