@@ -335,9 +335,9 @@ relic claw extract --agent analyst --name "Data Analyst"
 relic claw extract --agent johnny --dir /path/to/.fooclaw
 ```
 
-### Sync — Bidirectional memory merge
+### Sync — Bidirectional merge
 
-Merges `memory/*.md`, `MEMORY.md`, and `USER.md` between matching Engram/agent pairs. Only pairs where both the Engram and agent exist are synced.
+Merges `memory/*.md`, `MEMORY.md`, and `USER.md` between matching Engram/agent pairs. Only pairs where both the Engram and agent exist are synced. Also runs automatically after `inject` (skip with `--no-sync`).
 
 ```bash
 # Sync all matching pairs
@@ -356,15 +356,16 @@ Merge rules:
 
 | Command | Direction | Description |
 |---------|-----------|-------------|
-| `relic claw inject -e <id>` | Relic → Claw | Push persona files to workspace (`--merge-identity` for non-OpenClaw) |
+| `relic claw inject -e <id>` | Relic → Claw | Push persona + auto-sync (`--no-sync` to skip, `--merge-identity` for non-OpenClaw) |
 | `relic claw extract -a <name>` | Claw → Relic | One-time import (new Engrams only) |
-| `relic claw sync` | Relic ↔ Claw | Bidirectional memory merge |
+| `relic claw sync` | Relic ↔ Claw | Bidirectional merge (memory, MEMORY.md, USER.md) |
 
 ## Memory Management
 
 Relic uses a **sliding window** for memory entries (default: 2 days), matching OpenClaw's approach:
 
-- `MEMORY.md` — Always included in the prompt (curated long-term memory)
+- `MEMORY.md` — Always included in the prompt (curated long-term memory — objective facts and rules)
+- `USER.md` — Always included in the prompt (user profile — preferences, tendencies, work style)
 - `memory/today.md` + `memory/yesterday.md` — Always included (configurable window)
 - Older entries — **Not included in the prompt**, but searchable via MCP
 

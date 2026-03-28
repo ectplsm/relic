@@ -334,9 +334,9 @@ relic claw extract --agent analyst --name "Data Analyst"
 relic claw extract --agent johnny --dir /path/to/.fooclaw
 ```
 
-### Sync — メモリの双方向マージ
+### Sync — 双方向マージ
 
-Engram/agentのマッチングペア間で `memory/*.md`・`MEMORY.md`・`USER.md` をマージします。Engramとagentの両方が存在するペアのみが対象です。
+Engram/agentのマッチングペア間で `memory/*.md`・`MEMORY.md`・`USER.md` をマージします。Engramとagentの両方が存在するペアのみが対象です。`inject` の後にも自動実行されます（`--no-sync` でスキップ可）。
 
 ```bash
 # マッチするペアをすべて同期
@@ -355,15 +355,16 @@ relic claw sync --dir /path/to/.fooclaw
 
 | コマンド | 方向 | 説明 |
 |---------|------|------|
-| `relic claw inject -e <id>` | Relic → Claw | ペルソナファイルをワークスペースに反映（非OpenClawは `--merge-identity`） |
+| `relic claw inject -e <id>` | Relic → Claw | ペルソナ注入 + 自動sync（`--no-sync` でスキップ、非OpenClawは `--merge-identity`） |
 | `relic claw extract -a <name>` | Claw → Relic | 初回取り込み（新規Engramのみ） |
-| `relic claw sync` | Relic ↔ Claw | メモリの双方向マージ |
+| `relic claw sync` | Relic ↔ Claw | 双方向マージ（memory, MEMORY.md, USER.md） |
 
 ## メモリ管理
 
 Relicは OpenClaw と同じ **スライディングウィンドウ** でメモリエントリを管理します（デフォルト: 2日分）:
 
-- `MEMORY.md` — 常にプロンプトに含まれる（キュレーション済み長期記憶）
+- `MEMORY.md` — 常にプロンプトに含まれる（キュレーション済み長期記憶 — 客観的事実・ルール）
+- `USER.md` — 常にプロンプトに含まれる（ユーザープロフィール — 傾向・好み・作業スタイル）
 - `memory/today.md` + `memory/yesterday.md` — 常にプロンプトに含まれる（ウィンドウ幅は変更可能）
 - それ以前のエントリ — **プロンプトには含まれない**が、MCPで検索可能
 
