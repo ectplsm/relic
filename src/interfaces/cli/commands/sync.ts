@@ -1,10 +1,8 @@
-import { watch } from "node:fs";
-import { join } from "node:path";
 import type { Command } from "commander";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import {
   Sync,
-  SyncAgentsDirNotFoundError,
+  SyncOpenclawDirNotFoundError,
 } from "../../../core/usecases/index.js";
 import { resolveEngramsPath } from "../../../shared/config.js";
 
@@ -12,7 +10,7 @@ export function registerSyncCommand(program: Command): void {
   program
     .command("sync")
     .description(
-      "Watch OpenClaw agents and auto-sync with Engrams"
+      "Bidirectional memory sync between Relic Engrams and OpenClaw workspaces"
     )
     .option(
       "--openclaw <dir>",
@@ -26,57 +24,38 @@ export function registerSyncCommand(program: Command): void {
       }) => {
         const engramsPath = await resolveEngramsPath(opts.path);
         const repo = new LocalEngramRepository(engramsPath);
-        const sync = new Sync(repo);
+        const sync = new Sync(repo, engramsPath);
 
         try {
-          console.log("Starting Relic sync...");
+          const result = await sync.execute(opts.openclaw);
 
-          // 初回同期
-          const result = await sync.initialSync(opts.openclaw);
-
-          if (result.injected.length > 0) {
-            console.log(
-              `  Injected: ${result.injected.join(", ")}`
-            );
-          }
-          if (result.extracted.length > 0) {
-            console.log(
-              `  Extracted memory: ${result.extracted.join(", ")}`
-            );
-          }
-          if (result.targets.length === 0) {
-            console.log("  No agents found.");
+          if (result.synced.length === 0 && result.skipped.length === 0) {
+            console.log("No OpenClaw workspaces found.");
             return;
           }
 
-          // ファイル監視を開始
-          const watchers = startWatching(
-            result.targets,
-            sync,
-            opts.openclaw
-          );
-
-          console.log(
-            `\nWatching ${result.targets.length} agent(s) for memory changes...`
-          );
-          console.log("Press Ctrl+C to stop.\n");
-
-          // Ctrl+C でクリーンアップ
-          const cleanup = () => {
-            console.log("\nStopping sync...");
-            for (const w of watchers) {
-              w.close();
+          for (const s of result.synced) {
+            const details: string[] = [];
+            if (s.memoryFilesMerged > 0) {
+              details.push(`${s.memoryFilesMerged} memory file(s)`);
             }
-            process.exit(0);
-          };
+            if (s.memoryIndexMerged) {
+              details.push("MEMORY.md");
+            }
+            if (details.length > 0) {
+              console.log(`  ${s.engramId}: merged ${details.join(", ")}`);
+            } else {
+              console.log(`  ${s.engramId}: already in sync`);
+            }
+          }
 
-          process.on("SIGINT", cleanup);
-          process.on("SIGTERM", cleanup);
-
-          // プロセスを維持
-          await new Promise(() => {});
+          if (result.skipped.length > 0) {
+            console.log(
+              `  Skipped (no matching Engram): ${result.skipped.join(", ")}`
+            );
+          }
         } catch (err) {
-          if (err instanceof SyncAgentsDirNotFoundError) {
+          if (err instanceof SyncOpenclawDirNotFoundError) {
             console.error(`Error: ${err.message}`);
             process.exit(1);
           }
@@ -84,58 +63,4 @@ export function registerSyncCommand(program: Command): void {
         }
       }
     );
-}
-
-function startWatching(
-  targets: { engramId: string; agentPath: string }[],
-  sync: Sync,
-  openclawDir?: string
-) {
-  const watchers: ReturnType<typeof watch>[] = [];
-  // デバウンス用タイマー
-  const debounceTimers = new Map<string, NodeJS.Timeout>();
-
-  for (const target of targets) {
-    const memoryDir = join(target.agentPath, "memory");
-
-    try {
-      const watcher = watch(
-        memoryDir,
-        { recursive: true },
-        (_event, filename) => {
-          if (!filename?.endsWith(".md")) return;
-
-          // デバウンス（同一agentの連続変更を500msでまとめる）
-          const existing = debounceTimers.get(target.engramId);
-          if (existing) clearTimeout(existing);
-
-          debounceTimers.set(
-            target.engramId,
-            setTimeout(async () => {
-              debounceTimers.delete(target.engramId);
-              try {
-                await sync.syncMemory(target.engramId, openclawDir);
-                const now = new Date().toLocaleTimeString();
-                console.log(
-                  `[${now}] Synced memory: ${target.engramId} (${filename})`
-                );
-              } catch {
-                // sync失敗は警告のみ
-                console.error(
-                  `[warn] Failed to sync memory for ${target.engramId}`
-                );
-              }
-            }, 500)
-          );
-        }
-      );
-
-      watchers.push(watcher);
-    } catch {
-      // memory/ ディレクトリが存在しない場合はスキップ
-      // （エージェントにまだメモリがない）
-    }
-  }
-
-  return watchers;
 }

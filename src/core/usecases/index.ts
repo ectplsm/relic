@@ -4,15 +4,14 @@ export { Init, type InitResult } from "./init.js";
 export {
   Inject,
   InjectEngramNotFoundError,
-  InjectAgentNotFoundError,
+  InjectWorkspaceNotFoundError,
   type InjectResult,
 } from "./inject.js";
 export {
   Extract,
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
-  EngramAlreadyExistsError,
-  ExtractNameRequiredError,
+  AlreadyExtractedError,
   type ExtractResult,
 } from "./extract.js";
 export {
@@ -22,8 +21,9 @@ export {
 } from "./memory-write.js";
 export {
   Sync,
-  SyncAgentsDirNotFoundError,
+  SyncOpenclawDirNotFoundError,
   type SyncTarget,
+  type SyncResult,
   type SyncInitialResult,
 } from "./sync.js";
 export {
