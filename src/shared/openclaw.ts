@@ -40,13 +40,12 @@ export const RELIC_FILE_MAP: Partial<typeof FILE_MAP> = {
 
 /**
  * Inject時に書き込むファイルのサブセット。
- * ペルソナ定義（SOUL, IDENTITY, USER）のみ。
- * MEMORYはinject後のauto-syncで双方向マージされる。
+ * ペルソナ定義（SOUL, IDENTITY）のみ。
+ * USER/MEMORYはinject後のauto-syncで双方向マージされる。
  */
 export const INJECT_FILE_MAP: Partial<typeof FILE_MAP> = {
   soul: "SOUL.md",
   identity: "IDENTITY.md",
-  user: "USER.md",
 };
 
 export const MEMORY_DIR = "memory";

@@ -298,7 +298,7 @@ Agent Name = Engram ID. All Claw commands live under `relic claw`:
 
 ### Inject — Push an Engram into a Claw workspace
 
-Injects persona files (SOUL.md, IDENTITY.md, USER.md) into the agent's workspace directory, then automatically runs a memory sync for that pair. Only persona definition files are written — AGENTS.md, HEARTBEAT.md are left to the Claw agent. Memory is handled by the auto-sync (bidirectional merge, not overwrite).
+Injects persona files (SOUL.md, IDENTITY.md) into the agent's workspace directory, then automatically runs a sync for that pair. USER.md and memory are handled by the auto-sync (bidirectional merge, not overwrite). AGENTS.md and HEARTBEAT.md are left to the Claw agent.
 
 > **Note:** The Claw agent must already exist (e.g. `openclaw agents add <name>`). Inject writes persona files into an existing workspace — it does not create new agents.
 
