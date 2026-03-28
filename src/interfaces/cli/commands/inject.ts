@@ -3,7 +3,7 @@ import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import {
   Inject,
   InjectEngramNotFoundError,
-  InjectAgentNotFoundError,
+  InjectWorkspaceNotFoundError,
 } from "../../../core/usecases/index.js";
 import { resolveEngramsPath, resolveOpenclawPath } from "../../../shared/config.js";
 
@@ -43,7 +43,7 @@ export function registerInjectCommand(program: Command): void {
         } catch (err) {
           if (
             err instanceof InjectEngramNotFoundError ||
-            err instanceof InjectAgentNotFoundError
+            err instanceof InjectWorkspaceNotFoundError
           ) {
             console.error(`Error: ${err.message}`);
             process.exit(1);
