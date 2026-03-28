@@ -17,6 +17,8 @@ Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code
 
 ## インストール
 
+<img alt="version badge" src="https://img.shields.io/github/v/release/ectplsm/relic?filter=*.*.*">
+
 ```bash
 npm install -g @ectplsm/relic
 ```

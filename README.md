@@ -15,7 +15,9 @@
 
 Relic manages AI **Engrams** (memory + personality) and injects them into coding assistants like Claude Code, Codex CLI, Gemini CLI. One persona, any shell.
 
-## Installation
+## Install
+
+<img alt="version badge" src="https://img.shields.io/github/v/release/ectplsm/relic?filter=*.*.*">
 
 ```bash
 npm install -g @ectplsm/relic
