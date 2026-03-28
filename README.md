@@ -82,7 +82,7 @@ relic gemini
 
 As you use a Construct, conversation logs are automatically saved to `archive.md` by background hooks. To distill these into lasting memory, periodically tell the Construct:
 
-> **"Organize my memories"** (or 「記憶を整理して」)
+> **"Organize my memories"**
 
 The Construct will review recent conversations, extract key facts and decisions into `memory/*.md`, promote important long-term insights to `MEMORY.md`, and update your preferences in `USER.md`. These distilled memories are then loaded into future sessions automatically.
 
