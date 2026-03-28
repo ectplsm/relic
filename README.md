@@ -52,16 +52,7 @@ relic list          # List available Engrams
 relic show motoko   # Preview an Engram's composed prompt
 ```
 
-### 2. Launch a Shell
-
-```bash
-relic claude                   # Uses default Engram
-relic claude --engram motoko   # Specify explicitly
-relic codex
-relic gemini
-```
-
-### 3. Set Up Memory (MCP)
+### 2. Set Up Memory (MCP)
 
 Register the MCP server so the Construct can search past conversations and distill memories. Pick your shell:
 
@@ -77,6 +68,15 @@ codex mcp add relic -- relic-mcp
 ```
 
 > For auto-approval setup and per-shell details, see [MCP Server](#mcp-server).
+
+### 3. Launch a Shell
+
+```bash
+relic claude                   # Uses default Engram
+relic claude --engram motoko   # Specify explicitly
+relic codex
+relic gemini
+```
 
 ### 4. Organize Memories
 

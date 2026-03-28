@@ -52,16 +52,7 @@ relic list          # 利用可能なEngramを一覧表示
 relic show motoko   # Engramの合成プロンプトをプレビュー
 ```
 
-### 2. Shellを起動
-
-```bash
-relic claude                   # デフォルトEngramを使用
-relic claude --engram motoko   # 明示的に指定
-relic codex
-relic gemini
-```
-
-### 3. 記憶機能のセットアップ (MCP)
+### 2. 記憶機能のセットアップ (MCP)
 
 MCPサーバーを登録すると、Constructが過去の会話を検索したり、記憶を蒸留できるようになります。使用するShellに合わせて実行してください:
 
@@ -77,6 +68,15 @@ codex mcp add relic -- relic-mcp
 ```
 
 > 自動承認の設定やShellごとの詳細は [MCPサーバー](#mcpサーバー) を参照してください。
+
+### 3. Shellを起動
+
+```bash
+relic claude                   # デフォルトEngramを使用
+relic claude --engram motoko   # 明示的に指定
+relic codex
+relic gemini
+```
 
 ### 4. 記憶を整理する
 
