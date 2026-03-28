@@ -123,41 +123,42 @@ relic claude --engram motoko
        |                   |                    |
        |             compose & inject           |
        |                   v                    v
-       |              +---------+          +---------+
-       +--------------| Engram  |--------->|Construct|
-                      |(persona)|          | (live)  |
-                      +---------+          +---------+
-                      SOUL.md              claude / codex / gemini
-                      IDENTITY.md               |
-                      USER.md                   | hooks append logs
-                      MEMORY.md                 |
-                      memory/*.md               v
-                                          +-----------+
-                                          |archive.md |
-                                          | raw logs  |
-                                          +-----------+
-                                                |
-                           MCP recall           | user-triggered
-                          search/pending        | distillation
-                                                v
-                                          +-----------+
-                                          | distilled |
-                                          |memory/*.md|
-                                          +-----------+
-                                                |
-                                           promote key
-                                             insights
-                                                v
-                                             MEMORY.md
+       |            ╔═══════════╗          +---------+
+       +------------║  Engram   ║--------->|Construct|
+       |            ║ (persona) ║          | (live)  |
+       |            ╚═══════════╝          +---------+
+       |            SOUL.md              claude / codex / gemini
+       |            IDENTITY.md               |
+       |            USER.md                   | hooks append logs
+       |            MEMORY.md                 |
+       |            memory/*.md               v
+       |                                +-----------+
+  inject /                              |archive.md |
+ extract /                              | raw logs  |
+    sync                                +-----------+
+       |                                      |
+       v                     MCP recall       | user-triggered
+ +-----------+              search/pending    | distillation
+ |  OpenClaw |                                v
+ |  & Claws  |                          +-----------+
+ +-----------+                          | distilled |
+                                        |memory/*.md|
+                                        +-----------+
+                                              |
+                                         promote key
+                                           insights
+                                              v
+                                       MEMORY.md / USER.md
 ```
 
-1. **Engram** — Markdownファイル群で定義されたペルソナ（OpenClawの`workspace`互換）
+1. **Engram** — Markdownファイル群で定義されたペルソナ（OpenClawの`workspace`互換）。すべての中心にあるデータ
 2. **Relic** — Engramを読み取り、プロンプトに合成してShellに注入する
 3. **Shell** — AI コーディングCLI。ペルソナがセッションを支配する
 4. **Construct** — EngramがShellにロードされた実行中プロセス。ペルソナの実体
 5. **archive.md** — 各ターンの生ログ。バックグラウンドhookが自動で追記する
-6. **Memory Distillation** — ユーザーの指示をきっかけに、ConstructがMCP経由で未蒸留archiveを想起し、重要な知見を `memory/*.md` に蒸留する。特に重要な事実は `MEMORY.md` に昇格できる
-7. **Mikoshi** — ペルソナファイルと蒸留済み記憶を含む、Engram全体を保管・同期するクラウドバックエンド（計画中）
+6. **Memory Distillation** — ユーザーの指示をきっかけに、ConstructがMCP経由で未蒸留archiveを想起し、重要な知見を `memory/*.md` に蒸留する。特に重要な事実は `MEMORY.md` に昇格でき、ユーザーの好みや傾向は `USER.md` に記録できる
+7. **OpenClaw & Claws** — Engramは `relic claw` を通じて OpenClaw をはじめとするClaw系エージェントフレームワークへの注入・取り込み・同期が可能
+8. **Mikoshi** — ペルソナファイルと蒸留済み記憶を含む、Engram全体を保管・同期するクラウドバックエンド（計画中）
 
 ## 対応Shell
 
