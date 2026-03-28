@@ -27,6 +27,7 @@ export function registerClawCommand(program: Command): void {
     .option("--to <agent>", "Inject into a different agent name")
     .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
     .option("--merge-identity", "Merge IDENTITY.md into SOUL.md (for non-OpenClaw Claw frameworks)")
+    .option("--no-sync", "Skip automatic memory sync after inject")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(
       async (opts: {
@@ -34,6 +35,7 @@ export function registerClawCommand(program: Command): void {
         to?: string;
         dir?: string;
         mergeIdentity?: boolean;
+        sync: boolean;
         path?: string;
       }) => {
         const engramsPath = await resolveEngramsPath(opts.path);
@@ -52,6 +54,8 @@ export function registerClawCommand(program: Command): void {
             `Injected "${result.engramName}" into ${result.targetPath}`
           );
           console.log(`  Files written: ${result.filesWritten.join(", ")}`);
+
+          if (!opts.sync) return;
 
           // Auto-sync memory after inject
           const sync = new Sync(repo, engramsPath);
