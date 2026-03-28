@@ -337,7 +337,7 @@ relic claw extract --agent johnny --dir /path/to/.fooclaw
 
 ### Sync — Bidirectional memory merge
 
-Merges `memory/*.md` and `MEMORY.md` between matching Engram/agent pairs. Only pairs where both the Engram and agent exist are synced.
+Merges `memory/*.md`, `MEMORY.md`, and `USER.md` between matching Engram/agent pairs. Only pairs where both the Engram and agent exist are synced.
 
 ```bash
 # Sync all matching pairs

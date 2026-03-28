@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { Engram, EngramFiles } from "../entities/engram.js";
-import { FILE_MAP, MEMORY_DIR, resolveWorkspacePath } from "../../shared/openclaw.js";
+import { RELIC_FILE_MAP, MEMORY_DIR, resolveWorkspacePath } from "../../shared/openclaw.js";
 
 export interface ExtractResult {
   engramId: string;
@@ -76,7 +76,7 @@ export class Extract {
     const files: Partial<EngramFiles> = {};
     const filesRead: string[] = [];
 
-    for (const [key, filename] of Object.entries(FILE_MAP)) {
+    for (const [key, filename] of Object.entries(RELIC_FILE_MAP)) {
       const filePath = join(sourcePath, filename);
       if (existsSync(filePath)) {
         (files as Record<string, string>)[key] = await readFile(

@@ -17,6 +17,7 @@ export interface SyncResult {
   engramId: string;
   memoryFilesMerged: number;
   memoryIndexMerged: boolean;
+  userMerged: boolean;
 }
 
 export interface SyncInitialResult {
@@ -82,10 +83,14 @@ export class Sync {
     // MEMORY.md のマージ
     const memoryIndexMerged = await this.mergeMemoryIndex(relicDir, openclawDir);
 
+    // USER.md のマージ
+    const userMerged = await this.mergeSingleFile(relicDir, openclawDir, "USER.md");
+
     return {
       engramId: target.engramId,
       memoryFilesMerged,
       memoryIndexMerged,
+      userMerged,
     };
   }
 
@@ -144,8 +149,19 @@ export class Sync {
     relicDir: string,
     openclawDir: string
   ): Promise<boolean> {
-    const relicPath = join(relicDir, MEMORY_INDEX);
-    const openclawPath = join(openclawDir, MEMORY_INDEX);
+    return this.mergeSingleFile(relicDir, openclawDir, MEMORY_INDEX);
+  }
+
+  /**
+   * 単一ファイルの双方向マージ（MEMORY.md, USER.md 等）
+   */
+  private async mergeSingleFile(
+    relicDir: string,
+    openclawDir: string,
+    filename: string
+  ): Promise<boolean> {
+    const relicPath = join(relicDir, filename);
+    const openclawPath = join(openclawDir, filename);
 
     const relicContent = existsSync(relicPath)
       ? await readFile(relicPath, "utf-8")

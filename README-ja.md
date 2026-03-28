@@ -336,7 +336,7 @@ relic claw extract --agent johnny --dir /path/to/.fooclaw
 
 ### Sync — メモリの双方向マージ
 
-Engram/agentのマッチングペア間で `memory/*.md` と `MEMORY.md` をマージします。Engramとagentの両方が存在するペアのみが対象です。
+Engram/agentのマッチングペア間で `memory/*.md`・`MEMORY.md`・`USER.md` をマージします。Engramとagentの両方が存在するペアのみが対象です。
 
 ```bash
 # マッチするペアをすべて同期

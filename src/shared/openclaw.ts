@@ -23,9 +23,25 @@ export const FILE_MAP: Record<
 };
 
 /**
+ * Relicが管理するファイル群。
+ * SOUL, IDENTITY, USER, MEMORY の4種 + memory/*.md。
+ * AGENTS/HEARTBEAT等はClaw側の管理に委ねる。
+ *
+ * - inject: SOUL, IDENTITY, USER のみ書き込み（MEMORYはauto-syncで処理）
+ * - extract: 全て読み込み + memory/*.md
+ * - sync: MEMORY + USER + memory/*.md を双方向マージ
+ */
+export const RELIC_FILE_MAP: Partial<typeof FILE_MAP> = {
+  soul: "SOUL.md",
+  identity: "IDENTITY.md",
+  user: "USER.md",
+  memory: "MEMORY.md",
+};
+
+/**
  * Inject時に書き込むファイルのサブセット。
  * ペルソナ定義（SOUL, IDENTITY, USER）のみ。
- * AGENTS/MEMORY/HEARTBEATはClaw側の管理に委ねる。
+ * MEMORYはinject後のauto-syncで双方向マージされる。
  */
 export const INJECT_FILE_MAP: Partial<typeof FILE_MAP> = {
   soul: "SOUL.md",

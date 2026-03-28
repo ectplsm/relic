@@ -73,10 +73,13 @@ export function registerClawCommand(program: Command): void {
           if (syncResult.memoryIndexMerged) {
             details.push("MEMORY.md");
           }
+          if (syncResult.userMerged) {
+            details.push("USER.md");
+          }
           if (details.length > 0) {
-            console.log(`  Memory synced: ${details.join(", ")}`);
+            console.log(`  Synced: ${details.join(", ")}`);
           } else {
-            console.log(`  Memory: already in sync`);
+            console.log(`  Already in sync`);
           }
         } catch (err) {
           if (
@@ -168,6 +171,9 @@ export function registerClawCommand(program: Command): void {
             }
             if (s.memoryIndexMerged) {
               details.push("MEMORY.md");
+            }
+            if (s.userMerged) {
+              details.push("USER.md");
             }
             if (details.length > 0) {
               console.log(`  ${s.engramId}: merged ${details.join(", ")}`);
