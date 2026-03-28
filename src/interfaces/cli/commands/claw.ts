@@ -11,7 +11,7 @@ import {
   Sync,
   SyncOpenclawDirNotFoundError,
 } from "../../../core/usecases/index.js";
-import { resolveEngramsPath, resolveOpenclawPath } from "../../../shared/config.js";
+import { resolveEngramsPath, resolveClawPath } from "../../../shared/config.js";
 
 export function registerClawCommand(program: Command): void {
   const claw = program
@@ -34,7 +34,7 @@ export function registerClawCommand(program: Command): void {
         path?: string;
       }) => {
         const engramsPath = await resolveEngramsPath(opts.path);
-        const clawDir = await resolveOpenclawPath(opts.dir);
+        const clawDir = await resolveClawPath(opts.dir);
         const repo = new LocalEngramRepository(engramsPath);
         const inject = new Inject(repo);
 
@@ -77,7 +77,7 @@ export function registerClawCommand(program: Command): void {
         path?: string;
       }) => {
         const engramsPath = await resolveEngramsPath(opts.path);
-        const clawDir = await resolveOpenclawPath(opts.dir);
+        const clawDir = await resolveClawPath(opts.dir);
         const repo = new LocalEngramRepository(engramsPath);
         const extract = new Extract(repo);
 
@@ -119,7 +119,7 @@ export function registerClawCommand(program: Command): void {
         path?: string;
       }) => {
         const engramsPath = await resolveEngramsPath(opts.path);
-        const clawDir = await resolveOpenclawPath(opts.dir);
+        const clawDir = await resolveClawPath(opts.dir);
         const repo = new LocalEngramRepository(engramsPath);
         const sync = new Sync(repo, engramsPath);
 

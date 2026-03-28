@@ -14,8 +14,8 @@ export const RelicConfigSchema = z.object({
   mikoshiUrl: z.string().optional(),
   /** --engram 未指定時に召喚するデフォルトEngram ID */
   defaultEngram: z.string().optional(),
-  /** inject/extract で使うOpenClawディレクトリ (default: ~/.openclaw) */
-  openclawPath: z.string().optional(),
+  /** claw inject/extract/sync で使うClawディレクトリ (default: ~/.openclaw) */
+  clawPath: z.string().optional(),
   /** システムプロンプトに含める直近メモリエントリ数 (default: 2) */
   memoryWindowSize: z.number().int().min(1).default(2),
 });
@@ -204,10 +204,10 @@ export async function setDefaultEngram(engramId: string): Promise<void> {
 }
 
 /**
- * OpenClawディレクトリを解決する。
- * 優先順位: CLIオプション > config.openclawPath > ~/.openclaw
+ * Clawディレクトリを解決する。
+ * 優先順位: CLIオプション > config.clawPath > ~/.openclaw
  */
-export async function resolveOpenclawPath(
+export async function resolveClawPath(
   cliOverride?: string
 ): Promise<string | undefined> {
   if (cliOverride) {
@@ -215,7 +215,7 @@ export async function resolveOpenclawPath(
   }
   await ensureInitialized();
   const config = await loadConfig();
-  return config.openclawPath; // undefined の場合は openclaw.ts 側のデフォルトに委ねる
+  return config.clawPath; // undefined の場合は openclaw.ts 側のデフォルトに委ねる
 }
 
 /**

@@ -54,23 +54,23 @@ export function registerConfigCommand(program: Command): void {
       console.log(`Default Engram set to: ${engram.meta.name} (${id})`);
     });
 
-  // relic config openclaw-path [path]
+  // relic config claw-path [path]
   config
-    .command("openclaw-path [path]")
-    .description("Get or set the OpenClaw directory path (default: ~/.openclaw)")
+    .command("claw-path [path]")
+    .description("Get or set the Claw directory path (default: ~/.openclaw)")
     .action(async (path: string | undefined) => {
       await ensureInitialized();
       const cfg = await loadConfig();
 
       if (!path) {
         // getter
-        console.log(cfg.openclawPath ?? "(not set — using ~/.openclaw)");
+        console.log(cfg.clawPath ?? "(not set — using ~/.openclaw)");
         return;
       }
 
-      cfg.openclawPath = path;
+      cfg.clawPath = path;
       await saveConfig(cfg);
-      console.log(`OpenClaw path set to: ${path}`);
+      console.log(`Claw path set to: ${path}`);
     });
 
   // relic config memory-window [n]
