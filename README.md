@@ -126,7 +126,8 @@ relic claude --engram motoko
                       +---------+          +---------+
                       SOUL.md              claude / codex / gemini
                       IDENTITY.md               |
-                      MEMORY.md                 | hooks append logs
+                      USER.md                   | hooks append logs
+                      MEMORY.md                 |
                       memory/*.md               v
                                           +-----------+
                                           |archive.md |
