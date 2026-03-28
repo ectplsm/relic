@@ -22,6 +22,17 @@ export const FILE_MAP: Record<
   heartbeat: "HEARTBEAT.md",
 };
 
+/**
+ * Inject時に書き込むファイルのサブセット。
+ * ペルソナ定義（SOUL, IDENTITY, USER）のみ。
+ * AGENTS/MEMORY/HEARTBEATはClaw側の管理に委ねる。
+ */
+export const INJECT_FILE_MAP: Partial<typeof FILE_MAP> = {
+  soul: "SOUL.md",
+  identity: "IDENTITY.md",
+  user: "USER.md",
+};
+
 export const MEMORY_DIR = "memory";
 
 /**

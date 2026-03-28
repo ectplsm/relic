@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { EngramFiles } from "../entities/engram.js";
-import { FILE_MAP, resolveWorkspacePath } from "../../shared/openclaw.js";
+import { INJECT_FILE_MAP, resolveWorkspacePath } from "../../shared/openclaw.js";
 
 export interface InjectResult {
   engramId: string;
@@ -63,13 +63,13 @@ export class Inject {
   ): Promise<string[]> {
     const written: string[] = [];
 
-    for (const [key, filename] of Object.entries(FILE_MAP)) {
+    for (const [key, filename] of Object.entries(INJECT_FILE_MAP)) {
       // --merge-identity: skip IDENTITY.md (merged into SOUL.md below)
       if (mergeIdentity && key === "identity") {
         continue;
       }
 
-      let content = files[key as keyof typeof FILE_MAP];
+      let content = files[key as keyof typeof INJECT_FILE_MAP];
 
       // --merge-identity: append IDENTITY.md content to SOUL.md
       if (mergeIdentity && key === "soul" && files.identity) {
