@@ -232,8 +232,7 @@ relic claude --engram motoko
 
 以後の起動では、キャッシュ済みのデフォルトプロンプトにEngramペルソナを追記したものを、毎回 `GEMINI_SYSTEM_MD` で注入します。
 
-<details>
-<summary><h2>MCPサーバー</h2></summary>
+## MCPサーバー
 
 Relicの[MCP](https://modelcontextprotocol.io/)サーバーはCLI注入とペアで使い、記憶の呼び覚ましを担います。
 会話ログとメモリエントリは**バックグラウンドhook**によって自動的にarchiveに書き込まれ、これにはLLMを介しません。一方、記憶の蒸留と呼び覚ましはMCPサーバーを使って行います。
@@ -311,10 +310,7 @@ approval_mode = "approve"
 
 > **注意:** 確認ダイアログを抑制するには `trust: true` が必要です。設定しないと、ダイアログで「今後のセッションでも許可」を選択しても毎回確認が表示されます。これは Gemini CLI の既知のバグで、ツール名が誤ったフォーマットで保存されるため、保存したルールが永遠にマッチしません。
 
-</details>
-
-<details>
-<summary><h2>Claw連携</h2></summary>
+## Claw連携
 
 Relicのエングラムは [OpenClaw](https://github.com/openclaw/openclaw) のワークスペースとネイティブ互換です — ファイル構造が1:1で対応します（SOUL.md, IDENTITY.md, memory/ 等）。Nanobot・gitagentなど、IDENTITYをSOULに統合する他のClaw派生フレームワークには、`--merge-identity` フラグでIDENTITY.mdをSOUL.mdに統合してinjectできます。`--dir` と組み合わせることで、あらゆるClaw互換ワークスペースに対応可能です。
 
@@ -383,8 +379,6 @@ relic claw sync --dir /path/to/.fooclaw
 | `relic claw inject -e <id>` | Relic → Claw | ペルソナ注入 + 自動sync（`--no-sync` でスキップ、非OpenClawは `--merge-identity`） |
 | `relic claw extract -a <name>` | Claw → Relic | 初回取り込み（新規Engramのみ） |
 | `relic claw sync` | Relic ↔ Claw | 双方向マージ（memory, MEMORY.md, USER.md） |
-
-</details>
 
 ## 記憶の管理
 

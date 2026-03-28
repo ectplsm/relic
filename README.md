@@ -232,8 +232,7 @@ On the **first run** of `relic gemini`, two one-time setups happen automatically
 
 The Engram persona is then appended to the cached default prompt and injected via `GEMINI_SYSTEM_MD` on every launch.
 
-<details>
-<summary><h2>MCP Server</h2></summary>
+## MCP Server
 
 Relic's [MCP](https://modelcontextprotocol.io/) server is paired with CLI injection to handle memory recall.
 Session logs and memory entries are written automatically by a **background hook** — without going through the LLM. Memory distillation and recall, on the other hand, is performed via the MCP server.
@@ -311,10 +310,7 @@ Add to `~/.gemini/settings.json`:
 
 > **Note:** `trust: true` is required to suppress confirmation dialogs for Relic tools. Without it, dialogs will appear on every call even if you select "Allow for all future sessions" — this is a known bug in Gemini CLI where the tool name is saved in the wrong format, causing the saved rule to never match.
 
-</details>
-
-<details>
-<summary><h2>Claw Integration</h2></summary>
+## Claw Integration
 
 Relic Engrams are natively compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces — their file structure maps 1:1 (SOUL.md, IDENTITY.md, memory/, etc.). For other Claw-derived frameworks (Nanobot, gitagent, etc.) that fold identity into SOUL.md, the `--merge-identity` flag merges IDENTITY.md into SOUL.md on inject. Combined with `--dir`, Relic can target any Claw-compatible workspace.
 
@@ -383,8 +379,6 @@ Merge rules:
 | `relic claw inject -e <id>` | Relic → Claw | Push persona + auto-sync (`--no-sync` to skip, `--merge-identity` for non-OpenClaw) |
 | `relic claw extract -a <name>` | Claw → Relic | One-time import (new Engrams only) |
 | `relic claw sync` | Relic ↔ Claw | Bidirectional merge (memory, MEMORY.md, USER.md) |
-
-</details>
 
 ## Memory Management
 
