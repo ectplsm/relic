@@ -49,7 +49,7 @@ relic init
 # → Prompts: "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):"
 
 relic list                            # List available Engrams
-relic config default-engram motoko   # Set your default Engram
+relic config default-engram motoko   # (Optional) Set your default Engram
 ```
 
 ### 2. Set Up Memory (MCP)
