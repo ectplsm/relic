@@ -222,9 +222,9 @@ Session logs and memory entries are written automatically by a **background hook
 |------|-------------|
 | `relic_archive_search` | Search the Engram's raw archive by keyword (newest-first) |
 | `relic_archive_pending` | Get un-distilled archive entries since the last distillation (up to 30) |
-| `relic_memory_write` | Write distilled memory to `memory/*.md`, optionally append to `MEMORY.md`, and advance the archive cursor |
+| `relic_memory_write` | Write distilled memory to `memory/*.md`, optionally append to `MEMORY.md`, optionally update `USER.md`, and advance the archive cursor |
 
-Session logs are written automatically by background hooks (Stop hook for Claude Code and Codex CLI, AfterAgent hook for Gemini CLI). Memory distillation is triggered by the user — ask the Construct to "organize memories" and it will fetch pending entries, distill key insights, and write them to `memory/*.md`. Especially important facts can be promoted to `MEMORY.md` (long-term memory included in every session) via the `long_term` parameter.
+Session logs are written automatically by background hooks (Stop hook for Claude Code and Codex CLI, AfterAgent hook for Gemini CLI). Memory distillation is triggered by the user — ask the Construct to "organize memories" and it will fetch pending entries, distill key insights, and write them to `memory/*.md`. Especially important facts can be promoted to `MEMORY.md` (long-term memory included in every session) via the `long_term` parameter. User tendencies and preferences can be updated in `USER.md` via the `user_profile` parameter.
 
 ### Setup
 

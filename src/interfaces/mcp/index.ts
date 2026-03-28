@@ -152,6 +152,10 @@ server.tool(
       .string()
       .optional()
       .describe("Especially important facts to append to MEMORY.md (long-term memory that persists across all sessions)"),
+    user_profile: z
+      .string()
+      .optional()
+      .describe("User profile updates to write to USER.md (preferences, tendencies, work style — about the human, not the project)"),
     date: z
       .string()
       .optional()
@@ -187,6 +191,14 @@ server.tool(
         longTermWritten = true;
       }
 
+      // Step 2.5: Write USER.md if user_profile is provided
+      let userProfileWritten = false;
+      if (args.user_profile) {
+        const userMdPath = join(engramsPath, args.id, "USER.md");
+        await writeFile(userMdPath, args.user_profile + "\n", "utf-8");
+        userProfileWritten = true;
+      }
+
       // Step 3: Advance cursor by the number of distilled entries
       const cursorUpdate = new ArchiveCursorUpdate(engramsPath);
       const cursorResult = await cursorUpdate.execute(args.id, args.count);
@@ -196,6 +208,9 @@ server.tool(
       ];
       if (longTermWritten) {
         parts.push("Long-term memory (MEMORY.md) updated.");
+      }
+      if (userProfileWritten) {
+        parts.push("User profile (USER.md) updated.");
       }
       parts.push(`Archive cursor advanced: ${cursorResult.previousCursor} → ${cursorResult.newCursor}.`);
 

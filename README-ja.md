@@ -221,9 +221,9 @@ Relicの[MCP](https://modelcontextprotocol.io/)サーバーはCLI注入とペア
 |-------|------|
 | `relic_archive_search` | Engramの生archiveをキーワード検索する（新しい順） |
 | `relic_archive_pending` | 前回の蒸留以降の未蒸留archiveエントリを取得する（最大30件） |
-| `relic_memory_write` | 蒸留した記憶を `memory/*.md` に書き込み、任意で `MEMORY.md` にも追記し、archiveカーソルを進める |
+| `relic_memory_write` | 蒸留した記憶を `memory/*.md` に書き込み、任意で `MEMORY.md` への追記や `USER.md` の更新も行い、archiveカーソルを進める |
 
-会話ログはバックグラウンドhook（Claude CodeとCodex CLIのStop hook、Gemini CLIのAfterAgent hook）によって自動でarchiveに書き込まれます。記憶の蒸留はユーザーがトリガーします。Constructに「記憶を整理して」と指示すれば、未蒸留エントリを取得し、重要な知見を蒸留して `memory/*.md` に書き出します。特に重要な事実は `long_term` パラメータで `MEMORY.md` に昇格でき、これは全セッションで読み込まれる長期記憶になります。
+会話ログはバックグラウンドhook（Claude CodeとCodex CLIのStop hook、Gemini CLIのAfterAgent hook）によって自動でarchiveに書き込まれます。記憶の蒸留はユーザーがトリガーします。Constructに「記憶を整理して」と指示すれば、未蒸留エントリを取得し、重要な知見を蒸留して `memory/*.md` に書き出します。特に重要な事実は `long_term` パラメータで `MEMORY.md` に昇格でき、これは全セッションで読み込まれる長期記憶になります。ユーザーの傾向や好みは `user_profile` パラメータで `USER.md` に記録できます。
 
 ### セットアップ
 
