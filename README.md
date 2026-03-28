@@ -46,7 +46,8 @@ relic claude --engram motoko
 relic codex --engram johnny
 ```
 
-## What `relic init` Creates
+<details>
+<summary><h2>What <code>relic init</code> Creates</h2></summary>
 
 Running `relic init` creates `~/.relic/`, writes `config.json`, and seeds two sample Engrams under `~/.relic/engrams/`.
 
@@ -81,7 +82,10 @@ As you keep using an Engram, more files are added to the same workspace:
 - `USER.md` is created or updated during memory distillation to record user preferences, tendencies, and work style.
 - `~/.relic/hooks/` and `~/.relic/gemini-system-default.md` are created later on first shell launch when hook registration or Gemini prompt caching is needed.
 
-## Sample Engrams
+</details>
+
+<details>
+<summary><h2>Sample Engrams</h2></summary>
 
 `relic init` seeds two ready-to-use Engrams. Their SOUL.md and IDENTITY.md follow the [OpenClaw](https://github.com/openclaw/openclaw) format.
 
@@ -110,6 +114,8 @@ Best for: system design, code review, debugging sessions, when precision matters
 ```bash
 relic claude --engram motoko
 ```
+
+</details>
 
 ## How It Works
 
@@ -160,7 +166,8 @@ relic claude --engram motoko
 7. **OpenClaw & Claws** — Engrams can be injected into, extracted from, and synced with OpenClaw and other Claw-based agent frameworks via `relic claw`.
 8. **Mikoshi** — Cloud backend where the full Engram is stored and synced, including persona files plus distilled memory (planned).
 
-## Supported Shells
+<details>
+<summary><h2>Supported Shells</h2></summary>
 
 | Shell | Command | Injection Method |
 |-------|---------|-----------------|
@@ -175,7 +182,10 @@ All shell commands support:
 
 Extra arguments are passed through to the underlying CLI.
 
-## Conversation Log Recording
+</details>
+
+<details>
+<summary><h2>Conversation Log Recording</h2></summary>
 
 Using each shell's `hook` mechanism, conversation content is appended to `archive.md` after every prompt and response.
 
@@ -215,8 +225,10 @@ On the **first run** of `relic gemini`, two one-time setups happen automatically
 
 The Engram persona is then appended to the cached default prompt and injected via `GEMINI_SYSTEM_MD` on every launch.
 
+</details>
 
-## MCP Server
+<details>
+<summary><h2>MCP Server</h2></summary>
 
 Relic's [MCP](https://modelcontextprotocol.io/) server is paired with CLI injection to handle memory recall.
 Session logs and memory entries are written automatically by a **background hook** — without going through the LLM. Memory distillation and recall, on the other hand, is performed via the MCP server.
@@ -294,7 +306,10 @@ Add to `~/.gemini/settings.json`:
 
 > **Note:** `trust: true` is required to suppress confirmation dialogs for Relic tools. Without it, dialogs will appear on every call even if you select "Allow for all future sessions" — this is a known bug in Gemini CLI where the tool name is saved in the wrong format, causing the saved rule to never match.
 
-## Claw Integration
+</details>
+
+<details>
+<summary><h2>Claw Integration</h2></summary>
 
 Relic Engrams are natively compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces — their file structure maps 1:1 (SOUL.md, IDENTITY.md, memory/, etc.). For other Claw-derived frameworks (Nanobot, gitagent, etc.) that fold identity into SOUL.md, the `--merge-identity` flag merges IDENTITY.md into SOUL.md on inject. Combined with `--dir`, Relic can target any Claw-compatible workspace.
 
@@ -364,7 +379,10 @@ Merge rules:
 | `relic claw extract -a <name>` | Claw → Relic | One-time import (new Engrams only) |
 | `relic claw sync` | Relic ↔ Claw | Bidirectional merge (memory, MEMORY.md, USER.md) |
 
-## Memory Management
+</details>
+
+<details>
+<summary><h2>Memory Management</h2></summary>
 
 Relic uses a **sliding window** for memory entries (default: 2 days), matching OpenClaw's approach:
 
@@ -383,7 +401,10 @@ relic_memory_write     → write distilled memory and advance the cursor
 
 The archive (`archive.md`) is the primary data store — it contains all session logs as written. The `memory/*.md` files are distilled from the archive by the Construct when the user triggers memory organization, and are used for cloud sync with Mikoshi.
 
-## Configuration
+</details>
+
+<details>
+<summary><h2>Configuration</h2></summary>
 
 Config lives at `~/.relic/config.json` and is managed via `relic config`:
 
@@ -417,7 +438,10 @@ relic config memory-window 5          # set
 
 CLI flags always take precedence over config values.
 
-## Creating Your Own Engram
+</details>
+
+<details>
+<summary><h2>Creating Your Own Engram</h2></summary>
 
 Create a directory under `~/.relic/engrams/` with the following structure:
 
@@ -488,6 +512,8 @@ After creating the directory, set it as your default Engram:
 ```bash
 relic config default-engram your-persona
 ```
+
+</details>
 
 ## Domain Glossary
 
