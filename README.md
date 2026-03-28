@@ -484,7 +484,7 @@ Each session, you wake up fresh. These files _are_ your memory. Read them. Updat
 
 See [`templates/engrams/`](templates/engrams/) for full working examples.
 
-After creating the directory, set it as default:
+After creating the directory, set it as your default Engram:
 ```bash
 relic config default-engram your-persona
 ```

@@ -363,7 +363,7 @@ relic claw sync --dir /path/to/.fooclaw
 | `relic claw extract -a <name>` | Claw → Relic | 初回取り込み（新規Engramのみ） |
 | `relic claw sync` | Relic ↔ Claw | 双方向マージ（memory, MEMORY.md, USER.md） |
 
-## メモリ管理
+## 記憶の管理
 
 Relicは OpenClaw と同じ **スライディングウィンドウ** でメモリエントリを管理します（デフォルト: 2日分）:
 
@@ -483,7 +483,7 @@ Each session, you wake up fresh. These files _are_ your memory. Read them. Updat
 
 完全な動作サンプルは [`templates/engrams/`](templates/engrams/) を参照してください。
 
-作成後はデフォルトに設定:
+作成後、デフォルトに設定するには以下を実行:
 ```bash
 relic config default-engram your-persona
 ```
