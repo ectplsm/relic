@@ -70,9 +70,9 @@ export class Sync {
   }
 
   /**
-   * 1ペア分の memory マージ
+   * 1ペア分の memory マージ（inject 後の自動 sync 等でも使用）
    */
-  private async syncPair(target: SyncTarget): Promise<SyncResult> {
+  async syncPair(target: SyncTarget): Promise<SyncResult> {
     const relicDir = join(this.engramsPath, target.engramId);
     const openclawDir = target.workspacePath;
 

@@ -12,6 +12,7 @@ import {
   SyncOpenclawDirNotFoundError,
 } from "../../../core/usecases/index.js";
 import { resolveEngramsPath, resolveClawPath } from "../../../shared/config.js";
+import { resolveWorkspacePath } from "../../../shared/openclaw.js";
 
 export function registerClawCommand(program: Command): void {
   const claw = program
@@ -51,6 +52,28 @@ export function registerClawCommand(program: Command): void {
             `Injected "${result.engramName}" into ${result.targetPath}`
           );
           console.log(`  Files written: ${result.filesWritten.join(", ")}`);
+
+          // Auto-sync memory after inject
+          const sync = new Sync(repo, engramsPath);
+          const agentName = opts.to ?? opts.engram;
+          const workspacePath = resolveWorkspacePath(agentName, clawDir);
+          const syncResult = await sync.syncPair({
+            engramId: opts.engram,
+            workspacePath,
+          });
+
+          const details: string[] = [];
+          if (syncResult.memoryFilesMerged > 0) {
+            details.push(`${syncResult.memoryFilesMerged} memory file(s)`);
+          }
+          if (syncResult.memoryIndexMerged) {
+            details.push("MEMORY.md");
+          }
+          if (details.length > 0) {
+            console.log(`  Memory synced: ${details.join(", ")}`);
+          } else {
+            console.log(`  Memory: already in sync`);
+          }
         } catch (err) {
           if (
             err instanceof InjectEngramNotFoundError ||
