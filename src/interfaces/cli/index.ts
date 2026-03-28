@@ -8,9 +8,7 @@ import { registerInitCommand } from "./commands/init.js";
 import { registerListCommand } from "./commands/list.js";
 import { registerShowCommand } from "./commands/show.js";
 import { registerShellCommands } from "./commands/shell.js";
-import { registerInjectCommand } from "./commands/inject.js";
-import { registerExtractCommand } from "./commands/extract.js";
-import { registerSyncCommand } from "./commands/sync.js";
+import { registerClawCommand } from "./commands/claw.js";
 import { registerConfigCommand } from "./commands/config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -27,9 +25,7 @@ registerInitCommand(program);
 registerListCommand(program);
 registerShowCommand(program);
 registerShellCommands(program);
-registerInjectCommand(program);
-registerExtractCommand(program);
-registerSyncCommand(program);
+registerClawCommand(program);
 registerConfigCommand(program);
 
 program.parse();

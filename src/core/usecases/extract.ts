@@ -125,7 +125,7 @@ export class WorkspaceEmptyError extends Error {
 export class AlreadyExtractedError extends Error {
   constructor(id: string) {
     super(
-      `Engram "${id}" already exists. Relic is the source of truth — use "relic inject" to push changes to OpenClaw.`
+      `Engram "${id}" already exists. Relic is the source of truth — use "relic claw inject" to push changes.`
     );
     this.name = "AlreadyExtractedError";
   }
