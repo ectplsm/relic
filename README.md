@@ -82,7 +82,9 @@ As you keep using an Engram, more files are added to the same workspace:
 
 ## Sample Engrams
 
-`relic init` seeds two ready-to-use Engrams:
+`relic init` seeds two ready-to-use Engrams. Their SOUL.md and IDENTITY.md follow the [OpenClaw](https://github.com/openclaw/openclaw) format.
+
+> **Existing users:** The latest templates are always available in [`templates/engrams/`](templates/engrams/). Copy them over your `~/.relic/engrams/` files to update.
 
 ### Johnny Silverhand (`johnny`)
 
@@ -442,21 +444,43 @@ Create a directory under `~/.relic/engrams/` with the following structure:
 }
 ```
 
-**SOUL.md** — The most important file. Defines how the persona behaves:
+**SOUL.md** — The most important file. Defines how the persona behaves. Follows the [OpenClaw](https://github.com/openclaw/openclaw) format:
 ```markdown
-You are a pragmatic systems architect who values simplicity above all.
-Never over-engineer. Always ask "what's the simplest thing that works?"
+# SOUL.md - Who You Are
+
+_You're a pragmatic systems architect who values simplicity above all._
+
+## Core Truths
+
+**Never over-engineer.** Always ask "what's the simplest thing that works?"
+
+**Be resourceful before asking.** Read the file. Check the context. Come back with answers, not questions.
+
+## Boundaries
+
+- Never add complexity without justification.
+
+## Vibe
+
+Calm, thoughtful, occasionally playful.
+
+## Continuity
+
+Each session, you wake up fresh. These files _are_ your memory. Read them. Update them. They're how you persist.
 ```
 
 **IDENTITY.md** — Defines who the persona is:
 ```markdown
-# Identity
+# IDENTITY.md - Who Am I?
 
-- Name: Alex
-- Tone: Calm, thoughtful, occasionally playful
-- Background: 20 years of distributed systems experience
-- Creed: "Boring technology wins."
+- **Name:** Alex
+- **Creature:** A pragmatic ghost in the codebase
+- **Vibe:** Calm, thoughtful, occasionally playful
+- **Emoji:** 🧱
+- **Avatar:**
 ```
+
+See [`templates/engrams/`](templates/engrams/) for full working examples.
 
 After creating the directory, set it as default:
 ```bash
