@@ -36,7 +36,6 @@ export class Inject {
   async inspectPersona(
     engramId: string,
     options?: {
-      to?: string;
       openclawDir?: string;
       mergeIdentity?: boolean;
     }
@@ -69,7 +68,6 @@ export class Inject {
   async execute(
     engramId: string,
     options?: {
-      to?: string;
       openclawDir?: string;
       mergeIdentity?: boolean;
     }
@@ -93,7 +91,6 @@ export class Inject {
   private async loadInjectTarget(
     engramId: string,
     options?: {
-      to?: string;
       openclawDir?: string;
       mergeIdentity?: boolean;
     }
@@ -107,11 +104,10 @@ export class Inject {
       throw new InjectClawDirNotFoundError(options.openclawDir);
     }
 
-    const agentName = options?.to ?? engramId;
-    const targetPath = resolveWorkspacePath(agentName, options?.openclawDir);
+    const targetPath = resolveWorkspacePath(engramId, options?.openclawDir);
 
     if (!existsSync(targetPath)) {
-      throw new InjectWorkspaceNotFoundError(agentName);
+      throw new InjectWorkspaceNotFoundError(engramId);
     }
 
     return { engram, targetPath };

@@ -28,7 +28,6 @@ export function registerClawCommand(program: Command): void {
     .command("inject")
     .description("Push an Engram into a Claw workspace")
     .requiredOption("-e, --engram <id>", "Engram ID to inject")
-    .option("--to <agent>", "Inject into a different agent name")
     .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
     .option("--merge-identity", "Merge IDENTITY.md into SOUL.md (for non-OpenClaw Claw frameworks)")
     .option("-y, --yes", "Skip persona overwrite confirmation")
@@ -37,7 +36,6 @@ export function registerClawCommand(program: Command): void {
     .action(
       async (opts: {
         engram: string;
-        to?: string;
         dir?: string;
         mergeIdentity?: boolean;
         yes?: boolean;
@@ -51,7 +49,6 @@ export function registerClawCommand(program: Command): void {
 
         try {
           const diff = await inject.inspectPersona(opts.engram, {
-            to: opts.to,
             openclawDir: clawDir,
             mergeIdentity: opts.mergeIdentity,
           });
@@ -76,7 +73,6 @@ export function registerClawCommand(program: Command): void {
             console.log(`  Already injected (${diff.targetPath})`);
           } else {
             const result = await inject.execute(opts.engram, {
-              to: opts.to,
               openclawDir: clawDir,
               mergeIdentity: opts.mergeIdentity,
             });
@@ -91,8 +87,7 @@ export function registerClawCommand(program: Command): void {
 
           // Auto-sync memory after inject
           const sync = new Sync(repo, engramsPath);
-          const agentName = opts.to ?? opts.engram;
-          const workspacePath = resolveWorkspacePath(agentName, clawDir);
+          const workspacePath = resolveWorkspacePath(opts.engram, clawDir);
           const syncResult = await sync.syncPair({
             engramId: opts.engram,
             workspacePath,
@@ -253,7 +248,7 @@ export function registerClawCommand(program: Command): void {
   claw
     .command("sync")
     .description("Bidirectional memory sync between Engrams and Claw workspaces")
-    .option("-t, --target <pair>", "Sync one pair only: <id> or <engram>:<agent>")
+    .option("-t, --target <id>", "Sync one target only by shared Engram/agent name")
     .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(
@@ -269,21 +264,25 @@ export function registerClawCommand(program: Command): void {
 
         try {
           if (opts.target) {
-            const { engramId, agentName } = parseSyncTarget(opts.target);
-            const engram = await repo.get(engramId);
+            const targetId = opts.target.trim();
+            if (!targetId) {
+              console.error(`Error: Invalid sync target "${opts.target}".`);
+              process.exit(1);
+            }
+            const engram = await repo.get(targetId);
             if (!engram) {
-              console.error(`Error: Engram "${engramId}" not found.`);
+              console.error(`Error: Engram "${targetId}" not found.`);
               process.exit(1);
             }
 
-            const workspacePath = resolveWorkspacePath(agentName, clawDir);
+            const workspacePath = resolveWorkspacePath(targetId, clawDir);
             if (!existsSync(workspacePath)) {
-              console.error(`Error: Claw agent "${agentName}" workspace not found.`);
+              console.error(`Error: Claw agent "${targetId}" workspace not found.`);
               process.exit(1);
             }
 
             const result = await sync.syncPair({
-              engramId,
+              engramId: targetId,
               workspacePath,
             });
 
@@ -298,9 +297,9 @@ export function registerClawCommand(program: Command): void {
               details.push("USER.md");
             }
             if (details.length > 0) {
-              console.log(`  ${engramId}: merged ${details.join(", ")}`);
+              console.log(`  ${targetId}: merged ${details.join(", ")}`);
             } else {
-              console.log(`  ${engramId}: already in sync`);
+              console.log(`  ${targetId}: already in sync`);
             }
             return;
           }
@@ -344,20 +343,6 @@ export function registerClawCommand(program: Command): void {
         }
       }
     );
-}
-
-function parseSyncTarget(target: string): { engramId: string; agentName: string } {
-  const trimmed = target.trim();
-  const [engramId, agentName] = trimmed.split(":");
-
-  if (!engramId) {
-    throw new Error(`Invalid sync target "${target}"`);
-  }
-
-  return {
-    engramId,
-    agentName: agentName || engramId,
-  };
 }
 
 async function confirmOverwrite(message: string): Promise<boolean> {
