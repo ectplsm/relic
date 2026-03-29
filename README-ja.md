@@ -2,6 +2,7 @@
 |:---:|:---:|
 
 # PROJECT RELIC
+![NPM Downloads](https://img.shields.io/npm/dt/%40ectplsm%2Frelic)
 
 ```
     ____  ________    ____________

@@ -2,6 +2,7 @@
 |:---:|:---:|
 
 # PROJECT RELIC
+![NPM Downloads](https://img.shields.io/npm/dt/%40ectplsm%2Frelic)
 
 ```
     ____  ________    ____________
@@ -17,21 +18,44 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 
 ## Table of Contents
 
-- [Requirements](#requirements)
-- [Install](#install)
-- [Quick Start](#quick-start)
-- [What `relic init` Creates](#what-relic-init-creates)
-- [Sample Engrams](#sample-engrams)
-- [How It Works](#how-it-works)
-- [Supported Shells](#supported-shells)
-- [Conversation Log Recording](#conversation-log-recording)
-- [MCP Server](#mcp-server)
-- [Claw Integration](#claw-integration)
-- [Memory Management](#memory-management)
-- [Configuration](#configuration)
-- [Creating Your Own Engram](#creating-your-own-engram)
-- [Domain Glossary](#domain-glossary)
-- [Roadmap](#roadmap)
+- [PROJECT RELIC](#project-relic)
+  - [Table of Contents](#table-of-contents)
+  - [Requirements](#requirements)
+  - [Install](#install)
+  - [Quick Start](#quick-start)
+    - [1. Initialize](#1-initialize)
+    - [2. Set Up Memory (MCP)](#2-set-up-memory-mcp)
+    - [3. Launch a Shell](#3-launch-a-shell)
+    - [4. Organize Memories](#4-organize-memories)
+  - [What `relic init` Creates](#what-relic-init-creates)
+    - [Migration](#migration)
+  - [Sample Engrams](#sample-engrams)
+    - [Johnny Silverhand (`johnny`)](#johnny-silverhand-johnny)
+    - [Motoko Kusanagi (`motoko`)](#motoko-kusanagi-motoko)
+  - [How It Works](#how-it-works)
+  - [Supported Shells](#supported-shells)
+  - [Conversation Log Recording](#conversation-log-recording)
+      - [Claude Code](#claude-code)
+      - [Codex CLI](#codex-cli)
+      - [Gemini CLI](#gemini-cli)
+  - [MCP Server](#mcp-server)
+    - [Available Tools](#available-tools)
+    - [Setup](#setup)
+      - [Claude Code](#claude-code-1)
+      - [Codex CLI](#codex-cli-1)
+      - [Gemini CLI](#gemini-cli-1)
+  - [Claw Integration](#claw-integration)
+    - [Command Summary](#command-summary)
+    - [Inject — Push an Engram into a Claw workspace](#inject--push-an-engram-into-a-claw-workspace)
+    - [Extract — Import a Claw agent as an Engram](#extract--import-a-claw-agent-as-an-engram)
+    - [Sync — Bidirectional merge](#sync--bidirectional-merge)
+    - [Behavior Matrix](#behavior-matrix)
+  - [Memory Management](#memory-management)
+  - [Configuration](#configuration)
+  - [Creating Your Own Engram](#creating-your-own-engram)
+  - [Domain Glossary](#domain-glossary)
+  - [Roadmap](#roadmap)
+  - [License](#license)
 
 ## Requirements
 
