@@ -118,8 +118,6 @@ Running `relic init` creates `~/.relic/`, writes `config.json`, and seeds two sa
 - `manifest.json` stores system-managed fields like the Engram ID and timestamps.
 - `SOUL.md` and `IDENTITY.md` define the persona itself.
 - `memory/YYYY-MM-DD.md` stores dated distilled memory entries. `relic init` seeds an initial memory file for each sample Engram.
-- `relic migrate engrams` can be used to front-load legacy Engrams into the new `manifest.json` format, although normal Engram reads also migrate automatically.
-- `relic refresh-samples` refreshes bundled sample personas like `johnny` and `motoko` without touching memory or archive files.
 
 As you keep using an Engram, more files are added to the same workspace:
 
@@ -128,11 +126,18 @@ As you keep using an Engram, more files are added to the same workspace:
 - `USER.md` is created or updated during memory distillation to record user preferences, tendencies, and work style.
 - `~/.relic/hooks/` and `~/.relic/gemini-system-default.md` are created later on first shell launch when hook registration or Gemini prompt caching is needed.
 
+### Migration
+
+```bash
+relic migrate engrams   # migrate legacy engram.json metadata to manifest.json
+relic refresh-samples   # refresh bundled sample personas like johnny and motoko
+```
+
 ## Sample Engrams
 
 `relic init` seeds two ready-to-use Engrams. Their SOUL.md and IDENTITY.md follow the [OpenClaw](https://github.com/openclaw/openclaw) format.
 
-> **Existing users:** The latest templates are always available in [`templates/engrams/`](templates/engrams/). Copy them over your `~/.relic/engrams/` files to update.
+> **Existing users:** Run `relic refresh-samples` to update bundled sample personas from the latest templates.
 
 ### Johnny Silverhand (`johnny`)
 
