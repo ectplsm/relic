@@ -17,20 +17,41 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 
 ## Table of Contents
 
-- [Install](#install)
-- [Quick Start](#quick-start)
-- [What `relic init` Creates](#what-relic-init-creates)
-- [Sample Engrams](#sample-engrams)
-- [How It Works](#how-it-works)
-- [Supported Shells](#supported-shells)
-- [Conversation Log Recording](#conversation-log-recording)
-- [MCP Server](#mcp-server)
-- [Claw Integration](#claw-integration)
-- [Memory Management](#memory-management)
-- [Configuration](#configuration)
-- [Creating Your Own Engram](#creating-your-own-engram)
-- [Domain Glossary](#domain-glossary)
-- [Roadmap](#roadmap)
+- [PROJECT RELIC](#project-relic)
+  - [Table of Contents](#table-of-contents)
+  - [Install](#install)
+  - [Quick Start](#quick-start)
+    - [1. Initialize](#1-initialize)
+    - [2. Set Up Memory (MCP)](#2-set-up-memory-mcp)
+    - [3. Launch a Shell](#3-launch-a-shell)
+    - [4. Organize Memories](#4-organize-memories)
+  - [What `relic init` Creates](#what-relic-init-creates)
+  - [Sample Engrams](#sample-engrams)
+    - [Johnny Silverhand (`johnny`)](#johnny-silverhand-johnny)
+    - [Motoko Kusanagi (`motoko`)](#motoko-kusanagi-motoko)
+  - [How It Works](#how-it-works)
+  - [Supported Shells](#supported-shells)
+  - [Conversation Log Recording](#conversation-log-recording)
+      - [Claude Code](#claude-code)
+      - [Codex CLI](#codex-cli)
+      - [Gemini CLI](#gemini-cli)
+  - [MCP Server](#mcp-server)
+    - [Available Tools](#available-tools)
+    - [Setup](#setup)
+      - [Claude Code](#claude-code-1)
+      - [Codex CLI](#codex-cli-1)
+      - [Gemini CLI](#gemini-cli-1)
+  - [Claw Integration](#claw-integration)
+    - [Inject — Push an Engram into a Claw workspace](#inject--push-an-engram-into-a-claw-workspace)
+    - [Extract — Import a Claw agent as an Engram](#extract--import-a-claw-agent-as-an-engram)
+    - [Sync — Bidirectional merge](#sync--bidirectional-merge)
+    - [Command Summary](#command-summary)
+  - [Memory Management](#memory-management)
+  - [Configuration](#configuration)
+  - [Creating Your Own Engram](#creating-your-own-engram)
+  - [Domain Glossary](#domain-glossary)
+  - [Roadmap](#roadmap)
+  - [License](#license)
 
 ## Install
 
@@ -343,7 +364,18 @@ Agent Name = Engram ID. All Claw commands live under `relic claw`:
 
 ### Inject — Push an Engram into a Claw workspace
 
-Injects persona files (SOUL.md, IDENTITY.md) into the agent's workspace directory, then automatically runs a sync for that pair. USER.md and memory are handled by the auto-sync (bidirectional merge, not overwrite). AGENTS.md and HEARTBEAT.md are left to the Claw agent.
+Writes the persona files (`SOUL.md`, `IDENTITY.md`) into the agent workspace, then automatically syncs `USER.md` and memory files (`MEMORY.md`, `memory/*.md`) for that pair. The sync is bidirectional and merge-based, not a blind overwrite. `AGENTS.md` and `HEARTBEAT.md` remain under Claw's control.
+
+If persona files already exist in the target workspace and differ from the local Relic Engram, `inject` asks for confirmation by default. Use `--yes` to skip the prompt. If the target persona already matches, Relic skips the persona rewrite and only runs the memory sync.
+
+Inject behavior:
+
+| Workspace persona state | Flags | Behavior |
+|---------|------|------|
+| Workspace missing | none | Fail and ask you to create the agent first |
+| Same as local Engram | none | Skip persona rewrite, then auto-sync memory |
+| Different from local Engram | none | Ask for confirmation before overwriting persona |
+| Different from local Engram | `--yes` | Overwrite persona without confirmation |
 
 > **Note:** The Claw agent must already exist (e.g. `openclaw agents add <name>`). Inject writes persona files into an existing workspace — it does not create new agents.
 
@@ -360,11 +392,31 @@ relic claw inject --engram motoko --dir /path/to/.fooclaw
 
 # Non-OpenClaw frameworks: merge IDENTITY.md into SOUL.md
 relic claw inject --engram motoko --dir ~/.nanobot --merge-identity
+
+# Skip overwrite confirmation if persona files differ
+relic claw inject --engram motoko --yes
 ```
 
-### Extract — Import a Claw agent as a new Engram
+### Extract — Import a Claw agent as an Engram
 
-Creates a new Engram from an existing Claw agent workspace. This is a **one-time initial import** — if the Engram already exists, use `relic claw inject` to push updates.
+Creates a new Engram from an existing Claw agent workspace.
+
+Extract behavior:
+
+| Local Engram state | Flags | Behavior |
+|---------|------|------|
+| Missing | none | Create a new Engram from workspace files |
+| Missing | `--force` | Same as normal new extract |
+| Exists | none | Fail and require `--force` |
+| Exists, no persona drift | `--force` | Skip overwrite |
+| Exists, persona differs | `--force` | Ask for confirmation before overwriting `SOUL.md` / `IDENTITY.md` |
+| Exists, persona differs | `--force --yes` | Overwrite `SOUL.md` / `IDENTITY.md` without confirmation |
+
+Notes:
+- "Persona" means `SOUL.md` and `IDENTITY.md`
+- `--force` only overwrites `SOUL.md` and `IDENTITY.md`
+- `--force` does not overwrite `USER.md`, `MEMORY.md`, or `memory/*.md`
+- If `--name` is provided together with `--force`, Relic also updates `engram.json.name`
 
 ```bash
 # Extract from the default (main) agent
@@ -375,6 +427,12 @@ relic claw extract --agent johnny
 
 # Set a custom display name
 relic claw extract --agent analyst --name "Data Analyst"
+
+# Overwrite local persona files from the Claw workspace
+relic claw extract --agent johnny --force
+
+# Skip overwrite confirmation
+relic claw extract --agent johnny --force --yes
 
 # Override Claw directory
 relic claw extract --agent johnny --dir /path/to/.fooclaw
@@ -401,8 +459,8 @@ Merge rules:
 
 | Command | Direction | Description |
 |---------|-----------|-------------|
-| `relic claw inject -e <id>` | Relic → Claw | Push persona + auto-sync (`--no-sync` to skip, `--merge-identity` for non-OpenClaw) |
-| `relic claw extract -a <name>` | Claw → Relic | One-time import (new Engrams only) |
+| `relic claw inject -e <id>` | Relic → Claw | Push persona + auto-sync (`--yes` skips overwrite confirmation, `--no-sync` skips sync, `--merge-identity` for non-OpenClaw) |
+| `relic claw extract -a <name>` | Claw → Relic | New import by default, or persona-only overwrite with `--force` (`--yes` skips confirmation) |
 | `relic claw sync` | Relic ↔ Claw | Bidirectional merge (memory, MEMORY.md, USER.md) |
 
 ## Memory Management
