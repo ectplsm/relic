@@ -98,12 +98,14 @@ Constructが最近の会話を振り返り、重要な事実や決定を `memory
 └── engrams/
     ├── johnny/
     │   ├── engram.json
+    │   ├── manifest.json
     │   ├── SOUL.md
     │   ├── IDENTITY.md
     │   └── memory/
     │       └── YYYY-MM-DD.md
     └── motoko/
         ├── engram.json
+        ├── manifest.json
         ├── SOUL.md
         ├── IDENTITY.md
         └── memory/
@@ -112,9 +114,11 @@ Constructが最近の会話を振り返り、重要な事実や決定を `memory
 
 - `config.json` には `engramsPath`、`defaultEngram`、`clawPath`、`memoryWindowSize` などのRelic全体設定が入ります。
 - `engrams/<id>/` は1つのEngramの `workspace` です。ペルソナファイルとそのEngram用の記憶はここに保存されます。
-- `engram.json` には Engram のID、表示名、説明、タグなどのメタデータが入ります。
+- `engram.json` には表示名、説明、タグなどの編集可能なプロフィール情報が入ります。
+- `manifest.json` には Engram ID やタイムスタンプなどのシステム管理情報が入ります。
 - `SOUL.md` と `IDENTITY.md` がペルソナ本体を定義します。
 - `memory/YYYY-MM-DD.md` には日付ごとの蒸留済み記憶が入ります。`relic init` では各サンプルEngramに初期メモリが1件入ります。
+- 旧形式のEngramをまとめて新しい `manifest.json` 形式へ前倒し移行したい場合は `relic migrate engrams` が使えます。通常の Engram 読み込み時にも自動移行は走ります。
 
 Engramを使い続けると、同じ `workspace` に追加のファイルが増えていきます。
 
@@ -378,7 +382,7 @@ relic claw inject --engram motoko --yes
 既存のClawエージェントのワークスペースからEngramを作成します。
 
 `extract` がローカルに書き込むもの:
-- 新規extract: `engram.json`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `MEMORY.md`, `memory/*.md`
+- 新規extract: `engram.json`, `manifest.json`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `MEMORY.md`, `memory/*.md`
 - `extract --force`: `SOUL.md` と `IDENTITY.md` のみ
 - `extract --force --name`: `SOUL.md`, `IDENTITY.md`, `engram.json.name`
 
@@ -513,7 +517,8 @@ CLIフラグは常にconfig値より優先されます。
 
 ```
 ~/.relic/engrams/your-persona/
-├── engram.json        # メタデータ（id, name, description, tags）
+├── engram.json        # 編集可能なプロフィール（name, description, tags）
+├── manifest.json      # システム管理情報（id, createdAt, updatedAt）
 ├── SOUL.md            # コアディレクティブ — ペルソナの思考と行動を定義
 ├── IDENTITY.md        # 名前、口調、背景、性格
 ├── AGENTS.md          # （任意）ツール使用ポリシー
@@ -527,12 +532,18 @@ CLIフラグは常にconfig値より優先されます。
 **engram.json:**
 ```json
 {
-  "id": "your-persona",
   "name": "表示名",
   "description": "短い説明文",
-  "createdAt": "2026-03-21T00:00:00Z",
-  "updatedAt": "2026-03-21T00:00:00Z",
   "tags": ["custom"]
+}
+```
+
+**manifest.json:**
+```json
+{
+  "id": "your-persona",
+  "createdAt": "2026-03-21T00:00:00Z",
+  "updatedAt": "2026-03-21T00:00:00Z"
 }
 ```
 
