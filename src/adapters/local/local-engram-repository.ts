@@ -1,8 +1,18 @@
 import { readdir, readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { EngramMetaSchema } from "../../core/entities/engram.js";
-import type { Engram, EngramMeta, EngramFiles } from "../../core/entities/engram.js";
+import {
+  EngramManifestSchema,
+  EngramMetaSchema,
+  EngramProfileSchema,
+} from "../../core/entities/engram.js";
+import type {
+  Engram,
+  EngramFiles,
+  EngramManifest,
+  EngramMeta,
+  EngramProfile,
+} from "../../core/entities/engram.js";
 import type { EngramRepository } from "../../core/ports/engram-repository.js";
 
 /**
@@ -18,7 +28,8 @@ const FILE_MAP: Record<keyof Omit<EngramFiles, "memoryEntries">, string> = {
   heartbeat: "HEARTBEAT.md",
 };
 
-const META_FILE = "engram.json";
+const PROFILE_FILE = "engram.json";
+const MANIFEST_FILE = "manifest.json";
 const MEMORY_DIR = "memory";
 
 /**
@@ -27,7 +38,8 @@ const MEMORY_DIR = "memory";
  *
  * ディレクトリ構造:
  *   {basePath}/{engramId}/
- *     ├── engram.json     (メタデータ)
+ *     ├── engram.json     (ユーザー編集可能なプロフィール)
+ *     ├── manifest.json   (システム管理の識別子・タイムスタンプ)
  *     ├── SOUL.md
  *     ├── IDENTITY.md
  *     ├── AGENTS.md       (optional)
@@ -50,13 +62,9 @@ export class LocalEngramRepository implements EngramRepository {
 
     const metas: EngramMeta[] = [];
     for (const dir of dirs) {
-      const metaPath = join(this.basePath, dir.name, META_FILE);
-      if (!existsSync(metaPath)) continue;
-
-      const raw = await readFile(metaPath, "utf-8");
-      const parsed = EngramMetaSchema.safeParse(JSON.parse(raw));
-      if (parsed.success) {
-        metas.push(parsed.data);
+      const meta = await this.readMeta(join(this.basePath, dir.name));
+      if (meta) {
+        metas.push(meta);
       }
     }
 
@@ -69,7 +77,7 @@ export class LocalEngramRepository implements EngramRepository {
       return null;
     }
 
-    const meta = await this.readMeta(engramDir);
+    const meta = await this.readMeta(engramDir, { migrateLegacy: true });
     if (!meta) return null;
 
     const files = await this.readFiles(engramDir);
@@ -80,12 +88,7 @@ export class LocalEngramRepository implements EngramRepository {
     const engramDir = join(this.basePath, engram.meta.id);
     await mkdir(engramDir, { recursive: true });
 
-    // メタデータ書き込み
-    await writeFile(
-      join(engramDir, META_FILE),
-      JSON.stringify(engram.meta, null, 2),
-      "utf-8"
-    );
+    await this.writeMetaFiles(engramDir, engram.meta);
 
     // 必須ファイル書き込み
     for (const [key, filename] of Object.entries(FILE_MAP)) {
@@ -114,13 +117,69 @@ export class LocalEngramRepository implements EngramRepository {
 
   // --- private ---
 
-  private async readMeta(engramDir: string): Promise<EngramMeta | null> {
-    const metaPath = join(engramDir, META_FILE);
-    if (!existsSync(metaPath)) return null;
+  private async readMeta(
+    engramDir: string,
+    options?: { migrateLegacy?: boolean }
+  ): Promise<EngramMeta | null> {
+    const profilePath = join(engramDir, PROFILE_FILE);
+    if (!existsSync(profilePath)) return null;
 
-    const raw = await readFile(metaPath, "utf-8");
-    const parsed = EngramMetaSchema.safeParse(JSON.parse(raw));
-    return parsed.success ? parsed.data : null;
+    const profileRaw = JSON.parse(await readFile(profilePath, "utf-8"));
+    const manifestPath = join(engramDir, MANIFEST_FILE);
+
+    if (existsSync(manifestPath)) {
+      const profile = EngramProfileSchema.safeParse(profileRaw);
+      if (!profile.success) return null;
+
+      const manifest = EngramManifestSchema.safeParse(
+        JSON.parse(await readFile(manifestPath, "utf-8"))
+      );
+      if (!manifest.success) return null;
+
+      return {
+        ...profile.data,
+        ...manifest.data,
+      };
+    }
+
+    // 後方互換: 旧形式では engram.json に profile + manifest が同居していた
+    const legacy = EngramMetaSchema.safeParse(profileRaw);
+    if (!legacy.success) return null;
+
+    if (options?.migrateLegacy) {
+      await this.writeMetaFiles(engramDir, legacy.data);
+    }
+
+    return legacy.data;
+  }
+
+  private toProfile(meta: EngramMeta): EngramProfile {
+    return {
+      name: meta.name,
+      description: meta.description,
+      tags: meta.tags,
+    };
+  }
+
+  private toManifest(meta: EngramMeta): EngramManifest {
+    return {
+      id: meta.id,
+      createdAt: meta.createdAt,
+      updatedAt: meta.updatedAt,
+    };
+  }
+
+  private async writeMetaFiles(engramDir: string, meta: EngramMeta): Promise<void> {
+    await writeFile(
+      join(engramDir, PROFILE_FILE),
+      JSON.stringify(this.toProfile(meta), null, 2),
+      "utf-8"
+    );
+    await writeFile(
+      join(engramDir, MANIFEST_FILE),
+      JSON.stringify(this.toManifest(meta), null, 2),
+      "utf-8"
+    );
   }
 
   private async readFiles(engramDir: string): Promise<EngramFiles> {

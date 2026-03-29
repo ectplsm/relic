@@ -2,6 +2,10 @@ export { Summon, EngramNotFoundError, type SummonResult } from "./summon.js";
 export { ListEngrams } from "./list-engrams.js";
 export { Init, type InitResult } from "./init.js";
 export {
+  MigrateEngrams,
+  type MigrateEngramsResult,
+} from "./migrate-engrams.js";
+export {
   Inject,
   InjectEngramNotFoundError,
   InjectClawDirNotFoundError,

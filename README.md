@@ -98,12 +98,14 @@ Running `relic init` creates `~/.relic/`, writes `config.json`, and seeds two sa
 └── engrams/
     ├── johnny/
     │   ├── engram.json
+    │   ├── manifest.json
     │   ├── SOUL.md
     │   ├── IDENTITY.md
     │   └── memory/
     │       └── YYYY-MM-DD.md
     └── motoko/
         ├── engram.json
+        ├── manifest.json
         ├── SOUL.md
         ├── IDENTITY.md
         └── memory/
@@ -112,9 +114,11 @@ Running `relic init` creates `~/.relic/`, writes `config.json`, and seeds two sa
 
 - `config.json` stores global Relic settings such as `engramsPath`, `defaultEngram`, `clawPath`, and `memoryWindowSize`.
 - `engrams/<id>/` is one Engram workspace. This is where persona files and memory for that Engram live.
-- `engram.json` stores metadata like the Engram's ID, display name, description, and tags.
+- `engram.json` stores editable profile fields like display name, description, and tags.
+- `manifest.json` stores system-managed fields like the Engram ID and timestamps.
 - `SOUL.md` and `IDENTITY.md` define the persona itself.
 - `memory/YYYY-MM-DD.md` stores dated distilled memory entries. `relic init` seeds an initial memory file for each sample Engram.
+- `relic migrate engrams` can be used to front-load legacy Engrams into the new `manifest.json` format, although normal Engram reads also migrate automatically.
 
 As you keep using an Engram, more files are added to the same workspace:
 
@@ -378,7 +382,7 @@ relic claw inject --engram motoko --yes
 Creates a new Engram from an existing Claw agent workspace.
 
 What `extract` writes locally:
-- New extract: `engram.json`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `MEMORY.md`, `memory/*.md`
+- New extract: `engram.json`, `manifest.json`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `MEMORY.md`, `memory/*.md`
 - `extract --force`: only `SOUL.md` and `IDENTITY.md`
 - `extract --force --name`: `SOUL.md`, `IDENTITY.md`, and `engram.json.name`
 
@@ -513,7 +517,8 @@ Create a directory under `~/.relic/engrams/` with the following structure:
 
 ```
 ~/.relic/engrams/your-persona/
-├── engram.json        # Metadata (id, name, description, tags)
+├── engram.json        # Editable profile (name, description, tags)
+├── manifest.json      # System-managed identity (id, createdAt, updatedAt)
 ├── SOUL.md            # Core directive — how the persona thinks and acts
 ├── IDENTITY.md        # Name, tone, background, personality
 ├── AGENTS.md          # (optional) Tool usage policies
@@ -527,12 +532,18 @@ Create a directory under `~/.relic/engrams/` with the following structure:
 **engram.json:**
 ```json
 {
-  "id": "your-persona",
   "name": "Display Name",
   "description": "A short description",
-  "createdAt": "2026-03-21T00:00:00Z",
-  "updatedAt": "2026-03-21T00:00:00Z",
   "tags": ["custom"]
+}
+```
+
+**manifest.json:**
+```json
+{
+  "id": "your-persona",
+  "createdAt": "2026-03-21T00:00:00Z",
+  "updatedAt": "2026-03-21T00:00:00Z"
 }
 ```
 

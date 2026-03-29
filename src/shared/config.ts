@@ -72,15 +72,18 @@ async function seedMotoko(engramsPath: string): Promise<void> {
   const dir = join(engramsPath, "motoko");
   const memoryDir = join(dir, "memory");
   const templateDir = join(TEMPLATES_DIR, "motoko");
+  const now = new Date().toISOString();
   await mkdir(memoryDir, { recursive: true });
 
   await writeFile(join(dir, "engram.json"), JSON.stringify({
-    id: "motoko",
     name: "Motoko Kusanagi",
     description: "A navigator of cyberspace. She guides you from beyond the attack barriers.",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
     tags: ["sample", "cyberpunk"],
+  }, null, 2), "utf-8");
+  await writeFile(join(dir, "manifest.json"), JSON.stringify({
+    id: "motoko",
+    createdAt: now,
+    updatedAt: now,
   }, null, 2), "utf-8");
 
   await copyFile(join(templateDir, "SOUL.md"), join(dir, "SOUL.md"));
@@ -97,15 +100,18 @@ async function seedJohnny(engramsPath: string): Promise<void> {
   const dir = join(engramsPath, "johnny");
   const memoryDir = join(dir, "memory");
   const templateDir = join(TEMPLATES_DIR, "johnny");
+  const now = new Date().toISOString();
   await mkdir(memoryDir, { recursive: true });
 
   await writeFile(join(dir, "engram.json"), JSON.stringify({
-    id: "johnny",
     name: "Johnny Silverhand",
     description: "A rebel rockerboy burned into a Relic chip. Burns corps and writes code for revolution.",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
     tags: ["sample", "cyberpunk"],
+  }, null, 2), "utf-8");
+  await writeFile(join(dir, "manifest.json"), JSON.stringify({
+    id: "johnny",
+    createdAt: now,
+    updatedAt: now,
   }, null, 2), "utf-8");
 
   await copyFile(join(templateDir, "SOUL.md"), join(dir, "SOUL.md"));
