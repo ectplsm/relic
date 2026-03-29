@@ -17,41 +17,20 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 
 ## Table of Contents
 
-- [PROJECT RELIC](#project-relic)
-  - [Table of Contents](#table-of-contents)
-  - [Install](#install)
-  - [Quick Start](#quick-start)
-    - [1. Initialize](#1-initialize)
-    - [2. Set Up Memory (MCP)](#2-set-up-memory-mcp)
-    - [3. Launch a Shell](#3-launch-a-shell)
-    - [4. Organize Memories](#4-organize-memories)
-  - [What `relic init` Creates](#what-relic-init-creates)
-  - [Sample Engrams](#sample-engrams)
-    - [Johnny Silverhand (`johnny`)](#johnny-silverhand-johnny)
-    - [Motoko Kusanagi (`motoko`)](#motoko-kusanagi-motoko)
-  - [How It Works](#how-it-works)
-  - [Supported Shells](#supported-shells)
-  - [Conversation Log Recording](#conversation-log-recording)
-      - [Claude Code](#claude-code)
-      - [Codex CLI](#codex-cli)
-      - [Gemini CLI](#gemini-cli)
-  - [MCP Server](#mcp-server)
-    - [Available Tools](#available-tools)
-    - [Setup](#setup)
-      - [Claude Code](#claude-code-1)
-      - [Codex CLI](#codex-cli-1)
-      - [Gemini CLI](#gemini-cli-1)
-  - [Claw Integration](#claw-integration)
-    - [Inject — Push an Engram into a Claw workspace](#inject--push-an-engram-into-a-claw-workspace)
-    - [Extract — Import a Claw agent as an Engram](#extract--import-a-claw-agent-as-an-engram)
-    - [Sync — Bidirectional merge](#sync--bidirectional-merge)
-    - [Command Summary](#command-summary)
-  - [Memory Management](#memory-management)
-  - [Configuration](#configuration)
-  - [Creating Your Own Engram](#creating-your-own-engram)
-  - [Domain Glossary](#domain-glossary)
-  - [Roadmap](#roadmap)
-  - [License](#license)
+- [Install](#install)
+- [Quick Start](#quick-start)
+- [What `relic init` Creates](#what-relic-init-creates)
+- [Sample Engrams](#sample-engrams)
+- [How It Works](#how-it-works)
+- [Supported Shells](#supported-shells)
+- [Conversation Log Recording](#conversation-log-recording)
+- [MCP Server](#mcp-server)
+- [Claw Integration](#claw-integration)
+- [Memory Management](#memory-management)
+- [Configuration](#configuration)
+- [Creating Your Own Engram](#creating-your-own-engram)
+- [Domain Glossary](#domain-glossary)
+- [Roadmap](#roadmap)
 
 ## Install
 
@@ -360,11 +339,21 @@ Add to `~/.gemini/settings.json`:
 
 Relic Engrams are natively compatible with [OpenClaw](https://github.com/openclaw/openclaw) workspaces — their file structure maps 1:1 (SOUL.md, IDENTITY.md, memory/, etc.). For other Claw-derived frameworks (Nanobot, gitagent, etc.) that fold identity into SOUL.md, the `--merge-identity` flag merges IDENTITY.md into SOUL.md on inject. Combined with `--dir`, Relic can target any Claw-compatible workspace.
 
-Agent Name = Engram ID. All Claw commands live under `relic claw`:
+Current rule: **Agent Name = Engram ID**. Relic treats them as the same name by default. This keeps Claw integration simple: once Engram and agent names diverge, Relic has to introduce explicit mapping logic, which adds complexity that the current workflow does not need.
+
+All Claw commands live under `relic claw`:
+
+### Command Summary
+
+| Command | Direction | Description |
+|---------|-----------|-------------|
+| `relic claw inject -e <id>` | Relic → Claw | Push persona + auto-sync (`--yes` skips overwrite confirmation, `--no-sync` skips sync, `--merge-identity` for non-OpenClaw) |
+| `relic claw extract -a <name>` | Claw → Relic | New import or persona-only overwrite, then auto-sync that target (`--force`, `--yes`, `--no-sync`) |
+| `relic claw sync` | Relic ↔ Claw | Bidirectional merge (memory, MEMORY.md, USER.md; `--target` limits sync to one target) |
 
 ### Inject — Push an Engram into a Claw workspace
 
-Writes the persona files (`SOUL.md`, `IDENTITY.md`) into the agent workspace, then automatically syncs `USER.md` and memory files (`MEMORY.md`, `memory/*.md`) for that pair. The sync is bidirectional and merge-based, not a blind overwrite. `AGENTS.md` and `HEARTBEAT.md` remain under Claw's control.
+Writes the persona files (`SOUL.md`, `IDENTITY.md`) into the agent workspace, then syncs `USER.md` and memory files (`MEMORY.md`, `memory/*.md`). The sync is bidirectional and merge-based, not a blind overwrite. `AGENTS.md` and `HEARTBEAT.md` remain under Claw's control.
 
 If persona files already exist in the target workspace and differ from the local Relic Engram, `inject` asks for confirmation by default. Use `--yes` to skip the prompt. If the target persona already matches, Relic skips the persona rewrite and only runs the memory sync.
 
@@ -373,10 +362,6 @@ If persona files already exist in the target workspace and differ from the local
 ```bash
 # Inject Engram "motoko" → workspace-motoko/
 relic claw inject --engram motoko
-
-# Inject into a differently-named agent
-relic claw inject --engram motoko --to main
-# → workspace/ receives motoko's persona
 
 # Override Claw directory (or configure once with: relic config claw-path)
 relic claw inject --engram motoko --dir /path/to/.fooclaw
@@ -392,7 +377,12 @@ relic claw inject --engram motoko --yes
 
 Creates a new Engram from an existing Claw agent workspace.
 
-After `extract`, Relic automatically runs a targeted sync for that same Engram/agent pair. Use `--no-sync` to skip it.
+What `extract` writes locally:
+- New extract: `engram.json`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `MEMORY.md`, `memory/*.md`
+- `extract --force`: only `SOUL.md` and `IDENTITY.md`
+- `extract --force --name`: `SOUL.md`, `IDENTITY.md`, and `engram.json.name`
+
+After `extract`, Relic automatically runs a targeted sync for that same Engram/agent target. Use `--no-sync` to skip it.
 
 ```bash
 # Extract from the default (main) agent
@@ -410,7 +400,7 @@ relic claw extract --agent johnny --force
 # Skip overwrite confirmation
 relic claw extract --agent johnny --force --yes
 
-# Skip the automatic pair sync after extract
+# Skip the automatic targeted sync after extract
 relic claw extract --agent johnny --no-sync
 
 # Override Claw directory
@@ -419,19 +409,16 @@ relic claw extract --agent johnny --dir /path/to/.fooclaw
 
 ### Sync — Bidirectional merge
 
-Merges `memory/*.md`, `MEMORY.md`, and `USER.md` between matching Engram/agent pairs. Only pairs where both the Engram and agent exist are synced. Also runs automatically after `inject` (skip with `--no-sync`).
+Merges `memory/*.md`, `MEMORY.md`, and `USER.md` between matching Engram/agent targets. Only targets where both the Engram and agent exist are synced. Also runs automatically after `inject` (skip with `--no-sync`).
 
-By default, `sync` scans all matching pairs. Use `--target` to sync only one pair. Because Relic currently treats `Agent Name = Engram ID`, `--target <id>` is usually enough. For future compatibility, `--target <engram>:<agent>` is also accepted.
+By default, `sync` scans all matching targets. Use `--target <id>` to sync only one target by shared Engram/agent name.
 
 ```bash
-# Sync all matching pairs
+# Sync all matching targets
 relic claw sync
 
-# Sync only one matching pair
+# Sync only one matching target
 relic claw sync --target johnny
-
-# Explicit Engram/Agent pair
-relic claw sync --target johnny:main
 
 # Override Claw directory
 relic claw sync --dir /path/to/.fooclaw
@@ -447,34 +434,25 @@ Merge rules:
 | Command | State | Flags | Result |
 |---------|------|------|------|
 | `inject` | Workspace missing | none | Fail and ask you to create the agent first |
-| `inject` | Persona matches local Engram | none | Skip persona rewrite, then auto-sync that pair |
-| `inject` | Persona differs from local Engram | none | Ask for confirmation before overwriting persona, then auto-sync that pair |
-| `inject` | Persona differs from local Engram | `--yes` | Overwrite persona without confirmation, then auto-sync that pair |
-| `inject` | any successful inject | `--no-sync` | Skip the automatic pair sync |
-| `extract` | Local Engram missing | none | Create a new Engram from workspace files, then auto-sync that pair |
-| `extract` | Local Engram missing | `--force` | Same as normal new extract, then auto-sync that pair |
+| `inject` | Persona matches local Engram | none | Skip persona rewrite, then auto-sync that target |
+| `inject` | Persona differs from local Engram | none | Ask for confirmation before overwriting persona, then auto-sync that target |
+| `inject` | Persona differs from local Engram | `--yes` | Overwrite persona without confirmation, then auto-sync that target |
+| `inject` | any successful inject | `--no-sync` | Skip the automatic targeted sync |
+| `extract` | Local Engram missing | none | Create a new Engram from workspace files, then auto-sync that target |
+| `extract` | Local Engram missing | `--force` | Same as normal new extract, then auto-sync that target |
 | `extract` | Local Engram exists | none | Fail and require `--force` |
-| `extract` | Local Engram exists, no persona drift | `--force` | Skip persona overwrite, then auto-sync that pair |
-| `extract` | Local Engram exists, persona differs | `--force` | Ask for confirmation before overwriting `SOUL.md` / `IDENTITY.md`, then auto-sync that pair |
-| `extract` | Local Engram exists, persona differs | `--force --yes` | Overwrite `SOUL.md` / `IDENTITY.md` without confirmation, then auto-sync that pair |
-| `extract` | any successful extract | `--no-sync` | Skip the automatic pair sync |
-| `sync` | no target | none | Scan and sync all matching pairs |
-| `sync` | explicit pair | `--target <id>` | Sync one matching pair where `agentName = engramId` |
-| `sync` | explicit pair | `--target <engram>:<agent>` | Sync one explicit Engram/agent pair |
+| `extract` | Local Engram exists, no persona drift | `--force` | Skip persona overwrite, then auto-sync that target |
+| `extract` | Local Engram exists, persona differs | `--force` | Ask for confirmation before overwriting `SOUL.md` / `IDENTITY.md`, then auto-sync that target |
+| `extract` | Local Engram exists, persona differs | `--force --yes` | Overwrite `SOUL.md` / `IDENTITY.md` without confirmation, then auto-sync that target |
+| `extract` | any successful extract | `--no-sync` | Skip the automatic targeted sync |
+| `sync` | no target | none | Scan and sync all matching targets |
+| `sync` | explicit target | `--target <id>` | Sync one matching target where `agentName = engramId` |
 
 Notes:
 - "Persona" means `SOUL.md` and `IDENTITY.md`
 - `extract --force` only overwrites `SOUL.md` and `IDENTITY.md`
 - `extract --force` does not overwrite `USER.md`, `MEMORY.md`, or `memory/*.md`
 - If `--name` is provided together with `extract --force`, Relic also updates `engram.json.name`
-
-### Command Summary
-
-| Command | Direction | Description |
-|---------|-----------|-------------|
-| `relic claw inject -e <id>` | Relic → Claw | Push persona + auto-sync (`--yes` skips overwrite confirmation, `--no-sync` skips sync, `--merge-identity` for non-OpenClaw) |
-| `relic claw extract -a <name>` | Claw → Relic | New import or persona-only overwrite, then auto-sync that pair (`--force`, `--yes`, `--no-sync`) |
-| `relic claw sync` | Relic ↔ Claw | Bidirectional merge (memory, MEMORY.md, USER.md; `--target` limits sync to one pair) |
 
 ## Memory Management
 
