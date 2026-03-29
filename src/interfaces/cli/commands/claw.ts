@@ -61,7 +61,9 @@ export function registerClawCommand(program: Command): void {
           if (
             diff.overwriteRequired &&
             !opts.yes &&
-            !(await confirmPersonaOverwrite(diff.targetPath))
+            !(await confirmOverwrite(
+              `SOUL.md and/or IDENTITY.md already exist and differ in ${diff.targetPath}. Overwrite with local Relic version? [y/N] `
+            ))
           ) {
             console.error(
               "Error: Persona files already exist and differ. Re-run with --yes to overwrite from local Relic Engram."
@@ -131,12 +133,16 @@ export function registerClawCommand(program: Command): void {
     .option("-a, --agent <name>", "Agent name to extract from (default: main)")
     .option("--name <name>", "Engram display name (defaults to agent name)")
     .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
+    .option("-f, --force", "Allow overwriting local persona files from the Claw workspace")
+    .option("-y, --yes", "Skip persona overwrite confirmation")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(
       async (opts: {
         agent?: string;
         name?: string;
         dir?: string;
+        force?: boolean;
+        yes?: boolean;
         path?: string;
       }) => {
         const engramsPath = await resolveEngramsPath(opts.path);
@@ -146,16 +152,63 @@ export function registerClawCommand(program: Command): void {
 
         try {
           const agentName = opts.agent ?? "main";
+          const diff = await extract.inspectPersona(agentName, {
+            name: opts.name,
+            openclawDir: clawDir,
+          });
+
+          if (diff.existing && !opts.force) {
+            throw new AlreadyExtractedError(agentName);
+          }
+
+          const alreadyExtracted =
+            diff.existing &&
+            diff.name === "same" &&
+            diff.soul === "same" &&
+            diff.identity === "same";
+
+          if (
+            diff.existing &&
+            diff.overwriteRequired &&
+            !opts.yes &&
+            !(await confirmOverwrite(
+              `SOUL.md and/or IDENTITY.md already exist in local Engram "${agentName}" and differ from ${diff.sourcePath}. Overwrite with the Claw version? [y/N] `
+            ))
+          ) {
+            console.error(
+              "Error: Persona files already exist and differ. Re-run with --yes to overwrite from the Claw workspace."
+            );
+            process.exit(1);
+          }
+
+          if (alreadyExtracted) {
+            console.log(
+              opts.force
+                ? `  Already extracted and updated (${agentName})`
+                : `  Already extracted (${agentName})`
+            );
+            return;
+          }
+
           const result = await extract.execute(agentName, {
             name: opts.name,
             openclawDir: clawDir,
+            force: opts.force,
           });
 
           console.log(
             `Extracted "${result.engramName}" from ${result.sourcePath}`
           );
-          console.log(`  Files read: ${result.filesRead.join(", ")}`);
-          console.log(`  Saved as Engram: ${result.engramId}`);
+          if (diff.existing) {
+            console.log(`  Files overwritten: SOUL.md, IDENTITY.md`);
+            if (diff.name === "different") {
+              console.log(`  Metadata updated: engram.json (name)`);
+            }
+            console.log(`  Saved as Engram: ${result.engramId}`);
+          } else {
+            console.log(`  Files extracted: ${result.filesRead.join(", ")}`);
+            console.log(`  Saved as Engram: ${result.engramId}`);
+          }
         } catch (err) {
           if (
             err instanceof WorkspaceNotFoundError ||
@@ -228,16 +281,14 @@ export function registerClawCommand(program: Command): void {
     );
 }
 
-async function confirmPersonaOverwrite(targetPath: string): Promise<boolean> {
+async function confirmOverwrite(message: string): Promise<boolean> {
   if (!input.isTTY || !output.isTTY) {
     return false;
   }
 
   const rl = createInterface({ input, output });
   try {
-    const answer = await rl.question(
-      `SOUL.md and/or IDENTITY.md already exist and differ in ${targetPath}. Overwrite with local Relic version? [y/N] `
-    );
+    const answer = await rl.question(message);
     return /^(y|yes)$/i.test(answer.trim());
   } finally {
     rl.close();

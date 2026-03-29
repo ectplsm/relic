@@ -15,6 +15,8 @@ export {
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
   AlreadyExtractedError,
+  type ExtractPersonaFileDiff,
+  type ExtractPersonaDiffResult,
   type ExtractResult,
 } from "./extract.js";
 export {

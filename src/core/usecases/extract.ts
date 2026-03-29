@@ -5,6 +5,19 @@ import type { EngramRepository } from "../ports/engram-repository.js";
 import type { Engram, EngramFiles } from "../entities/engram.js";
 import { RELIC_FILE_MAP, MEMORY_DIR, resolveWorkspacePath } from "../../shared/openclaw.js";
 
+export type ExtractPersonaFileDiff = "missing" | "same" | "different";
+
+export interface ExtractPersonaDiffResult {
+  engramId: string;
+  engramName: string;
+  sourcePath: string;
+  existing: boolean;
+  name: ExtractPersonaFileDiff;
+  soul: ExtractPersonaFileDiff;
+  identity: ExtractPersonaFileDiff;
+  overwriteRequired: boolean;
+}
+
 export interface ExtractResult {
   engramId: string;
   engramName: string;
@@ -21,11 +34,61 @@ export interface ExtractResult {
 export class Extract {
   constructor(private readonly repository: EngramRepository) {}
 
+  async inspectPersona(
+    agentName: string,
+    options?: {
+      name?: string;
+      openclawDir?: string;
+    }
+  ): Promise<ExtractPersonaDiffResult> {
+    const sourcePath = resolveWorkspacePath(agentName, options?.openclawDir);
+
+    if (!existsSync(sourcePath)) {
+      throw new WorkspaceNotFoundError(sourcePath);
+    }
+
+    const { files } = await this.readFiles(sourcePath);
+    const existing = await this.repository.get(agentName);
+
+    if (!existing) {
+      return {
+        engramId: agentName,
+        engramName: options?.name ?? agentName,
+        sourcePath,
+        existing: false,
+        name: "missing",
+        soul: "missing",
+        identity: "missing",
+        overwriteRequired: false,
+      };
+    }
+
+    const requestedName = options?.name ?? existing.meta.name;
+    const name = requestedName === existing.meta.name ? "same" : "different";
+    const soul = this.comparePersonaFile(existing.files.soul, files.soul);
+    const identity = this.comparePersonaFile(existing.files.identity, files.identity);
+
+    return {
+      engramId: agentName,
+      engramName: existing.meta.name,
+      sourcePath,
+      existing: true,
+      name,
+      soul,
+      identity,
+      overwriteRequired:
+        name === "different" ||
+        soul === "different" ||
+        identity === "different",
+    };
+  }
+
   async execute(
     agentName: string,
     options?: {
       name?: string;
       openclawDir?: string;
+      force?: boolean;
     }
   ): Promise<ExtractResult> {
     const sourcePath = resolveWorkspacePath(agentName, options?.openclawDir);
@@ -34,9 +97,8 @@ export class Extract {
       throw new WorkspaceNotFoundError(sourcePath);
     }
 
-    // 既存Engramがあればエラー — Relic側が真のデータソース
     const existing = await this.repository.get(agentName);
-    if (existing) {
+    if (existing && !options?.force) {
       throw new AlreadyExtractedError(agentName);
     }
 
@@ -46,28 +108,51 @@ export class Extract {
       throw new WorkspaceEmptyError(sourcePath);
     }
 
-    const engramName = options?.name ?? agentName;
     const now = new Date().toISOString();
-    const engram: Engram = {
-      meta: {
-        id: agentName,
-        name: engramName,
-        description: `Extracted from OpenClaw workspace (${agentName})`,
-        createdAt: now,
-        updatedAt: now,
-        tags: ["extracted", "openclaw"],
-      },
-      files,
-    };
+    const engram: Engram = existing && options?.force
+      ? {
+          meta: {
+            ...existing.meta,
+            name: options?.name ?? existing.meta.name,
+            updatedAt: now,
+          },
+          // Force extract only replaces persona files from Claw.
+          files: {
+            ...existing.files,
+            soul: files.soul ?? existing.files.soul,
+            identity: files.identity ?? existing.files.identity,
+          },
+        }
+      : {
+          meta: {
+            id: agentName,
+            name: options?.name ?? agentName,
+            description: `Extracted from OpenClaw workspace (${agentName})`,
+            createdAt: now,
+            updatedAt: now,
+            tags: ["extracted", "openclaw"],
+          },
+          files,
+        };
 
     await this.repository.save(engram);
 
     return {
       engramId: agentName,
-      engramName,
+      engramName: engram.meta.name,
       sourcePath,
       filesRead,
     };
+  }
+
+  private comparePersonaFile(
+    currentContent: string | undefined,
+    incomingContent: string | undefined
+  ): ExtractPersonaFileDiff {
+    if (currentContent === undefined || incomingContent === undefined) {
+      return "missing";
+    }
+    return currentContent === incomingContent ? "same" : "different";
   }
 
   private async readFiles(
@@ -125,7 +210,7 @@ export class WorkspaceEmptyError extends Error {
 export class AlreadyExtractedError extends Error {
   constructor(id: string) {
     super(
-      `Engram "${id}" already exists. Relic is the source of truth — use "relic claw inject" to push changes.`
+      `Engram "${id}" already exists. Re-run with "--force" option to overwrite local persona files from the Claw workspace.`
     );
     this.name = "AlreadyExtractedError";
   }
