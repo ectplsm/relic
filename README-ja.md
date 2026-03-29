@@ -380,6 +380,8 @@ relic claw inject --engram motoko --yes
 
 既存のClawエージェントのワークスペースからEngramを作成します。
 
+`extract` の後には、同じ Engram/agent ペアに対して対象限定の sync を自動実行します。スキップしたい場合は `--no-sync` を使います。
+
 extractの挙動:
 
 | ローカルEngram状態 | オプション | 挙動 |
@@ -413,6 +415,9 @@ relic claw extract --agent johnny --force
 # 上書き確認をスキップ
 relic claw extract --agent johnny --force --yes
 
+# extract 後の自動ペア sync をスキップ
+relic claw extract --agent johnny --no-sync
+
 # Clawディレクトリを指定
 relic claw extract --agent johnny --dir /path/to/.fooclaw
 ```
@@ -421,9 +426,17 @@ relic claw extract --agent johnny --dir /path/to/.fooclaw
 
 Engram/agentのマッチングペア間で `memory/*.md`・`MEMORY.md`・`USER.md` をマージします。Engramとagentの両方が存在するペアのみが対象です。`inject` の後にも自動実行されます（`--no-sync` でスキップ可）。
 
+デフォルトでは、`sync` はマッチするすべてのペアを走査します。特定のペアだけ同期したい場合は `--target` を使います。現在は `Agent Name = Engram ID` の前提なので、通常は `--target <id>` で十分です。将来の互換性のために `--target <engram>:<agent>` 形式も受け付けます。
+
 ```bash
 # マッチするペアをすべて同期
 relic claw sync
+
+# 特定の1ペアだけ同期
+relic claw sync --target johnny
+
+# Engram/Agent ペアを明示
+relic claw sync --target johnny:main
 
 # Clawディレクトリを指定
 relic claw sync --dir /path/to/.fooclaw
@@ -439,8 +452,8 @@ relic claw sync --dir /path/to/.fooclaw
 | コマンド | 方向 | 説明 |
 |---------|------|------|
 | `relic claw inject -e <id>` | Relic → Claw | ペルソナ注入 + 自動sync（`--yes` で上書き確認をスキップ、`--no-sync` でsyncをスキップ、非OpenClawは `--merge-identity`） |
-| `relic claw extract -a <name>` | Claw → Relic | 新規取り込み、または `--force` でペルソナのみ上書き（`--yes` で確認をスキップ） |
-| `relic claw sync` | Relic ↔ Claw | 双方向マージ（memory, MEMORY.md, USER.md） |
+| `relic claw extract -a <name>` | Claw → Relic | 新規取り込みまたはペルソナのみ上書き後、そのペアを自動sync（`--force`, `--yes`, `--no-sync`） |
+| `relic claw sync` | Relic ↔ Claw | 双方向マージ（memory, MEMORY.md, USER.md。`--target` で単一ペア指定可） |
 
 ## 記憶の管理
 

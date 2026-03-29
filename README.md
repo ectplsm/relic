@@ -401,6 +401,8 @@ relic claw inject --engram motoko --yes
 
 Creates a new Engram from an existing Claw agent workspace.
 
+After `extract`, Relic automatically runs a targeted sync for that same Engram/agent pair. Use `--no-sync` to skip it.
+
 Extract behavior:
 
 | Local Engram state | Flags | Behavior |
@@ -434,6 +436,9 @@ relic claw extract --agent johnny --force
 # Skip overwrite confirmation
 relic claw extract --agent johnny --force --yes
 
+# Skip the automatic pair sync after extract
+relic claw extract --agent johnny --no-sync
+
 # Override Claw directory
 relic claw extract --agent johnny --dir /path/to/.fooclaw
 ```
@@ -442,9 +447,17 @@ relic claw extract --agent johnny --dir /path/to/.fooclaw
 
 Merges `memory/*.md`, `MEMORY.md`, and `USER.md` between matching Engram/agent pairs. Only pairs where both the Engram and agent exist are synced. Also runs automatically after `inject` (skip with `--no-sync`).
 
+By default, `sync` scans all matching pairs. Use `--target` to sync only one pair. Because Relic currently treats `Agent Name = Engram ID`, `--target <id>` is usually enough. For future compatibility, `--target <engram>:<agent>` is also accepted.
+
 ```bash
 # Sync all matching pairs
 relic claw sync
+
+# Sync only one matching pair
+relic claw sync --target johnny
+
+# Explicit Engram/Agent pair
+relic claw sync --target johnny:main
 
 # Override Claw directory
 relic claw sync --dir /path/to/.fooclaw
@@ -460,8 +473,8 @@ Merge rules:
 | Command | Direction | Description |
 |---------|-----------|-------------|
 | `relic claw inject -e <id>` | Relic → Claw | Push persona + auto-sync (`--yes` skips overwrite confirmation, `--no-sync` skips sync, `--merge-identity` for non-OpenClaw) |
-| `relic claw extract -a <name>` | Claw → Relic | New import by default, or persona-only overwrite with `--force` (`--yes` skips confirmation) |
-| `relic claw sync` | Relic ↔ Claw | Bidirectional merge (memory, MEMORY.md, USER.md) |
+| `relic claw extract -a <name>` | Claw → Relic | New import or persona-only overwrite, then auto-sync that pair (`--force`, `--yes`, `--no-sync`) |
+| `relic claw sync` | Relic ↔ Claw | Bidirectional merge (memory, MEMORY.md, USER.md; `--target` limits sync to one pair) |
 
 ## Memory Management
 
