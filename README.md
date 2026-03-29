@@ -368,15 +368,6 @@ Writes the persona files (`SOUL.md`, `IDENTITY.md`) into the agent workspace, th
 
 If persona files already exist in the target workspace and differ from the local Relic Engram, `inject` asks for confirmation by default. Use `--yes` to skip the prompt. If the target persona already matches, Relic skips the persona rewrite and only runs the memory sync.
 
-Inject behavior:
-
-| Workspace persona state | Flags | Behavior |
-|---------|------|------|
-| Workspace missing | none | Fail and ask you to create the agent first |
-| Same as local Engram | none | Skip persona rewrite, then auto-sync memory |
-| Different from local Engram | none | Ask for confirmation before overwriting persona |
-| Different from local Engram | `--yes` | Overwrite persona without confirmation |
-
 > **Note:** The Claw agent must already exist (e.g. `openclaw agents add <name>`). Inject writes persona files into an existing workspace — it does not create new agents.
 
 ```bash
@@ -402,23 +393,6 @@ relic claw inject --engram motoko --yes
 Creates a new Engram from an existing Claw agent workspace.
 
 After `extract`, Relic automatically runs a targeted sync for that same Engram/agent pair. Use `--no-sync` to skip it.
-
-Extract behavior:
-
-| Local Engram state | Flags | Behavior |
-|---------|------|------|
-| Missing | none | Create a new Engram from workspace files |
-| Missing | `--force` | Same as normal new extract |
-| Exists | none | Fail and require `--force` |
-| Exists, no persona drift | `--force` | Skip overwrite |
-| Exists, persona differs | `--force` | Ask for confirmation before overwriting `SOUL.md` / `IDENTITY.md` |
-| Exists, persona differs | `--force --yes` | Overwrite `SOUL.md` / `IDENTITY.md` without confirmation |
-
-Notes:
-- "Persona" means `SOUL.md` and `IDENTITY.md`
-- `--force` only overwrites `SOUL.md` and `IDENTITY.md`
-- `--force` does not overwrite `USER.md`, `MEMORY.md`, or `memory/*.md`
-- If `--name` is provided together with `--force`, Relic also updates `engram.json.name`
 
 ```bash
 # Extract from the default (main) agent
@@ -467,6 +441,32 @@ Merge rules:
 - Files only on one side → copied to the other
 - Same content → skipped
 - Different content → merged (deduplicated) and written to both sides
+
+### Behavior Matrix
+
+| Command | State | Flags | Result |
+|---------|------|------|------|
+| `inject` | Workspace missing | none | Fail and ask you to create the agent first |
+| `inject` | Persona matches local Engram | none | Skip persona rewrite, then auto-sync that pair |
+| `inject` | Persona differs from local Engram | none | Ask for confirmation before overwriting persona, then auto-sync that pair |
+| `inject` | Persona differs from local Engram | `--yes` | Overwrite persona without confirmation, then auto-sync that pair |
+| `inject` | any successful inject | `--no-sync` | Skip the automatic pair sync |
+| `extract` | Local Engram missing | none | Create a new Engram from workspace files, then auto-sync that pair |
+| `extract` | Local Engram missing | `--force` | Same as normal new extract, then auto-sync that pair |
+| `extract` | Local Engram exists | none | Fail and require `--force` |
+| `extract` | Local Engram exists, no persona drift | `--force` | Skip persona overwrite, then auto-sync that pair |
+| `extract` | Local Engram exists, persona differs | `--force` | Ask for confirmation before overwriting `SOUL.md` / `IDENTITY.md`, then auto-sync that pair |
+| `extract` | Local Engram exists, persona differs | `--force --yes` | Overwrite `SOUL.md` / `IDENTITY.md` without confirmation, then auto-sync that pair |
+| `extract` | any successful extract | `--no-sync` | Skip the automatic pair sync |
+| `sync` | no target | none | Scan and sync all matching pairs |
+| `sync` | explicit pair | `--target <id>` | Sync one matching pair where `agentName = engramId` |
+| `sync` | explicit pair | `--target <engram>:<agent>` | Sync one explicit Engram/agent pair |
+
+Notes:
+- "Persona" means `SOUL.md` and `IDENTITY.md`
+- `extract --force` only overwrites `SOUL.md` and `IDENTITY.md`
+- `extract --force` does not overwrite `USER.md`, `MEMORY.md`, or `memory/*.md`
+- If `--name` is provided together with `extract --force`, Relic also updates `engram.json.name`
 
 ### Command Summary
 
