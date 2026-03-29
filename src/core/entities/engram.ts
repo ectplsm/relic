@@ -28,22 +28,37 @@ export const EngramFileSchema = z.object({
 export type EngramFiles = z.infer<typeof EngramFileSchema>;
 
 /**
- * Engramメタデータ — Mikoshiでの管理情報
+ * Engramプロフィール — ユーザーが編集可能な表示用メタデータ
  */
-export const EngramMetaSchema = z.object({
-  /** 一意識別子 (例: "ghost-in-the-shell") */
-  id: z.string(),
+export const EngramProfileSchema = z.object({
   /** 表示名 (例: "攻殻機動隊の少佐") */
   name: z.string(),
   /** 説明 */
   description: z.string().optional(),
+  /** タグ */
+  tags: z.array(z.string()).optional(),
+});
+
+export type EngramProfile = z.infer<typeof EngramProfileSchema>;
+
+/**
+ * Engramマニフェスト — システム管理の不変識別子と監査情報
+ */
+export const EngramManifestSchema = z.object({
+  /** 一意識別子 (例: "ghost-in-the-shell") */
+  id: z.string(),
   /** 作成日時 */
   createdAt: z.string().datetime(),
   /** 最終更新日時 */
   updatedAt: z.string().datetime(),
-  /** タグ */
-  tags: z.array(z.string()).optional(),
 });
+
+export type EngramManifest = z.infer<typeof EngramManifestSchema>;
+
+/**
+ * Engramメタデータ — プロフィールとマニフェストを結合した利用時ビュー
+ */
+export const EngramMetaSchema = EngramProfileSchema.merge(EngramManifestSchema);
 
 export type EngramMeta = z.infer<typeof EngramMetaSchema>;
 
