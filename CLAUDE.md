@@ -2,6 +2,15 @@
 
 A system that manages AI personas (Engrams) on a cloud fortress (Mikoshi) and dynamically injects them into any LLM interface (Shell).
 
+## Parent Documents
+
+Before making cross-repo sync, privacy, or ownership decisions:
+
+- read the shared Mikoshi sync contract from the sibling `contracts-local/` directory
+- read the relevant local plan index under `docs-local/plans/` when working on roadmap or multi-step changes
+
+If this document conflicts with a shared contract, the shared contract wins.
+
 ## Domain Glossary (The 5 Pillars)
 
 | Term | Role | Description |
@@ -44,6 +53,7 @@ src/
 - `src/adapters/shells/` — Shell launchers (claude, codex, gemini) and hook scripts.
 - `src/interfaces/mcp/` — MCP server with `relic_archive_search`, `relic_archive_pending`, `relic_memory_write` tools.
 - `src/interfaces/cli/` — CLI commands including `relic claw` subcommands (inject/extract/sync).
+- `docs-local/plans/` — local-only durable implementation plans and their index for larger features.
 
 ## Coding Conventions
 
