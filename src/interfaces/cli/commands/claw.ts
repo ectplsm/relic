@@ -299,7 +299,7 @@ export function registerClawCommand(program: Command): void {
             if (details.length > 0) {
               console.log(`  ${targetId}: merged ${details.join(", ")}`);
             } else {
-              console.log(`  ${targetId}: already in sync`);
+              console.log(`  Already in sync (${targetId})`);
             }
             return;
           }
@@ -325,7 +325,7 @@ export function registerClawCommand(program: Command): void {
             if (details.length > 0) {
               console.log(`  ${s.engramId}: merged ${details.join(", ")}`);
             } else {
-              console.log(`  ${s.engramId}: already in sync`);
+              console.log(`  Already in sync (${s.engramId})`);
             }
           }
 
