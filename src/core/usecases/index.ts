@@ -6,6 +6,8 @@ export {
   InjectEngramNotFoundError,
   InjectClawDirNotFoundError,
   InjectWorkspaceNotFoundError,
+  type InjectPersonaFileDiff,
+  type InjectPersonaDiffResult,
   type InjectResult,
 } from "./inject.js";
 export {

@@ -1,3 +1,5 @@
+import { createInterface } from "node:readline/promises";
+import { stdin as input, stdout as output } from "node:process";
 import { Command } from "commander";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import {
@@ -28,6 +30,7 @@ export function registerClawCommand(program: Command): void {
     .option("--to <agent>", "Inject into a different agent name")
     .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
     .option("--merge-identity", "Merge IDENTITY.md into SOUL.md (for non-OpenClaw Claw frameworks)")
+    .option("-y, --yes", "Skip persona overwrite confirmation")
     .option("--no-sync", "Skip automatic memory sync after inject")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(
@@ -36,6 +39,7 @@ export function registerClawCommand(program: Command): void {
         to?: string;
         dir?: string;
         mergeIdentity?: boolean;
+        yes?: boolean;
         sync: boolean;
         path?: string;
       }) => {
@@ -45,16 +49,40 @@ export function registerClawCommand(program: Command): void {
         const inject = new Inject(repo);
 
         try {
-          const result = await inject.execute(opts.engram, {
+          const diff = await inject.inspectPersona(opts.engram, {
             to: opts.to,
             openclawDir: clawDir,
             mergeIdentity: opts.mergeIdentity,
           });
+          const alreadyInjected =
+            diff.soul === "same" &&
+            (diff.identity === "same" || diff.identity === "skipped");
 
-          console.log(
-            `Injected "${result.engramName}" into ${result.targetPath}`
-          );
-          console.log(`  Files written: ${result.filesWritten.join(", ")}`);
+          if (
+            diff.overwriteRequired &&
+            !opts.yes &&
+            !(await confirmPersonaOverwrite(diff.targetPath))
+          ) {
+            console.error(
+              "Error: Persona files already exist and differ. Re-run with --yes to overwrite from local Relic Engram."
+            );
+            process.exit(1);
+          }
+
+          if (alreadyInjected) {
+            console.log(`  Already injected (${diff.targetPath})`);
+          } else {
+            const result = await inject.execute(opts.engram, {
+              to: opts.to,
+              openclawDir: clawDir,
+              mergeIdentity: opts.mergeIdentity,
+            });
+
+            console.log(
+              `Injected "${result.engramName}" into ${result.targetPath}`
+            );
+            console.log(`  Files written: ${result.filesWritten.join(", ")}`);
+          }
 
           if (!opts.sync) return;
 
@@ -198,4 +226,20 @@ export function registerClawCommand(program: Command): void {
         }
       }
     );
+}
+
+async function confirmPersonaOverwrite(targetPath: string): Promise<boolean> {
+  if (!input.isTTY || !output.isTTY) {
+    return false;
+  }
+
+  const rl = createInterface({ input, output });
+  try {
+    const answer = await rl.question(
+      `SOUL.md and/or IDENTITY.md already exist and differ in ${targetPath}. Overwrite with local Relic version? [y/N] `
+    );
+    return /^(y|yes)$/i.test(answer.trim());
+  } finally {
+    rl.close();
+  }
 }
