@@ -6,6 +6,10 @@ export {
   type MigrateEngramsResult,
 } from "./migrate-engrams.js";
 export {
+  RefreshSamples,
+  type RefreshSamplesResult,
+} from "./refresh-samples.js";
+export {
   Inject,
   InjectEngramNotFoundError,
   InjectClawDirNotFoundError,

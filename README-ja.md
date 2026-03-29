@@ -119,6 +119,7 @@ Constructが最近の会話を振り返り、重要な事実や決定を `memory
 - `SOUL.md` と `IDENTITY.md` がペルソナ本体を定義します。
 - `memory/YYYY-MM-DD.md` には日付ごとの蒸留済み記憶が入ります。`relic init` では各サンプルEngramに初期メモリが1件入ります。
 - 旧形式のEngramをまとめて新しい `manifest.json` 形式へ前倒し移行したい場合は `relic migrate engrams` が使えます。通常の Engram 読み込み時にも自動移行は走ります。
+- `relic refresh-samples` を使うと、`johnny` や `motoko` などの同梱サンプル人格だけを最新テンプレートで更新できます。memory や archive は触りません。
 
 Engramを使い続けると、同じ `workspace` に追加のファイルが増えていきます。
 

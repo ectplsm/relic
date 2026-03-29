@@ -119,6 +119,7 @@ Running `relic init` creates `~/.relic/`, writes `config.json`, and seeds two sa
 - `SOUL.md` and `IDENTITY.md` define the persona itself.
 - `memory/YYYY-MM-DD.md` stores dated distilled memory entries. `relic init` seeds an initial memory file for each sample Engram.
 - `relic migrate engrams` can be used to front-load legacy Engrams into the new `manifest.json` format, although normal Engram reads also migrate automatically.
+- `relic refresh-samples` refreshes bundled sample personas like `johnny` and `motoko` without touching memory or archive files.
 
 As you keep using an Engram, more files are added to the same workspace:
 

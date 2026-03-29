@@ -189,4 +189,4 @@ export async function resolveMemoryWindowSize(): Promise<number> {
   return config.memoryWindowSize;
 }
 
-export { CONFIG_PATH, RELIC_DIR };
+export { CONFIG_PATH, RELIC_DIR, TEMPLATES_DIR };
