@@ -128,6 +128,8 @@ As you keep using an Engram, more files are added to the same workspace:
 
 ### Migration
 
+If you want to manually update parts of an existing local setup that changed over time, use:
+
 ```bash
 relic migrate engrams   # migrate legacy engram.json metadata to manifest.json
 relic refresh-samples   # refresh bundled sample personas like johnny and motoko
