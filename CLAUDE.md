@@ -66,6 +66,9 @@ src/
 ## Git & PR Conventions
 
 - **Commits**: Follow [Conventional Commits](https://www.conventionalcommits.org/) (e.g. `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`).
+- **Commit language**: Write commit messages in English.
+- **Commit format**: Use a one-line Conventional Commit subject, then a blank line, then a short explanatory body.
+- **No subject-only commits**: Do not use subject-only commit messages unless the user explicitly asks for it.
 - **Pull Requests**: Always write PR titles and descriptions in **English**.
 - **PR template**: Use `## Summary` with bullet points and `## Test plan` with checklist.
 - Do not auto-merge PRs — wait for explicit user approval.
