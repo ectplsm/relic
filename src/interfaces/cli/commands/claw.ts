@@ -1,5 +1,6 @@
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import { existsSync } from "node:fs";
 import { Command } from "commander";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import {
@@ -135,6 +136,7 @@ export function registerClawCommand(program: Command): void {
     .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
     .option("-f, --force", "Allow overwriting local persona files from the Claw workspace")
     .option("-y, --yes", "Skip persona overwrite confirmation")
+    .option("--no-sync", "Skip automatic memory sync after extract")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(
       async (opts: {
@@ -143,12 +145,14 @@ export function registerClawCommand(program: Command): void {
         dir?: string;
         force?: boolean;
         yes?: boolean;
+        sync: boolean;
         path?: string;
       }) => {
         const engramsPath = await resolveEngramsPath(opts.path);
         const clawDir = await resolveClawPath(opts.dir);
         const repo = new LocalEngramRepository(engramsPath);
         const extract = new Extract(repo);
+        const sync = new Sync(repo, engramsPath);
 
         try {
           const agentName = opts.agent ?? "main";
@@ -187,27 +191,49 @@ export function registerClawCommand(program: Command): void {
                 ? `  Already extracted and updated (${agentName})`
                 : `  Already extracted (${agentName})`
             );
-            return;
+          } else {
+            const result = await extract.execute(agentName, {
+              name: opts.name,
+              openclawDir: clawDir,
+              force: opts.force,
+            });
+
+            console.log(
+              `Extracted "${result.engramName}" from ${result.sourcePath}`
+            );
+            if (diff.existing) {
+              console.log(`  Files overwritten: SOUL.md, IDENTITY.md`);
+              if (diff.name === "different") {
+                console.log(`  Metadata updated: engram.json (name)`);
+              }
+              console.log(`  Saved as Engram: ${result.engramId}`);
+            } else {
+              console.log(`  Files extracted: ${result.filesRead.join(", ")}`);
+              console.log(`  Saved as Engram: ${result.engramId}`);
+            }
           }
 
-          const result = await extract.execute(agentName, {
-            name: opts.name,
-            openclawDir: clawDir,
-            force: opts.force,
+          if (!opts.sync) return;
+
+          const syncResult = await sync.syncPair({
+            engramId: agentName,
+            workspacePath: diff.sourcePath,
           });
 
-          console.log(
-            `Extracted "${result.engramName}" from ${result.sourcePath}`
-          );
-          if (diff.existing) {
-            console.log(`  Files overwritten: SOUL.md, IDENTITY.md`);
-            if (diff.name === "different") {
-              console.log(`  Metadata updated: engram.json (name)`);
-            }
-            console.log(`  Saved as Engram: ${result.engramId}`);
+          const details: string[] = [];
+          if (syncResult.memoryFilesMerged > 0) {
+            details.push(`${syncResult.memoryFilesMerged} memory file(s)`);
+          }
+          if (syncResult.memoryIndexMerged) {
+            details.push("MEMORY.md");
+          }
+          if (syncResult.userMerged) {
+            details.push("USER.md");
+          }
+          if (details.length > 0) {
+            console.log(`  Synced: ${details.join(", ")}`);
           } else {
-            console.log(`  Files extracted: ${result.filesRead.join(", ")}`);
-            console.log(`  Saved as Engram: ${result.engramId}`);
+            console.log(`  Already in sync`);
           }
         } catch (err) {
           if (
@@ -227,10 +253,12 @@ export function registerClawCommand(program: Command): void {
   claw
     .command("sync")
     .description("Bidirectional memory sync between Engrams and Claw workspaces")
+    .option("-t, --target <pair>", "Sync one pair only: <id> or <engram>:<agent>")
     .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(
       async (opts: {
+        target?: string;
         dir?: string;
         path?: string;
       }) => {
@@ -240,6 +268,43 @@ export function registerClawCommand(program: Command): void {
         const sync = new Sync(repo, engramsPath);
 
         try {
+          if (opts.target) {
+            const { engramId, agentName } = parseSyncTarget(opts.target);
+            const engram = await repo.get(engramId);
+            if (!engram) {
+              console.error(`Error: Engram "${engramId}" not found.`);
+              process.exit(1);
+            }
+
+            const workspacePath = resolveWorkspacePath(agentName, clawDir);
+            if (!existsSync(workspacePath)) {
+              console.error(`Error: Claw agent "${agentName}" workspace not found.`);
+              process.exit(1);
+            }
+
+            const result = await sync.syncPair({
+              engramId,
+              workspacePath,
+            });
+
+            const details: string[] = [];
+            if (result.memoryFilesMerged > 0) {
+              details.push(`${result.memoryFilesMerged} memory file(s)`);
+            }
+            if (result.memoryIndexMerged) {
+              details.push("MEMORY.md");
+            }
+            if (result.userMerged) {
+              details.push("USER.md");
+            }
+            if (details.length > 0) {
+              console.log(`  ${engramId}: merged ${details.join(", ")}`);
+            } else {
+              console.log(`  ${engramId}: already in sync`);
+            }
+            return;
+          }
+
           const result = await sync.execute(clawDir);
 
           if (result.synced.length === 0 && result.skipped.length === 0) {
@@ -279,6 +344,20 @@ export function registerClawCommand(program: Command): void {
         }
       }
     );
+}
+
+function parseSyncTarget(target: string): { engramId: string; agentName: string } {
+  const trimmed = target.trim();
+  const [engramId, agentName] = trimmed.split(":");
+
+  if (!engramId) {
+    throw new Error(`Invalid sync target "${target}"`);
+  }
+
+  return {
+    engramId,
+    agentName: agentName || engramId,
+  };
 }
 
 async function confirmOverwrite(message: string): Promise<boolean> {
