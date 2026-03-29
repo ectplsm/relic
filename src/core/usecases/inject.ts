@@ -1,9 +1,20 @@
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { EngramFiles } from "../entities/engram.js";
 import { INJECT_FILE_MAP, resolveWorkspacePath } from "../../shared/openclaw.js";
+
+export type InjectPersonaFileDiff = "missing" | "same" | "different" | "skipped";
+
+export interface InjectPersonaDiffResult {
+  engramId: string;
+  engramName: string;
+  targetPath: string;
+  soul: InjectPersonaFileDiff;
+  identity: InjectPersonaFileDiff;
+  overwriteRequired: boolean;
+}
 
 export interface InjectResult {
   engramId: string;
@@ -22,30 +33,46 @@ export interface InjectResult {
 export class Inject {
   constructor(private readonly repository: EngramRepository) {}
 
+  async inspectPersona(
+    engramId: string,
+    options?: {
+      openclawDir?: string;
+      mergeIdentity?: boolean;
+    }
+  ): Promise<InjectPersonaDiffResult> {
+    const { engram, targetPath } = await this.loadInjectTarget(engramId, options);
+    const mergeIdentity = options?.mergeIdentity ?? false;
+
+    const soul = await this.compareTargetFile(
+      join(targetPath, INJECT_FILE_MAP.soul!),
+      this.resolveInjectedContent("soul", engram.files, mergeIdentity)
+    );
+
+    const identity = mergeIdentity
+      ? "skipped"
+      : await this.compareTargetFile(
+          join(targetPath, INJECT_FILE_MAP.identity!),
+          this.resolveInjectedContent("identity", engram.files, mergeIdentity)
+        );
+
+    return {
+      engramId: engram.meta.id,
+      engramName: engram.meta.name,
+      targetPath,
+      soul,
+      identity,
+      overwriteRequired: soul === "different" || identity === "different",
+    };
+  }
+
   async execute(
     engramId: string,
     options?: {
-      to?: string;
       openclawDir?: string;
       mergeIdentity?: boolean;
     }
   ): Promise<InjectResult> {
-    const engram = await this.repository.get(engramId);
-    if (!engram) {
-      throw new InjectEngramNotFoundError(engramId);
-    }
-
-    // ベースディレクトリ（--dir）の存在チェック
-    if (options?.openclawDir && !existsSync(options.openclawDir)) {
-      throw new InjectClawDirNotFoundError(options.openclawDir);
-    }
-
-    const agentName = options?.to ?? engramId;
-    const targetPath = resolveWorkspacePath(agentName, options?.openclawDir);
-
-    if (!existsSync(targetPath)) {
-      throw new InjectWorkspaceNotFoundError(agentName);
-    }
+    const { engram, targetPath } = await this.loadInjectTarget(engramId, options);
 
     const filesWritten = await this.writeFiles(
       targetPath,
@@ -61,6 +88,63 @@ export class Inject {
     };
   }
 
+  private async loadInjectTarget(
+    engramId: string,
+    options?: {
+      openclawDir?: string;
+      mergeIdentity?: boolean;
+    }
+  ): Promise<{ engram: NonNullable<Awaited<ReturnType<EngramRepository["get"]>>>; targetPath: string }> {
+    const engram = await this.repository.get(engramId);
+    if (!engram) {
+      throw new InjectEngramNotFoundError(engramId);
+    }
+
+    if (options?.openclawDir && !existsSync(options.openclawDir)) {
+      throw new InjectClawDirNotFoundError(options.openclawDir);
+    }
+
+    const targetPath = resolveWorkspacePath(engramId, options?.openclawDir);
+
+    if (!existsSync(targetPath)) {
+      throw new InjectWorkspaceNotFoundError(engramId);
+    }
+
+    return { engram, targetPath };
+  }
+
+  private resolveInjectedContent(
+    key: keyof typeof INJECT_FILE_MAP,
+    files: EngramFiles,
+    mergeIdentity: boolean
+  ): string | undefined {
+    if (mergeIdentity && key === "identity") {
+      return undefined;
+    }
+
+    let content = files[key as keyof typeof INJECT_FILE_MAP];
+    if (mergeIdentity && key === "soul" && files.identity) {
+      content = content + "\n" + files.identity;
+    }
+    return content;
+  }
+
+  private async compareTargetFile(
+    filePath: string,
+    expectedContent: string | undefined
+  ): Promise<InjectPersonaFileDiff> {
+    if (expectedContent === undefined) {
+      return "skipped";
+    }
+
+    if (!existsSync(filePath)) {
+      return "missing";
+    }
+
+    const currentContent = await readFile(filePath, "utf-8");
+    return currentContent === expectedContent ? "same" : "different";
+  }
+
   private async writeFiles(
     targetPath: string,
     files: EngramFiles,
@@ -74,12 +158,11 @@ export class Inject {
         continue;
       }
 
-      let content = files[key as keyof typeof INJECT_FILE_MAP];
-
-      // --merge-identity: append IDENTITY.md content to SOUL.md
-      if (mergeIdentity && key === "soul" && files.identity) {
-        content = content + "\n" + files.identity;
-      }
+      const content = this.resolveInjectedContent(
+        key as keyof typeof INJECT_FILE_MAP,
+        files,
+        mergeIdentity
+      );
 
       if (content !== undefined) {
         await writeFile(join(targetPath, filename), content, "utf-8");

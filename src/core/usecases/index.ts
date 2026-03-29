@@ -6,6 +6,8 @@ export {
   InjectEngramNotFoundError,
   InjectClawDirNotFoundError,
   InjectWorkspaceNotFoundError,
+  type InjectPersonaFileDiff,
+  type InjectPersonaDiffResult,
   type InjectResult,
 } from "./inject.js";
 export {
@@ -13,6 +15,8 @@ export {
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
   AlreadyExtractedError,
+  type ExtractPersonaFileDiff,
+  type ExtractPersonaDiffResult,
   type ExtractResult,
 } from "./extract.js";
 export {
