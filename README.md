@@ -17,6 +17,7 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 
 ## Table of Contents
 
+- [Requirements](#requirements)
 - [Install](#install)
 - [Quick Start](#quick-start)
 - [What `relic init` Creates](#what-relic-init-creates)
@@ -31,6 +32,10 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 - [Creating Your Own Engram](#creating-your-own-engram)
 - [Domain Glossary](#domain-glossary)
 - [Roadmap](#roadmap)
+
+## Requirements
+
+- Node.js 18 or later
 
 ## Install
 
