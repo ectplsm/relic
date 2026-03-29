@@ -597,9 +597,9 @@ relic config default-engram your-persona
 - [x] Claw連携（inject / extract / sync）
 - [x] `relic claw sync` — Clawワークスペースとのメモリ双方向マージ
 - [x] `relic config` — デフォルトEngram・Clawパス・メモリウィンドウの管理
-- [ ] `relic login` — Mikoshi認証（OAuth Device Flow）
-- [ ] `relic push` / `relic pull` — MikoshiとのEngram同期
 - [ ] Mikoshi クラウドバックエンド（`mikoshi.ectplsm.com`）
+- [ ] `relic mikoshi login` — Mikoshi認証（OAuth Device Flow）
+- [ ] `relic mikoshi upload` / `relic mikoshi download` / `relic mikoshi sync` — MikoshiとのEngram同期
 - [ ] `relic create` — 対話型Engram作成ウィザード
 
 ## ライセンス
