@@ -10,6 +10,7 @@ import { registerShowCommand } from "./commands/show.js";
 import { registerShellCommands } from "./commands/shell.js";
 import { registerClawCommand } from "./commands/claw.js";
 import { registerConfigCommand } from "./commands/config.js";
+import { registerMigrateCommand } from "./commands/migrate.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, "../../../package.json"), "utf-8"));
@@ -27,5 +28,6 @@ registerShowCommand(program);
 registerShellCommands(program);
 registerClawCommand(program);
 registerConfigCommand(program);
+registerMigrateCommand(program);
 
 program.parse();
