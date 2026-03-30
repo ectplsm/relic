@@ -31,6 +31,7 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 - [Memory Management](#memory-management)
 - [Configuration](#configuration)
 - [Creating Your Own Engram](#creating-your-own-engram)
+- [Deleting an Engram](#deleting-an-engram)
 - [Domain Glossary](#domain-glossary)
 - [Roadmap](#roadmap)
 
@@ -284,6 +285,7 @@ Session logs and memory entries are written automatically by a **background hook
 
 | Tool | Description |
 |------|-------------|
+| `relic_engram_create` | Create a new Engram with optional LLM-generated SOUL.md and IDENTITY.md |
 | `relic_archive_search` | Search the Engram's raw archive by keyword (newest-first) |
 | `relic_archive_pending` | Get un-distilled archive entries since the last distillation (up to 30) |
 | `relic_memory_write` | Write distilled memory to `memory/*.md`, optionally append to `MEMORY.md`, optionally update `USER.md`, and advance the archive cursor |
@@ -305,6 +307,7 @@ To suppress confirmation dialogs and auto-approve Relic tools across all project
   "permissions": {
     "allow": [
       "Edit(~/.relic/engrams/**)",
+      "mcp__relic__relic_engram_create",
       "mcp__relic__relic_archive_search",
       "mcp__relic__relic_archive_pending",
       "mcp__relic__relic_memory_write"
@@ -324,6 +327,9 @@ codex mcp add relic -- relic-mcp
 To suppress confirmation dialogs and auto-approve Relic tools, add the following to `~/.codex/config.toml`:
 
 ```toml
+[mcp_servers.relic.tools.relic_engram_create]
+approval_mode = "approve"
+
 [mcp_servers.relic.tools.relic_archive_search]
 approval_mode = "approve"
 
@@ -527,41 +533,29 @@ CLI flags always take precedence over config values.
 
 ## Creating Your Own Engram
 
-Create a directory under `~/.relic/engrams/` with the following structure:
+The easiest way to create a new Engram is with `relic create`:
 
-```
-~/.relic/engrams/your-persona/
-├── engram.json        # Editable profile (name, description, tags)
-├── manifest.json      # System-managed identity (id, createdAt, updatedAt)
-├── SOUL.md            # Core directive — how the persona thinks and acts
-├── IDENTITY.md        # Name, tone, background, personality
-├── AGENTS.md          # (optional) Tool usage policies
-├── USER.md            # (optional) User context
-├── MEMORY.md          # (optional) Memory index
-├── HEARTBEAT.md       # (optional) Periodic reflection
-└── memory/            # (optional) Dated memory entries
-    └── 2026-03-21.md
+```bash
+# Fully interactive — prompts for everything
+relic create
+
+# Pre-supply some fields
+relic create --id my-agent --name "My Agent" --description "A helpful assistant" --tags "custom,dev"
 ```
 
-**engram.json:**
-```json
-{
-  "name": "Display Name",
-  "description": "A short description",
-  "tags": ["custom"]
-}
+This creates the directory structure, writes `engram.json` / `manifest.json`, and seeds `SOUL.md` / `IDENTITY.md` with OpenClaw-compatible default templates. Customize the persona files, then launch a shell:
+
+```bash
+relic claude my-agent
 ```
 
-**manifest.json:**
-```json
-{
-  "id": "your-persona",
-  "createdAt": "2026-03-21T00:00:00Z",
-  "updatedAt": "2026-03-21T00:00:00Z"
-}
-```
+You can also create Engrams via the `relic_engram_create` MCP tool — LLMs can ask about the desired personality and generate `SOUL.md` / `IDENTITY.md` content through conversation, then call the tool with the results.
 
-**SOUL.md** — The most important file. Defines how the persona behaves. Follows the [OpenClaw](https://github.com/openclaw/openclaw) format:
+### Customizing the Persona
+
+After running `relic create`, edit `SOUL.md` and `IDENTITY.md` in the Engram directory. These follow the [OpenClaw](https://github.com/openclaw/openclaw) format:
+
+**SOUL.md** — The most important file. Defines how the persona behaves:
 ```markdown
 # SOUL.md - Who You Are
 
@@ -599,10 +593,13 @@ Each session, you wake up fresh. These files _are_ your memory. Read them. Updat
 
 See [`templates/engrams/`](templates/engrams/) for full working examples.
 
-After creating the directory, set it as your default Engram:
+## Deleting an Engram
+
 ```bash
-relic config default-engram your-persona
+relic delete my-agent
 ```
+
+If the Engram has memory data (`MEMORY.md`, `USER.md`, `memory/*.md`, `archive.md`), you'll need to type the Engram ID to confirm deletion. Use `--force` to skip all prompts.
 
 ## Domain Glossary
 
@@ -622,7 +619,8 @@ relic config default-engram your-persona
 - [x] Claw integration (inject / extract / sync)
 - [x] `relic claw sync` — bidirectional memory sync with Claw workspaces
 - [x] `relic config` — manage default Engram, Claw path, memory window
-- [ ] `relic create` — interactive Engram creation wizard (WIP)
+- [x] `relic create` — interactive Engram creation wizard + MCP tool
+- [x] `relic delete` — safe Engram deletion with memory-aware confirmation
 - [ ] Mikoshi cloud backend (`mikoshi.ectplsm.com`)
 - [ ] `relic mikoshi login` — authenticate with Mikoshi (OAuth Device Flow)
 - [ ] `relic mikoshi upload` / `relic mikoshi download` / `relic mikoshi sync` — sync Engrams with Mikoshi

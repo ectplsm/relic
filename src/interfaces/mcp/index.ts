@@ -18,6 +18,13 @@ import {
   MemoryWrite,
   MemoryWriteEngramNotFoundError,
 } from "../../core/usecases/memory-write.js";
+import {
+  CreateEngram,
+  EngramAlreadyExistsError,
+  InvalidEngramIdError,
+} from "../../core/usecases/create-engram.js";
+import { DEFAULT_SOUL, DEFAULT_IDENTITY } from "../../shared/templates.js";
+import { LocalEngramRepository } from "../../adapters/local/index.js";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
@@ -27,6 +34,87 @@ const server = new McpServer({
   name: "relic",
   version: "0.1.0",
 });
+
+// --- relic_engram_create ---
+server.tool(
+  "relic_engram_create",
+  "Create a new Engram (AI persona). Use this after gathering enough context about the desired persona through conversation. Ask the user about personality, voice, principles, and identity before calling this tool.",
+  {
+    id: z
+      .string()
+      .describe(
+        "Unique Engram ID (lowercase alphanumeric + hyphens, e.g. 'my-agent')"
+      ),
+    name: z.string().describe("Display name for the Engram"),
+    description: z
+      .string()
+      .optional()
+      .describe("Short description of the Engram"),
+    tags: z
+      .array(z.string())
+      .optional()
+      .describe("Tags for categorization"),
+    soul: z
+      .string()
+      .optional()
+      .describe(
+        "SOUL.md content — core principles, behavior rules, voice discipline, and boundaries. If omitted, a sensible default template is used."
+      ),
+    identity: z
+      .string()
+      .optional()
+      .describe(
+        "IDENTITY.md content — name, creature type, vibe, emoji, avatar, and background. If omitted, a blank template is used for the user to fill in."
+      ),
+    path: z
+      .string()
+      .optional()
+      .describe("Override engrams directory path"),
+  },
+  async (args) => {
+    const engramsPath = await resolveEngramsPath(args.path);
+    const repo = new LocalEngramRepository(engramsPath);
+    const usecase = new CreateEngram(repo);
+
+    try {
+      const result = await usecase.execute({
+        id: args.id,
+        name: args.name,
+        description: args.description,
+        tags: args.tags,
+        soul: args.soul ?? DEFAULT_SOUL,
+        identity: args.identity ?? DEFAULT_IDENTITY,
+      });
+
+      const engramDir = join(engramsPath, result.engram.meta.id);
+      const lines = [
+        `Created Engram "${result.engram.meta.name}" (${result.engram.meta.id})`,
+        `Directory: ${engramDir}/`,
+        "",
+        "Files created:",
+        "  engram.json    — metadata (name, description, tags)",
+        "  manifest.json  — system metadata (id, timestamps)",
+        "  SOUL.md        — core principles and behavior",
+        "  IDENTITY.md    — persona identity",
+      ];
+
+      return {
+        content: [{ type: "text" as const, text: lines.join("\n") }],
+      };
+    } catch (err) {
+      if (
+        err instanceof EngramAlreadyExistsError ||
+        err instanceof InvalidEngramIdError
+      ) {
+        return {
+          content: [{ type: "text" as const, text: err.message }],
+          isError: true,
+        };
+      }
+      throw err;
+    }
+  }
+);
 
 // --- relic_archive_search ---
 server.tool(

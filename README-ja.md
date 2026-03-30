@@ -31,6 +31,7 @@ Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code
 - [記憶の管理](#記憶の管理)
 - [設定](#設定)
 - [独自のEngramを作成する](#独自のengramを作成する)
+- [Engramの削除](#engramの削除)
 - [ドメイン用語集](#ドメイン用語集)
 - [ロードマップ](#ロードマップ)
 
@@ -284,6 +285,7 @@ Relicの[MCP](https://modelcontextprotocol.io/)サーバーはCLI注入とペア
 
 | ツール | 説明 |
 |-------|------|
+| `relic_engram_create` | 新しいEngramを作成する（LLMが生成した SOUL.md / IDENTITY.md を渡せる） |
 | `relic_archive_search` | Engramの生archiveをキーワード検索する（新しい順） |
 | `relic_archive_pending` | 前回の蒸留以降の未蒸留archiveエントリを取得する（最大30件） |
 | `relic_memory_write` | 蒸留した記憶を `memory/*.md` に書き込み、任意で `MEMORY.md` への追記や `USER.md` の更新も行い、archiveカーソルを進める |
@@ -305,6 +307,7 @@ claude mcp add --scope user relic -- relic-mcp
   "permissions": {
     "allow": [
       "Edit(~/.relic/engrams/**)",
+      "mcp__relic__relic_engram_create",
       "mcp__relic__relic_archive_search",
       "mcp__relic__relic_archive_pending",
       "mcp__relic__relic_memory_write"
@@ -324,6 +327,9 @@ codex mcp add relic -- relic-mcp
 確認ダイアログを抑制し、Relicツールを自動承認するには、`~/.codex/config.toml` に以下を追加します:
 
 ```toml
+[mcp_servers.relic.tools.relic_engram_create]
+approval_mode = "approve"
+
 [mcp_servers.relic.tools.relic_archive_search]
 approval_mode = "approve"
 
@@ -527,41 +533,29 @@ CLIフラグは常にconfig値より優先されます。
 
 ## 独自のEngramを作成する
 
-`~/.relic/engrams/` 配下に以下の構造でディレクトリを作成します:
+新しいEngramを作る最も簡単な方法は `relic create` です:
 
-```
-~/.relic/engrams/your-persona/
-├── engram.json        # 編集可能なプロフィール（name, description, tags）
-├── manifest.json      # システム管理情報（id, createdAt, updatedAt）
-├── SOUL.md            # コアディレクティブ — ペルソナの思考と行動を定義
-├── IDENTITY.md        # 名前、口調、背景、性格
-├── AGENTS.md          # （任意）ツール使用ポリシー
-├── USER.md            # （任意）ユーザーコンテキスト
-├── MEMORY.md          # （任意）メモリインデックス
-├── HEARTBEAT.md       # （任意）定期的な内省
-└── memory/            # （任意）日付付きメモリエントリ
-    └── 2026-03-21.md
+```bash
+# 完全対話モード — すべてプロンプトで入力
+relic create
+
+# 一部を事前指定
+relic create --id my-agent --name "My Agent" --description "A helpful assistant" --tags "custom,dev"
 ```
 
-**engram.json:**
-```json
-{
-  "name": "表示名",
-  "description": "短い説明文",
-  "tags": ["custom"]
-}
+ディレクトリ構造の作成、`engram.json` / `manifest.json` の書き込み、OpenClaw互換のデフォルトテンプレートによる `SOUL.md` / `IDENTITY.md` の初期配置が行われます。ペルソナファイルをカスタマイズしたら、Shellを起動:
+
+```bash
+relic claude my-agent
 ```
 
-**manifest.json:**
-```json
-{
-  "id": "your-persona",
-  "createdAt": "2026-03-21T00:00:00Z",
-  "updatedAt": "2026-03-21T00:00:00Z"
-}
-```
+MCPツール `relic_engram_create` を使えば、LLMとの会話で性格や特徴を深掘りしながらEngram を作成することもできます。LLMが会話から `SOUL.md` / `IDENTITY.md` の内容を生成し、ツールに渡します。
 
-**SOUL.md** — 最も重要なファイル。ペルソナの振る舞いを定義します。[OpenClaw](https://github.com/openclaw/openclaw) 形式に準拠:
+### ペルソナのカスタマイズ
+
+`relic create` 実行後、Engramディレクトリ内の `SOUL.md` と `IDENTITY.md` を編集します。[OpenClaw](https://github.com/openclaw/openclaw) 形式に準拠しています:
+
+**SOUL.md** — 最も重要なファイル。ペルソナの振る舞いを定義します:
 ```markdown
 # SOUL.md - Who You Are
 
@@ -599,10 +593,13 @@ Each session, you wake up fresh. These files _are_ your memory. Read them. Updat
 
 完全な動作サンプルは [`templates/engrams/`](templates/engrams/) を参照してください。
 
-作成後、デフォルトに設定するには以下を実行:
+## Engramの削除
+
 ```bash
-relic config default-engram your-persona
+relic delete my-agent
 ```
+
+記憶データ（`MEMORY.md`、`USER.md`、`memory/*.md`、`archive.md`）を持つEngramの場合、削除確認としてEngram IDの入力が必要です。`--force` ですべてのプロンプトをスキップできます。
 
 ## ドメイン用語集
 
@@ -622,7 +619,8 @@ relic config default-engram your-persona
 - [x] Claw連携（inject / extract / sync）
 - [x] `relic claw sync` — Clawワークスペースとのメモリ双方向マージ
 - [x] `relic config` — デフォルトEngram・Clawパス・メモリウィンドウの管理
-- [ ] `relic create` — 対話型Engram作成ウィザード (WIP)
+- [x] `relic create` — 対話型Engram作成ウィザード + MCPツール
+- [x] `relic delete` — 記憶データを考慮した安全なEngram削除
 - [ ] Mikoshi クラウドバックエンド（`mikoshi.ectplsm.com`）
 - [ ] `relic mikoshi login` — Mikoshi認証（OAuth Device Flow）
 - [ ] `relic mikoshi upload` / `relic mikoshi download` / `relic mikoshi sync` — MikoshiとのEngram同期
