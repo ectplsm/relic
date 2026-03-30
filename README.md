@@ -558,43 +558,11 @@ relic delete my-agent
 
 If the Engram has memory data (`MEMORY.md`, `USER.md`, `memory/*.md`, `archive.md`), you'll need to type the Engram ID to confirm deletion. Use `--force` to skip all prompts.
 
-### Manual Creation
+### Customizing the Persona
 
-You can also create an Engram directory manually under `~/.relic/engrams/`:
+After running `relic create`, edit `SOUL.md` and `IDENTITY.md` in the Engram directory. These follow the [OpenClaw](https://github.com/openclaw/openclaw) format:
 
-```
-~/.relic/engrams/your-persona/
-├── engram.json        # Editable profile (name, description, tags)
-├── manifest.json      # System-managed identity (id, createdAt, updatedAt)
-├── SOUL.md            # Core directive — how the persona thinks and acts
-├── IDENTITY.md        # Name, tone, background, personality
-├── AGENTS.md          # (optional) Tool usage policies
-├── USER.md            # (optional) User context
-├── MEMORY.md          # (optional) Memory index
-├── HEARTBEAT.md       # (optional) Periodic reflection
-└── memory/            # (optional) Dated memory entries
-    └── 2026-03-21.md
-```
-
-**engram.json:**
-```json
-{
-  "name": "Display Name",
-  "description": "A short description",
-  "tags": ["custom"]
-}
-```
-
-**manifest.json:**
-```json
-{
-  "id": "your-persona",
-  "createdAt": "2026-03-21T00:00:00Z",
-  "updatedAt": "2026-03-21T00:00:00Z"
-}
-```
-
-**SOUL.md** — The most important file. Defines how the persona behaves. Follows the [OpenClaw](https://github.com/openclaw/openclaw) format:
+**SOUL.md** — The most important file. Defines how the persona behaves:
 ```markdown
 # SOUL.md - Who You Are
 
@@ -631,11 +599,6 @@ Each session, you wake up fresh. These files _are_ your memory. Read them. Updat
 ```
 
 See [`templates/engrams/`](templates/engrams/) for full working examples.
-
-After creating the directory, set it as your default Engram:
-```bash
-relic config default-engram your-persona
-```
 
 ## Domain Glossary
 

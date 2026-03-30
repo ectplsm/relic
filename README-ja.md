@@ -558,43 +558,11 @@ relic delete my-agent
 
 記憶データ（`MEMORY.md`、`USER.md`、`memory/*.md`、`archive.md`）を持つEngramの場合、削除確認としてEngram IDの入力が必要です。`--force` ですべてのプロンプトをスキップできます。
 
-### 手動作成
+### ペルソナのカスタマイズ
 
-`~/.relic/engrams/` 配下にディレクトリを手動で作成することもできます:
+`relic create` 実行後、Engramディレクトリ内の `SOUL.md` と `IDENTITY.md` を編集します。[OpenClaw](https://github.com/openclaw/openclaw) 形式に準拠しています:
 
-```
-~/.relic/engrams/your-persona/
-├── engram.json        # 編集可能なプロフィール（name, description, tags）
-├── manifest.json      # システム管理情報（id, createdAt, updatedAt）
-├── SOUL.md            # コアディレクティブ — ペルソナの思考と行動を定義
-├── IDENTITY.md        # 名前、口調、背景、性格
-├── AGENTS.md          # （任意）ツール使用ポリシー
-├── USER.md            # （任意）ユーザーコンテキスト
-├── MEMORY.md          # （任意）メモリインデックス
-├── HEARTBEAT.md       # （任意）定期的な内省
-└── memory/            # （任意）日付付きメモリエントリ
-    └── 2026-03-21.md
-```
-
-**engram.json:**
-```json
-{
-  "name": "表示名",
-  "description": "短い説明文",
-  "tags": ["custom"]
-}
-```
-
-**manifest.json:**
-```json
-{
-  "id": "your-persona",
-  "createdAt": "2026-03-21T00:00:00Z",
-  "updatedAt": "2026-03-21T00:00:00Z"
-}
-```
-
-**SOUL.md** — 最も重要なファイル。ペルソナの振る舞いを定義します。[OpenClaw](https://github.com/openclaw/openclaw) 形式に準拠:
+**SOUL.md** — 最も重要なファイル。ペルソナの振る舞いを定義します:
 ```markdown
 # SOUL.md - Who You Are
 
@@ -631,11 +599,6 @@ Each session, you wake up fresh. These files _are_ your memory. Read them. Updat
 ```
 
 完全な動作サンプルは [`templates/engrams/`](templates/engrams/) を参照してください。
-
-作成後、デフォルトに設定するには以下を実行:
-```bash
-relic config default-engram your-persona
-```
 
 ## ドメイン用語集
 
