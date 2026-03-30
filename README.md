@@ -31,6 +31,7 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 - [Memory Management](#memory-management)
 - [Configuration](#configuration)
 - [Creating Your Own Engram](#creating-your-own-engram)
+- [Deleting an Engram](#deleting-an-engram)
 - [Domain Glossary](#domain-glossary)
 - [Roadmap](#roadmap)
 
@@ -550,14 +551,6 @@ relic claude my-agent
 
 You can also create Engrams via the `relic_engram_create` MCP tool — LLMs can ask about the desired personality and generate `SOUL.md` / `IDENTITY.md` content through conversation, then call the tool with the results.
 
-To delete an Engram:
-
-```bash
-relic delete my-agent
-```
-
-If the Engram has memory data (`MEMORY.md`, `USER.md`, `memory/*.md`, `archive.md`), you'll need to type the Engram ID to confirm deletion. Use `--force` to skip all prompts.
-
 ### Customizing the Persona
 
 After running `relic create`, edit `SOUL.md` and `IDENTITY.md` in the Engram directory. These follow the [OpenClaw](https://github.com/openclaw/openclaw) format:
@@ -599,6 +592,14 @@ Each session, you wake up fresh. These files _are_ your memory. Read them. Updat
 ```
 
 See [`templates/engrams/`](templates/engrams/) for full working examples.
+
+## Deleting an Engram
+
+```bash
+relic delete my-agent
+```
+
+If the Engram has memory data (`MEMORY.md`, `USER.md`, `memory/*.md`, `archive.md`), you'll need to type the Engram ID to confirm deletion. Use `--force` to skip all prompts.
 
 ## Domain Glossary
 

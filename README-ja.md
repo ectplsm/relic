@@ -31,6 +31,7 @@ Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code
 - [記憶の管理](#記憶の管理)
 - [設定](#設定)
 - [独自のEngramを作成する](#独自のengramを作成する)
+- [Engramの削除](#engramの削除)
 - [ドメイン用語集](#ドメイン用語集)
 - [ロードマップ](#ロードマップ)
 
@@ -550,14 +551,6 @@ relic claude my-agent
 
 MCPツール `relic_engram_create` を使えば、LLMとの会話で性格やボイスを深掘りしながらEngram を作成することもできます。LLMが会話から `SOUL.md` / `IDENTITY.md` の内容を生成し、ツールに渡します。
 
-Engramの削除:
-
-```bash
-relic delete my-agent
-```
-
-記憶データ（`MEMORY.md`、`USER.md`、`memory/*.md`、`archive.md`）を持つEngramの場合、削除確認としてEngram IDの入力が必要です。`--force` ですべてのプロンプトをスキップできます。
-
 ### ペルソナのカスタマイズ
 
 `relic create` 実行後、Engramディレクトリ内の `SOUL.md` と `IDENTITY.md` を編集します。[OpenClaw](https://github.com/openclaw/openclaw) 形式に準拠しています:
@@ -599,6 +592,14 @@ Each session, you wake up fresh. These files _are_ your memory. Read them. Updat
 ```
 
 完全な動作サンプルは [`templates/engrams/`](templates/engrams/) を参照してください。
+
+## Engramの削除
+
+```bash
+relic delete my-agent
+```
+
+記憶データ（`MEMORY.md`、`USER.md`、`memory/*.md`、`archive.md`）を持つEngramの場合、削除確認としてEngram IDの入力が必要です。`--force` ですべてのプロンプトをスキップできます。
 
 ## ドメイン用語集
 
