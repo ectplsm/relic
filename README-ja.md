@@ -549,7 +549,7 @@ relic create --id my-agent --name "My Agent" --description "A helpful assistant"
 relic claude my-agent
 ```
 
-MCPツール `relic_engram_create` を使えば、LLMとの会話で性格やボイスを深掘りしながらEngram を作成することもできます。LLMが会話から `SOUL.md` / `IDENTITY.md` の内容を生成し、ツールに渡します。
+MCPツール `relic_engram_create` を使えば、LLMとの会話で性格や特徴を深掘りしながらEngram を作成することもできます。LLMが会話から `SOUL.md` / `IDENTITY.md` の内容を生成し、ツールに渡します。
 
 ### ペルソナのカスタマイズ
 
