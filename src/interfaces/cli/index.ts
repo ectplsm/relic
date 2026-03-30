@@ -12,6 +12,7 @@ import { registerClawCommand } from "./commands/claw.js";
 import { registerConfigCommand } from "./commands/config.js";
 import { registerMigrateCommand } from "./commands/migrate.js";
 import { registerRefreshSamplesCommand } from "./commands/refresh-samples.js";
+import { registerCreateCommand } from "./commands/create.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, "../../../package.json"), "utf-8"));
@@ -24,6 +25,7 @@ program
   .version(pkg.version);
 
 registerInitCommand(program);
+registerCreateCommand(program);
 registerListCommand(program);
 registerShowCommand(program);
 registerShellCommands(program);
