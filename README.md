@@ -622,10 +622,10 @@ relic config default-engram your-persona
 - [x] Claw integration (inject / extract / sync)
 - [x] `relic claw sync` — bidirectional memory sync with Claw workspaces
 - [x] `relic config` — manage default Engram, Claw path, memory window
+- [ ] `relic create` — interactive Engram creation wizard (WIP)
 - [ ] Mikoshi cloud backend (`mikoshi.ectplsm.com`)
 - [ ] `relic mikoshi login` — authenticate with Mikoshi (OAuth Device Flow)
 - [ ] `relic mikoshi upload` / `relic mikoshi download` / `relic mikoshi sync` — sync Engrams with Mikoshi
-- [ ] `relic create` — interactive Engram creation wizard
 
 ## License
 
