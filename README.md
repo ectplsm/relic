@@ -162,7 +162,7 @@ relic claude --engram rebel
 
 ### Commander (`commander`)
 
-> *"The network is vast and infinite."*
+> *"Every system has a seam. Find it."*
 
 A cyber operations specialist with architect-level thinking. Concise, decisive, surgically precise. Cuts straight to the essence — no decoration, no hand-holding. Dry wit surfaces when least expected.
 
