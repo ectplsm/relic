@@ -544,7 +544,13 @@ CLI flags always take precedence over config values.
 
 ## Creating Your Own Engram
 
-The easiest way to create a new Engram is with `relic create`:
+The recommended way is to **ask your Construct to create one via conversation**. With the MCP server registered, just tell the Construct something like:
+
+> "Create a new Engram called Neon — a street-smart info broker who trades context for favors."
+
+The Construct will ask follow-up questions to flesh out the personality, generate `SOUL.md` / `IDENTITY.md` content tailored to the character, and call the `relic_engram_create` MCP tool to save it. No manual file editing needed.
+
+If you prefer the CLI, `relic create` is also available:
 
 ```bash
 # Fully interactive — prompts for everything
@@ -554,13 +560,7 @@ relic create
 relic create --id my-agent --name "My Agent" --description "A helpful assistant" --tags "custom,dev"
 ```
 
-This creates the directory structure, writes `engram.json` / `manifest.json`, and seeds `SOUL.md` / `IDENTITY.md` with OpenClaw-compatible default templates. Customize the persona files, then launch a shell:
-
-```bash
-relic claude my-agent
-```
-
-You can also create Engrams via the `relic_engram_create` MCP tool — LLMs can ask about the desired personality and generate `SOUL.md` / `IDENTITY.md` content through conversation, then call the tool with the results.
+This creates the directory structure with default templates. You'll want to edit `SOUL.md` and `IDENTITY.md` afterwards to define the personality.
 
 ### Customizing the Persona
 

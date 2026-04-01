@@ -544,7 +544,13 @@ CLIフラグは常にconfig値より優先されます。
 
 ## 独自のEngramを作成する
 
-新しいEngramを作る最も簡単な方法は `relic create` です:
+おすすめの方法は、**Constructとの会話で作成する** ことです。MCPサーバーを登録済みなら、Constructにこう伝えるだけです:
+
+> 「Neonという新しいEngramを作って — コンテキストを通貨にするストリートスマートな情報屋」
+
+Constructが性格を深掘りする質問を投げかけ、キャラクターに合った `SOUL.md` / `IDENTITY.md` を生成し、`relic_engram_create` MCPツールで保存します。手動でファイルを編集する必要はありません。
+
+CLIで作りたい場合は `relic create` も使えます:
 
 ```bash
 # 完全対話モード — すべてプロンプトで入力
@@ -554,13 +560,7 @@ relic create
 relic create --id my-agent --name "My Agent" --description "A helpful assistant" --tags "custom,dev"
 ```
 
-ディレクトリ構造の作成、`engram.json` / `manifest.json` の書き込み、OpenClaw互換のデフォルトテンプレートによる `SOUL.md` / `IDENTITY.md` の初期配置が行われます。ペルソナファイルをカスタマイズしたら、Shellを起動:
-
-```bash
-relic claude my-agent
-```
-
-MCPツール `relic_engram_create` を使えば、LLMとの会話で性格や特徴を深掘りしながらEngram を作成することもできます。LLMが会話から `SOUL.md` / `IDENTITY.md` の内容を生成し、ツールに渡します。
+デフォルトテンプレートでディレクトリ構造が作られます。性格を定義するには、作成後に `SOUL.md` と `IDENTITY.md` を編集してください。
 
 ### ペルソナのカスタマイズ
 
