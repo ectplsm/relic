@@ -31,7 +31,7 @@ export type EngramFiles = z.infer<typeof EngramFileSchema>;
  * Engramプロフィール — ユーザーが編集可能な表示用メタデータ
  */
 export const EngramProfileSchema = z.object({
-  /** 表示名 (例: "攻殻機動隊の少佐") */
+  /** 表示名 (例: "Commander") */
   name: z.string(),
   /** 説明 */
   description: z.string().optional(),
@@ -45,7 +45,7 @@ export type EngramProfile = z.infer<typeof EngramProfileSchema>;
  * Engramマニフェスト — システム管理の不変識別子と監査情報
  */
 export const EngramManifestSchema = z.object({
-  /** 一意識別子 (例: "ghost-in-the-shell") */
+  /** 一意識別子 (例: "commander") */
   id: z.string(),
   /** 作成日時 */
   createdAt: z.string().datetime(),

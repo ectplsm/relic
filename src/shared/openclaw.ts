@@ -69,7 +69,7 @@ export function resolveWorkspacePath(
 
 /**
  * OpenClawのワークスペースディレクトリ名からエージェント名を抽出する。
- * "workspace" → "main", "workspace-johnny" → "johnny"
+ * "workspace" → "main", "workspace-rebel" → "rebel"
  */
 export function extractAgentName(dirName: string): string | null {
   if (dirName === "workspace") {
