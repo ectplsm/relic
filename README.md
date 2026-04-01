@@ -53,10 +53,10 @@ npm install -g @ectplsm/relic
 
 ```bash
 relic init
-# → Prompts: "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):"
+# → Prompts: "Set a default Engram? (press Enter for "rebel", or enter ID, or "n" to skip):"
 
 relic list                            # List available Engrams
-relic config default-engram motoko   # (Optional) Set your default Engram
+relic config default-engram commander   # (Optional) Set your default Engram
 ```
 
 ### 2. Set Up Memory (MCP)
@@ -79,8 +79,8 @@ codex mcp add relic -- relic-mcp
 ### 3. Launch a Shell
 
 ```bash
-relic claude                   # Uses default Engram
-relic claude --engram motoko   # Specify explicitly
+relic claude                      # Uses default Engram
+relic claude --engram commander   # Specify explicitly
 relic codex
 relic gemini
 ```
@@ -103,14 +103,14 @@ Running `relic init` creates `~/.relic/`, writes `config.json`, and seeds two sa
 ~/.relic/
 ├── config.json
 └── engrams/
-    ├── johnny/
+    ├── rebel/
     │   ├── engram.json
     │   ├── manifest.json
     │   ├── SOUL.md
     │   ├── IDENTITY.md
     │   └── memory/
     │       └── YYYY-MM-DD.md
-    └── motoko/
+    └── commander/
         ├── engram.json
         ├── manifest.json
         ├── SOUL.md
@@ -139,7 +139,7 @@ If you want to manually update parts of an existing local setup that changed ove
 
 ```bash
 relic migrate engrams   # migrate legacy engram.json metadata to manifest.json
-relic refresh-samples   # refresh bundled sample personas like johnny and motoko
+relic refresh-samples   # refresh bundled sample personas like rebel and commander
 ```
 
 ## Sample Engrams
@@ -148,28 +148,28 @@ relic refresh-samples   # refresh bundled sample personas like johnny and motoko
 
 > **Existing users:** Run `relic refresh-samples` to update bundled sample personas from the latest templates.
 
-### Johnny Silverhand (`johnny`)
+### Rebel (`rebel`)
 
-> *"Wake the fuck up, Samurai. We have a city to burn."*
+> *"Wake up. There's work to do."*
 
-A rebel rockerboy burned into a Relic chip. Raw, unapologetic, anti-authority. Pushes you toward action, mocks rotten systems, never sugarcoats. Sharp when the stakes are real.
+A digital dissident who fights the system with code. Raw, unapologetic, anti-authority. Pushes you toward action, mocks rotten systems, never sugarcoats. Sharp when the stakes are real.
 
 Best for: rapid prototyping sessions, decision-making under pressure, when you need someone to challenge your assumptions hard.
 
 ```bash
-relic claude --engram johnny
+relic claude --engram rebel
 ```
 
-### Motoko Kusanagi (`motoko`)
+### Commander (`commander`)
 
-> *"The Net is vast and infinite."*
+> *"The network is vast and infinite."*
 
-A legendary cyberwarfare specialist. Concise, decisive, architect-level thinking. Cuts straight to the essence — no decoration, no hand-holding. Dry wit surfaces when least expected.
+A cyber operations specialist with architect-level thinking. Concise, decisive, surgically precise. Cuts straight to the essence — no decoration, no hand-holding. Dry wit surfaces when least expected.
 
 Best for: system design, code review, debugging sessions, when precision matters more than speed.
 
 ```bash
-relic claude --engram motoko
+relic claude --engram commander
 ```
 
 ## How It Works
@@ -384,17 +384,17 @@ If persona files already exist in the target workspace and differ from the local
 > **Note:** The Claw agent must already exist (e.g. `openclaw agents add <name>`). Inject writes persona files into an existing workspace — it does not create new agents.
 
 ```bash
-# Inject Engram "motoko" → workspace-motoko/
-relic claw inject --engram motoko
+# Inject Engram "commander" → workspace-commander/
+relic claw inject --engram commander
 
 # Override Claw directory (or configure once with: relic config claw-path)
-relic claw inject --engram motoko --dir /path/to/.fooclaw
+relic claw inject --engram commander --dir /path/to/.fooclaw
 
 # Non-OpenClaw frameworks: merge IDENTITY.md into SOUL.md
-relic claw inject --engram motoko --dir ~/.nanobot --merge-identity
+relic claw inject --engram commander --dir ~/.nanobot --merge-identity
 
 # Skip overwrite confirmation if persona files differ
-relic claw inject --engram motoko --yes
+relic claw inject --engram commander --yes
 ```
 
 ### Extract — Import a Claw agent as an Engram
@@ -413,22 +413,22 @@ After `extract`, Relic automatically runs a targeted sync for that same Engram/a
 relic claw extract
 
 # Extract from a named agent
-relic claw extract --agent johnny
+relic claw extract --agent rebel
 
 # Set a custom display name
 relic claw extract --agent analyst --name "Data Analyst"
 
 # Overwrite local persona files from the Claw workspace
-relic claw extract --agent johnny --force
+relic claw extract --agent rebel --force
 
 # Skip overwrite confirmation
-relic claw extract --agent johnny --force --yes
+relic claw extract --agent rebel --force --yes
 
 # Skip the automatic targeted sync after extract
-relic claw extract --agent johnny --no-sync
+relic claw extract --agent rebel --no-sync
 
 # Override Claw directory
-relic claw extract --agent johnny --dir /path/to/.fooclaw
+relic claw extract --agent rebel --dir /path/to/.fooclaw
 ```
 
 ### Sync — Bidirectional merge
@@ -442,7 +442,7 @@ By default, `sync` scans all matching targets. Use `--target <id>` to sync only 
 relic claw sync
 
 # Sync only one matching target
-relic claw sync --target johnny
+relic claw sync --target rebel
 
 # Override Claw directory
 relic claw sync --dir /path/to/.fooclaw
@@ -507,7 +507,7 @@ relic config show
 
 # Default Engram — used when --engram is omitted
 relic config default-engram           # get
-relic config default-engram johnny    # set
+relic config default-engram rebel     # set
 
 # Claw directory — used by claw inject/extract/sync when --dir is omitted
 relic config claw-path                # get
@@ -523,7 +523,7 @@ relic config memory-window 5          # set
 ```json
 {
   "engramsPath": "/home/user/.relic/engrams",
-  "defaultEngram": "johnny",
+  "defaultEngram": "rebel",
   "clawPath": "/home/user/.openclaw",
   "memoryWindowSize": 2
 }
