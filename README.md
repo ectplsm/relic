@@ -142,7 +142,7 @@ Versions prior to 0.3.0 shipped sample Engrams that referenced copyrighted chara
 ```bash
 relic refresh-samples
 # → Seeded: 2 (commander, rebel)
-# → Memory migrated: johnny → rebel, motoko → commander
+# → Memory migrated from legacy samples
 # → Legacy samples remain untouched
 ```
 

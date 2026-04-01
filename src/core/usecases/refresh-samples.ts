@@ -27,7 +27,7 @@ export interface RefreshSamplesResult {
  * SOUL.md / IDENTITY.md と updatedAt のみを更新する。
  *
  * ローカルに存在しないテンプレートは新規 seed する。
- * seed 時、旧サンプル（johnny→rebel, motoko→commander）の記憶データがあればコピーする。
+ * seed 時、旧サンプルの記憶データがあれば対応する新サンプルにコピーする。
  */
 export class RefreshSamples {
   constructor(
@@ -127,7 +127,7 @@ export class RefreshSamples {
 
   /**
    * 旧サンプルEngramから記憶データをコピーする。
-   * johnny→rebel, motoko→commander のマッピングで、
+   * LEGACY_MAPPING に定義されたマッピングに基づき、
    * USER.md / MEMORY.md / memory/*.md を引き継ぐ。
    */
   private async migrateMemoryFromLegacy(
