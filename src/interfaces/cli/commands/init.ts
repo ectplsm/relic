@@ -41,15 +41,15 @@ export function registerInitCommand(program: Command): void {
           }
           console.log();
 
-          const johnny = engrams.find((e) => e.id === "johnny");
-          const prompt = johnny
-            ? `Set a default Engram? (press Enter for "${johnny.id}", or enter ID, or "n" to skip): `
+          const rebel = engrams.find((e) => e.id === "rebel");
+          const prompt = rebel
+            ? `Set a default Engram? (press Enter for "${rebel.id}", or enter ID, or "n" to skip): `
             : "Set a default Engram? (Enter ID, or press Enter to skip): ";
           const answer = await ask(prompt);
 
-          if (answer === "" && johnny) {
-            await setDefaultEngram(johnny.id);
-            console.log(`Default Engram set to: ${johnny.name} (${johnny.id})`);
+          if (answer === "" && rebel) {
+            await setDefaultEngram(rebel.id);
+            console.log(`Default Engram set to: ${rebel.name} (${rebel.id})`);
           } else if (answer === "" || answer.toLowerCase() === "n") {
             console.log(`Skipped. Run: relic config default-engram <id> to configure later.`);
           } else {

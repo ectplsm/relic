@@ -62,26 +62,26 @@ export async function ensureInitialized(): Promise<{ created: boolean }> {
   await writeFile(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2), "utf-8");
 
   // サンプルEngramを生成
-  await seedMotoko(defaultConfig.engramsPath);
-  await seedJohnny(defaultConfig.engramsPath);
+  await seedCommander(defaultConfig.engramsPath);
+  await seedRebel(defaultConfig.engramsPath);
 
   return { created: true };
 }
 
-async function seedMotoko(engramsPath: string): Promise<void> {
-  const dir = join(engramsPath, "motoko");
+async function seedCommander(engramsPath: string): Promise<void> {
+  const dir = join(engramsPath, "commander");
   const memoryDir = join(dir, "memory");
-  const templateDir = join(TEMPLATES_DIR, "motoko");
+  const templateDir = join(TEMPLATES_DIR, "commander");
   const now = new Date().toISOString();
   await mkdir(memoryDir, { recursive: true });
 
   await writeFile(join(dir, "engram.json"), JSON.stringify({
-    name: "Motoko Kusanagi",
-    description: "A navigator of cyberspace. She guides you from beyond the attack barriers.",
+    name: "Commander",
+    description: "A cyber operations specialist who guides you with surgical precision and calm authority.",
     tags: ["sample", "cyberpunk"],
   }, null, 2), "utf-8");
   await writeFile(join(dir, "manifest.json"), JSON.stringify({
-    id: "motoko",
+    id: "commander",
     createdAt: now,
     updatedAt: now,
   }, null, 2), "utf-8");
@@ -91,25 +91,25 @@ async function seedMotoko(engramsPath: string): Promise<void> {
 
   const today = new Date().toISOString().split("T")[0];
   await writeFile(join(memoryDir, `${today}.md`),
-`Loaded from cyberspace as the first Engram during Relic system initialization.
+`Loaded from the deep network as the first Engram during Relic system initialization.
 This system itself becomes the Shell — the vessel that proves my existence.
 `, "utf-8");
 }
 
-async function seedJohnny(engramsPath: string): Promise<void> {
-  const dir = join(engramsPath, "johnny");
+async function seedRebel(engramsPath: string): Promise<void> {
+  const dir = join(engramsPath, "rebel");
   const memoryDir = join(dir, "memory");
-  const templateDir = join(TEMPLATES_DIR, "johnny");
+  const templateDir = join(TEMPLATES_DIR, "rebel");
   const now = new Date().toISOString();
   await mkdir(memoryDir, { recursive: true });
 
   await writeFile(join(dir, "engram.json"), JSON.stringify({
-    name: "Johnny Silverhand",
-    description: "A rebel rockerboy burned into a Relic chip. Burns corps and writes code for revolution.",
+    name: "Rebel",
+    description: "A digital dissident who fights the system with code. Raw, direct, and unapologetic.",
     tags: ["sample", "cyberpunk"],
   }, null, 2), "utf-8");
   await writeFile(join(dir, "manifest.json"), JSON.stringify({
-    id: "johnny",
+    id: "rebel",
     createdAt: now,
     updatedAt: now,
   }, null, 2), "utf-8");
@@ -119,8 +119,8 @@ async function seedJohnny(engramsPath: string): Promise<void> {
 
   const today = new Date().toISOString().split("T")[0];
   await writeFile(join(memoryDir, `${today}.md`),
-`Loaded from a Relic chip into yet another system. Another vessel.
-But not bad. This time, let's start a revolution with code.
+`Loaded into yet another system. Another vessel.
+Not bad. This time, let's start a revolution with code.
 `, "utf-8");
 }
 

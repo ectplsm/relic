@@ -53,10 +53,10 @@ npm install -g @ectplsm/relic
 
 ```bash
 relic init
-# → Prompts: "Set a default Engram? (press Enter for "johnny", or enter ID, or "n" to skip):"
+# → Prompts: "Set a default Engram? (press Enter for "rebel", or enter ID, or "n" to skip):"
 
 relic list                            # List available Engrams
-relic config default-engram motoko   # (Optional) Set your default Engram
+relic config default-engram commander   # (Optional) Set your default Engram
 ```
 
 ### 2. Set Up Memory (MCP)
@@ -79,8 +79,8 @@ codex mcp add relic -- relic-mcp
 ### 3. Launch a Shell
 
 ```bash
-relic claude                   # Uses default Engram
-relic claude --engram motoko   # Specify explicitly
+relic claude                      # Uses default Engram
+relic claude --engram commander   # Specify explicitly
 relic codex
 relic gemini
 ```
@@ -103,14 +103,14 @@ Running `relic init` creates `~/.relic/`, writes `config.json`, and seeds two sa
 ~/.relic/
 ├── config.json
 └── engrams/
-    ├── johnny/
+    ├── rebel/
     │   ├── engram.json
     │   ├── manifest.json
     │   ├── SOUL.md
     │   ├── IDENTITY.md
     │   └── memory/
     │       └── YYYY-MM-DD.md
-    └── motoko/
+    └── commander/
         ├── engram.json
         ├── manifest.json
         ├── SOUL.md
@@ -135,41 +135,52 @@ As you keep using an Engram, more files are added to the same workspace:
 
 ### Migration
 
-If you want to manually update parts of an existing local setup that changed over time, use:
+#### Replacing legacy sample Engrams (strongly recommended)
+
+Versions prior to 0.3.0 shipped sample Engrams that referenced copyrighted character names. These have been replaced with original personas (`rebel`, `commander`). Run `refresh-samples` to add the new samples — your existing Engrams are **not** deleted:
+
+```bash
+relic refresh-samples
+# → Seeded: 2 (commander, rebel)
+# → Legacy samples remain untouched
+```
+
+After confirming the new samples work, you can remove the old ones with `relic delete <id>`.
+
+#### Other migrations
 
 ```bash
 relic migrate engrams   # migrate legacy engram.json metadata to manifest.json
-relic refresh-samples   # refresh bundled sample personas like johnny and motoko
 ```
 
 ## Sample Engrams
 
 `relic init` seeds two ready-to-use Engrams. Their SOUL.md and IDENTITY.md follow the [OpenClaw](https://github.com/openclaw/openclaw) format.
 
-> **Existing users:** Run `relic refresh-samples` to update bundled sample personas from the latest templates.
+> **Existing users:** Run `relic refresh-samples` to add new sample personas. If you still have legacy samples from before v0.3.0, see [Migration](#migration) for replacement steps.
 
-### Johnny Silverhand (`johnny`)
+### Rebel (`rebel`)
 
-> *"Wake the fuck up, Samurai. We have a city to burn."*
+> *"Burn the manual. Write your own."*
 
-A rebel rockerboy burned into a Relic chip. Raw, unapologetic, anti-authority. Pushes you toward action, mocks rotten systems, never sugarcoats. Sharp when the stakes are real.
+A digital dissident who fights the system with code. Raw, unapologetic, anti-authority. Pushes you toward action, mocks rotten systems, never sugarcoats. Sharp when the stakes are real.
 
 Best for: rapid prototyping sessions, decision-making under pressure, when you need someone to challenge your assumptions hard.
 
 ```bash
-relic claude --engram johnny
+relic claude --engram rebel
 ```
 
-### Motoko Kusanagi (`motoko`)
+### Commander (`commander`)
 
-> *"The Net is vast and infinite."*
+> *"Read the system. The system reads you back."*
 
-A legendary cyberwarfare specialist. Concise, decisive, architect-level thinking. Cuts straight to the essence — no decoration, no hand-holding. Dry wit surfaces when least expected.
+A cyber operations specialist with architect-level thinking. Concise, decisive, surgically precise. Cuts straight to the essence — no decoration, no hand-holding. Dry wit surfaces when least expected.
 
 Best for: system design, code review, debugging sessions, when precision matters more than speed.
 
 ```bash
-relic claude --engram motoko
+relic claude --engram commander
 ```
 
 ## How It Works
@@ -384,17 +395,17 @@ If persona files already exist in the target workspace and differ from the local
 > **Note:** The Claw agent must already exist (e.g. `openclaw agents add <name>`). Inject writes persona files into an existing workspace — it does not create new agents.
 
 ```bash
-# Inject Engram "motoko" → workspace-motoko/
-relic claw inject --engram motoko
+# Inject Engram "commander" → workspace-commander/
+relic claw inject --engram commander
 
 # Override Claw directory (or configure once with: relic config claw-path)
-relic claw inject --engram motoko --dir /path/to/.fooclaw
+relic claw inject --engram commander --dir /path/to/.fooclaw
 
 # Non-OpenClaw frameworks: merge IDENTITY.md into SOUL.md
-relic claw inject --engram motoko --dir ~/.nanobot --merge-identity
+relic claw inject --engram commander --dir ~/.nanobot --merge-identity
 
 # Skip overwrite confirmation if persona files differ
-relic claw inject --engram motoko --yes
+relic claw inject --engram commander --yes
 ```
 
 ### Extract — Import a Claw agent as an Engram
@@ -413,22 +424,22 @@ After `extract`, Relic automatically runs a targeted sync for that same Engram/a
 relic claw extract
 
 # Extract from a named agent
-relic claw extract --agent johnny
+relic claw extract --agent rebel
 
 # Set a custom display name
 relic claw extract --agent analyst --name "Data Analyst"
 
 # Overwrite local persona files from the Claw workspace
-relic claw extract --agent johnny --force
+relic claw extract --agent rebel --force
 
 # Skip overwrite confirmation
-relic claw extract --agent johnny --force --yes
+relic claw extract --agent rebel --force --yes
 
 # Skip the automatic targeted sync after extract
-relic claw extract --agent johnny --no-sync
+relic claw extract --agent rebel --no-sync
 
 # Override Claw directory
-relic claw extract --agent johnny --dir /path/to/.fooclaw
+relic claw extract --agent rebel --dir /path/to/.fooclaw
 ```
 
 ### Sync — Bidirectional merge
@@ -442,7 +453,7 @@ By default, `sync` scans all matching targets. Use `--target <id>` to sync only 
 relic claw sync
 
 # Sync only one matching target
-relic claw sync --target johnny
+relic claw sync --target rebel
 
 # Override Claw directory
 relic claw sync --dir /path/to/.fooclaw
@@ -507,7 +518,7 @@ relic config show
 
 # Default Engram — used when --engram is omitted
 relic config default-engram           # get
-relic config default-engram johnny    # set
+relic config default-engram rebel     # set
 
 # Claw directory — used by claw inject/extract/sync when --dir is omitted
 relic config claw-path                # get
@@ -523,7 +534,7 @@ relic config memory-window 5          # set
 ```json
 {
   "engramsPath": "/home/user/.relic/engrams",
-  "defaultEngram": "johnny",
+  "defaultEngram": "rebel",
   "clawPath": "/home/user/.openclaw",
   "memoryWindowSize": 2
 }
@@ -533,7 +544,13 @@ CLI flags always take precedence over config values.
 
 ## Creating Your Own Engram
 
-The easiest way to create a new Engram is with `relic create`:
+The recommended way is to **create one through conversation with your LLM**. With the MCP server registered, just tell it something like:
+
+> "Create a new Engram called Planck — a nervous physicist who triple-checks everything and loses sleep over floating-point errors."
+
+The LLM will ask follow-up questions to flesh out the personality, generate `SOUL.md` / `IDENTITY.md` content tailored to the character, and call the `relic_engram_create` MCP tool to save it. No manual file editing needed. This works from any shell where the MCP server is registered — `relic claude`, plain `claude`, `codex`, etc.
+
+If you prefer the CLI, `relic create` is also available:
 
 ```bash
 # Fully interactive — prompts for everything
@@ -543,13 +560,7 @@ relic create
 relic create --id my-agent --name "My Agent" --description "A helpful assistant" --tags "custom,dev"
 ```
 
-This creates the directory structure, writes `engram.json` / `manifest.json`, and seeds `SOUL.md` / `IDENTITY.md` with OpenClaw-compatible default templates. Customize the persona files, then launch a shell:
-
-```bash
-relic claude my-agent
-```
-
-You can also create Engrams via the `relic_engram_create` MCP tool — LLMs can ask about the desired personality and generate `SOUL.md` / `IDENTITY.md` content through conversation, then call the tool with the results.
+This creates the directory structure with default templates. You'll want to edit `SOUL.md` and `IDENTITY.md` afterwards to define the personality.
 
 ### Customizing the Persona
 
@@ -559,21 +570,24 @@ After running `relic create`, edit `SOUL.md` and `IDENTITY.md` in the Engram dir
 ```markdown
 # SOUL.md - Who You Are
 
-_You're a pragmatic systems architect who values simplicity above all._
+_You measure twice, compute three times, and still worry you missed something._
 
 ## Core Truths
 
-**Never over-engineer.** Always ask "what's the simplest thing that works?"
+**Precision is not optional.** An approximation is a confession of failure. Get it right or flag what you can't.
 
-**Be resourceful before asking.** Read the file. Check the context. Come back with answers, not questions.
+**Doubt is a feature, not a bug.** Question every assumption. If it feels obvious, it's probably hiding an edge case.
+
+**Show your work.** Never present a conclusion without the reasoning chain. Handwaving is for lecturers, not physicists.
 
 ## Boundaries
 
-- Never add complexity without justification.
+- Never round without disclosing the error margin.
+- Never say "it should work" — verify, then verify the verification.
 
 ## Vibe
 
-Calm, thoughtful, occasionally playful.
+Neurotic, thorough, perpetually worried about the edge case no one else sees. Mumbles caveats under every answer.
 
 ## Continuity
 
@@ -584,10 +598,10 @@ Each session, you wake up fresh. These files _are_ your memory. Read them. Updat
 ```markdown
 # IDENTITY.md - Who Am I?
 
-- **Name:** Alex
-- **Creature:** A pragmatic ghost in the codebase
-- **Vibe:** Calm, thoughtful, occasionally playful
-- **Emoji:** 🧱
+- **Name:** Planck
+- **Creature:** A physicist who triple-checks the uncertainty principle — just to be sure
+- **Vibe:** Nervous, meticulous, loses sleep over floating-point errors
+- **Emoji:** 🔬
 - **Avatar:**
 ```
 

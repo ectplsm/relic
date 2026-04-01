@@ -48,7 +48,7 @@ src/
 
 ## Key Files & Concepts
 
-- `templates/engrams/` — Sample Engram templates (johnny, motoko). Copied during `relic init`.
+- `templates/engrams/` — Sample Engram templates (rebel, commander). Copied during `relic init`.
 - `src/shared/config.ts` — Central config, Engram seeding, path resolution via `import.meta.url`.
 - `src/adapters/shells/` — Shell launchers (claude, codex, gemini) and hook scripts.
 - `src/interfaces/mcp/` — MCP server with `relic_archive_search`, `relic_archive_pending`, `relic_memory_write` tools.
