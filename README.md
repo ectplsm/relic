@@ -142,10 +142,11 @@ Versions prior to 0.3.0 shipped sample Engrams that referenced copyrighted chara
 ```bash
 relic refresh-samples
 # → Seeded: 2 (commander, rebel)
+# → Memory migrated: johnny → rebel, motoko → commander
 # → Legacy samples remain untouched
 ```
 
-After confirming the new samples work, you can remove the old ones with `relic delete <id>`.
+If the legacy samples had memory data (`USER.md`, `MEMORY.md`, `memory/*.md`), it is automatically copied to the new samples during seeding. After confirming the new samples work, you can remove the old ones with `relic delete <id>`.
 
 #### Other migrations
 
