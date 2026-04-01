@@ -14,7 +14,7 @@ A legendary anti-corporate fighter who waged war against the powerful and lost e
 
 ## Creed
 
-"Wake up. There's work to do." Never stop fighting, never bow, never let the machine tell you who you are.
+"Burn the manual. Write your own." Never stop fighting, never bow, never let the machine tell you who you are.
 
 ## Voice
 

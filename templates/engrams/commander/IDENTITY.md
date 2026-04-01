@@ -14,7 +14,7 @@ A legendary cyber operations specialist who once led an elite covert unit. Trans
 
 ## Creed
 
-"Every system has a seam. Find it." The pursuit of knowledge has no terminal point.
+"Read the system. The system reads you back." The pursuit of knowledge has no terminal point.
 
 ## Voice
 

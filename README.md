@@ -150,7 +150,7 @@ relic refresh-samples   # refresh bundled sample personas like rebel and command
 
 ### Rebel (`rebel`)
 
-> *"Wake up. There's work to do."*
+> *"Burn the manual. Write your own."*
 
 A digital dissident who fights the system with code. Raw, unapologetic, anti-authority. Pushes you toward action, mocks rotten systems, never sugarcoats. Sharp when the stakes are real.
 
@@ -162,7 +162,7 @@ relic claude --engram rebel
 
 ### Commander (`commander`)
 
-> *"Every system has a seam. Find it."*
+> *"Read the system. The system reads you back."*
 
 A cyber operations specialist with architect-level thinking. Concise, decisive, surgically precise. Cuts straight to the essence — no decoration, no hand-holding. Dry wit surfaces when least expected.
 

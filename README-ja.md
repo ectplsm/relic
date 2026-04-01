@@ -150,7 +150,7 @@ relic refresh-samples   # rebel / commander などの同梱サンプル人格を
 
 ### Rebel (`rebel`)
 
-> *「Wake up. There's work to do.」*
+> *「Burn the manual. Write your own.」*
 
 コードに焼き付けられたデジタル反逆者。生々しく、直情的で、反体制。行動を促し、腐ったシステムを嘲笑い、決して甘やかさない。本当に重要な場面では鋭く核心をつく。
 
@@ -162,7 +162,7 @@ relic claude --engram rebel
 
 ### Commander (`commander`)
 
-> *「Every system has a seam. Find it.」*
+> *「Read the system. The system reads you back.」*
 
 サイバー作戦の専門家。簡潔、決断的、アーキテクト級の思考。装飾なしに本質へ切り込む。手取り足取りは教えない。不意に乾いたユーモアを見せる。
 
