@@ -27,6 +27,13 @@ export function registerRefreshSamplesCommand(program: Command): void {
         console.log(`  IDs: ${result.seeded.join(", ")}`);
       }
 
+      if (result.migratedMemory.length > 0) {
+        console.log(`Memory migrated:`);
+        for (const m of result.migratedMemory) {
+          console.log(`  ${m.from} → ${m.to}`);
+        }
+      }
+
       if (result.skipped.length > 0) {
         console.log(`Skipped: ${result.skipped.length}`);
         for (const skipped of result.skipped) {

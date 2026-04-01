@@ -4,10 +4,20 @@ import { join } from "node:path";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { Engram } from "../entities/engram.js";
 
+/**
+ * Legacy sample Engram ID → new sample Engram ID mapping.
+ * Used during seed to copy memory data from old samples.
+ */
+const LEGACY_MAPPING: Record<string, string> = {
+  johnny: "rebel",
+  motoko: "commander",
+};
+
 export interface RefreshSamplesResult {
   refreshed: string[];
   seeded: string[];
   skipped: Array<{ id: string; reason: string }>;
+  migratedMemory: Array<{ from: string; to: string }>;
 }
 
 /**
@@ -17,6 +27,7 @@ export interface RefreshSamplesResult {
  * SOUL.md / IDENTITY.md と updatedAt のみを更新する。
  *
  * ローカルに存在しないテンプレートは新規 seed する。
+ * seed 時、旧サンプル（johnny→rebel, motoko→commander）の記憶データがあればコピーする。
  */
 export class RefreshSamples {
   constructor(
@@ -33,6 +44,7 @@ export class RefreshSamples {
       refreshed: [],
       seeded: [],
       skipped: [],
+      migratedMemory: [],
     };
 
     for (const id of ids) {
@@ -63,6 +75,12 @@ export class RefreshSamples {
         const seeded = await this.seedFromTemplate(id, templateDir, soulPath, identityPath);
         if (seeded) {
           result.seeded.push(id);
+
+          // Migrate memory from legacy sample if available
+          const migrated = await this.migrateMemoryFromLegacy(id);
+          if (migrated) {
+            result.migratedMemory.push(migrated);
+          }
         } else {
           result.skipped.push({ id, reason: "template engram.json not found (cannot seed)" });
         }
@@ -105,6 +123,43 @@ export class RefreshSamples {
 
     await this.repository.save(engram);
     return true;
+  }
+
+  /**
+   * 旧サンプルEngramから記憶データをコピーする。
+   * johnny→rebel, motoko→commander のマッピングで、
+   * USER.md / MEMORY.md / memory/*.md を引き継ぐ。
+   */
+  private async migrateMemoryFromLegacy(
+    newId: string
+  ): Promise<{ from: string; to: string } | null> {
+    // Find legacy ID that maps to this new ID
+    const legacyId = Object.entries(LEGACY_MAPPING)
+      .find(([, v]) => v === newId)?.[0];
+    if (!legacyId) return null;
+
+    const legacy = await this.repository.get(legacyId);
+    if (!legacy) return null;
+
+    // Check if legacy has any memory data worth copying
+    const hasMemory = legacy.files.user
+      || legacy.files.memory
+      || (legacy.files.memoryEntries && Object.keys(legacy.files.memoryEntries).length > 0);
+    if (!hasMemory) return null;
+
+    // Load the newly seeded engram and merge memory data
+    const newEngram = await this.repository.get(newId);
+    if (!newEngram) return null;
+
+    if (legacy.files.user) newEngram.files.user = legacy.files.user;
+    if (legacy.files.memory) newEngram.files.memory = legacy.files.memory;
+    if (legacy.files.memoryEntries) {
+      newEngram.files.memoryEntries = { ...legacy.files.memoryEntries };
+    }
+    newEngram.meta.updatedAt = new Date().toISOString();
+
+    await this.repository.save(newEngram);
+    return { from: legacyId, to: newId };
   }
 
   private async listTemplateIds(): Promise<string[]> {
