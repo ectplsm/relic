@@ -151,7 +151,6 @@ After confirming the new samples work, you can remove the old ones with `relic d
 
 ```bash
 relic migrate engrams   # migrate legacy engram.json metadata to manifest.json
-relic refresh-samples   # refresh bundled sample personas from latest templates
 ```
 
 ## Sample Engrams

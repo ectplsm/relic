@@ -151,7 +151,6 @@ relic refresh-samples
 
 ```bash
 relic migrate engrams   # 旧形式の engram.json メタデータを manifest.json に移行
-relic refresh-samples   # 同梱サンプル人格を最新テンプレートから更新・追加
 ```
 
 ## サンプルEngram
