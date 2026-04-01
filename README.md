@@ -135,18 +135,35 @@ As you keep using an Engram, more files are added to the same workspace:
 
 ### Migration
 
-If you want to manually update parts of an existing local setup that changed over time, use:
+#### Replacing legacy sample Engrams (strongly recommended)
+
+Versions prior to 0.3.0 shipped sample Engrams (`johnny`, `motoko`) that referenced copyrighted character names. These have been replaced with original personas (`rebel`, `commander`). Run `refresh-samples` to add the new samples — your existing Engrams are **not** deleted:
+
+```bash
+relic refresh-samples
+# → Seeded: 2 (commander, rebel)
+# → johnny/motoko remain untouched
+```
+
+After confirming the new samples work, you may optionally remove the old ones:
+
+```bash
+relic delete johnny
+relic delete motoko
+```
+
+#### Other migrations
 
 ```bash
 relic migrate engrams   # migrate legacy engram.json metadata to manifest.json
-relic refresh-samples   # refresh bundled sample personas like rebel and commander
+relic refresh-samples   # refresh bundled sample personas from latest templates
 ```
 
 ## Sample Engrams
 
 `relic init` seeds two ready-to-use Engrams. Their SOUL.md and IDENTITY.md follow the [OpenClaw](https://github.com/openclaw/openclaw) format.
 
-> **Existing users:** Run `relic refresh-samples` to update bundled sample personas from the latest templates.
+> **Existing users:** Run `relic refresh-samples` to add new sample personas. If you still have the legacy `johnny` / `motoko` samples, see [Migration](#migration) for replacement steps.
 
 ### Rebel (`rebel`)
 
