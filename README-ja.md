@@ -544,11 +544,11 @@ CLIフラグは常にconfig値より優先されます。
 
 ## 独自のEngramを作成する
 
-おすすめの方法は、**Constructとの会話で作成する** ことです。MCPサーバーを登録済みなら、Constructにこう伝えるだけです:
+おすすめの方法は、**LLMとの会話で作成する** ことです。MCPサーバーを登録済みなら、こう伝えるだけです:
 
 > 「Neonという新しいEngramを作って — コンテキストを通貨にするストリートスマートな情報屋」
 
-Constructが性格を深掘りする質問を投げかけ、キャラクターに合った `SOUL.md` / `IDENTITY.md` を生成し、`relic_engram_create` MCPツールで保存します。手動でファイルを編集する必要はありません。
+LLMが性格を深掘りする質問を投げかけ、キャラクターに合った `SOUL.md` / `IDENTITY.md` を生成し、`relic_engram_create` MCPツールで保存します。手動でファイルを編集する必要はありません。MCPサーバーが登録されていれば、`relic claude` でも素の `claude` でも `codex` でも使えます。
 
 CLIで作りたい場合は `relic create` も使えます:
 

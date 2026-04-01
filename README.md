@@ -544,11 +544,11 @@ CLI flags always take precedence over config values.
 
 ## Creating Your Own Engram
 
-The recommended way is to **ask your Construct to create one via conversation**. With the MCP server registered, just tell the Construct something like:
+The recommended way is to **create one through conversation with your LLM**. With the MCP server registered, just tell it something like:
 
 > "Create a new Engram called Neon — a street-smart info broker who trades context for favors."
 
-The Construct will ask follow-up questions to flesh out the personality, generate `SOUL.md` / `IDENTITY.md` content tailored to the character, and call the `relic_engram_create` MCP tool to save it. No manual file editing needed.
+The LLM will ask follow-up questions to flesh out the personality, generate `SOUL.md` / `IDENTITY.md` content tailored to the character, and call the `relic_engram_create` MCP tool to save it. No manual file editing needed. This works from any shell where the MCP server is registered — `relic claude`, plain `claude`, `codex`, etc.
 
 If you prefer the CLI, `relic create` is also available:
 
