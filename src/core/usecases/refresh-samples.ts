@@ -2,9 +2,11 @@ import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import type { EngramRepository } from "../ports/engram-repository.js";
+import type { Engram } from "../entities/engram.js";
 
 export interface RefreshSamplesResult {
   refreshed: string[];
+  seeded: string[];
   skipped: Array<{ id: string; reason: string }>;
 }
 
@@ -13,6 +15,8 @@ export interface RefreshSamplesResult {
  *
  * memory / USER / archive などの運用データは保持し、
  * SOUL.md / IDENTITY.md と updatedAt のみを更新する。
+ *
+ * ローカルに存在しないテンプレートは新規 seed する。
  */
 export class RefreshSamples {
   constructor(
@@ -27,6 +31,7 @@ export class RefreshSamples {
 
     const result: RefreshSamplesResult = {
       refreshed: [],
+      seeded: [],
       skipped: [],
     };
 
@@ -37,12 +42,6 @@ export class RefreshSamples {
         continue;
       }
 
-      const engram = await this.repository.get(id);
-      if (!engram) {
-        result.skipped.push({ id, reason: "local Engram not found" });
-        continue;
-      }
-
       const soulPath = join(templateDir, "SOUL.md");
       const identityPath = join(templateDir, "IDENTITY.md");
       if (!existsSync(soulPath) || !existsSync(identityPath)) {
@@ -50,15 +49,62 @@ export class RefreshSamples {
         continue;
       }
 
-      engram.files.soul = await readFile(soulPath, "utf-8");
-      engram.files.identity = await readFile(identityPath, "utf-8");
-      engram.meta.updatedAt = new Date().toISOString();
+      const engram = await this.repository.get(id);
+      if (engram) {
+        // Existing engram — refresh persona files only
+        engram.files.soul = await readFile(soulPath, "utf-8");
+        engram.files.identity = await readFile(identityPath, "utf-8");
+        engram.meta.updatedAt = new Date().toISOString();
 
-      await this.repository.save(engram);
-      result.refreshed.push(id);
+        await this.repository.save(engram);
+        result.refreshed.push(id);
+      } else {
+        // New sample — seed it
+        const seeded = await this.seedFromTemplate(id, templateDir, soulPath, identityPath);
+        if (seeded) {
+          result.seeded.push(id);
+        } else {
+          result.skipped.push({ id, reason: "template engram.json not found (cannot seed)" });
+        }
+      }
     }
 
     return result;
+  }
+
+  private async seedFromTemplate(
+    id: string,
+    templateDir: string,
+    soulPath: string,
+    identityPath: string
+  ): Promise<boolean> {
+    const engramJsonPath = join(templateDir, "engram.json");
+    if (!existsSync(engramJsonPath)) {
+      return false;
+    }
+
+    const profile = JSON.parse(await readFile(engramJsonPath, "utf-8"));
+    const soul = await readFile(soulPath, "utf-8");
+    const identity = await readFile(identityPath, "utf-8");
+    const now = new Date().toISOString();
+
+    const engram: Engram = {
+      meta: {
+        id,
+        name: profile.name ?? id,
+        description: profile.description,
+        tags: profile.tags,
+        createdAt: now,
+        updatedAt: now,
+      },
+      files: {
+        soul,
+        identity,
+      },
+    };
+
+    await this.repository.save(engram);
+    return true;
   }
 
   private async listTemplateIds(): Promise<string[]> {

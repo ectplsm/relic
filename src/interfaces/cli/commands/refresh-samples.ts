@@ -17,14 +17,25 @@ export function registerRefreshSamplesCommand(program: Command): void {
         opts.engram ? [opts.engram] : undefined
       );
 
-      console.log(`Refreshed: ${result.refreshed.length}`);
       if (result.refreshed.length > 0) {
+        console.log(`Refreshed: ${result.refreshed.length}`);
         console.log(`  IDs: ${result.refreshed.join(", ")}`);
       }
 
-      console.log(`Skipped: ${result.skipped.length}`);
-      for (const skipped of result.skipped) {
-        console.log(`  ${skipped.id}: ${skipped.reason}`);
+      if (result.seeded.length > 0) {
+        console.log(`Seeded: ${result.seeded.length}`);
+        console.log(`  IDs: ${result.seeded.join(", ")}`);
+      }
+
+      if (result.skipped.length > 0) {
+        console.log(`Skipped: ${result.skipped.length}`);
+        for (const skipped of result.skipped) {
+          console.log(`  ${skipped.id}: ${skipped.reason}`);
+        }
+      }
+
+      if (result.refreshed.length === 0 && result.seeded.length === 0 && result.skipped.length === 0) {
+        console.log("No sample templates found.");
       }
     });
 }
