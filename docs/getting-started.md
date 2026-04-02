@@ -84,7 +84,15 @@ When you want to turn those logs into durable memory, tell the Construct:
 
 > "Organize my memories"
 
-For the full logging and memory flow, see [integration-and-memory.md](integration-and-memory.md).
+### 5. Learn More
+
+For shell setup, approvals, logging, and memory flow, see [integration-and-memory.md](integration-and-memory.md).
+
+For architecture and domain terms, see [concepts.md](concepts.md).
+
+For custom persona creation, see [engram-guide.md](engram-guide.md).
+
+For migration from older versions, see [migration.md](migration.md).
 
 ## What `relic init` Creates
 
@@ -153,9 +161,3 @@ Good when precision matters more than vibe.
 ```bash
 relic claude --engram commander
 ```
-
-## Next
-
-- For architecture and domain terms, see [concepts.md](concepts.md).
-- For migration from older versions, see [migration.md](migration.md).
-- For custom persona creation, see [engram-guide.md](engram-guide.md).

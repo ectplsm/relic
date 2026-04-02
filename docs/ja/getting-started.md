@@ -84,7 +84,15 @@ relic gemini
 
 > 「記憶を整理して」
 
-ログ保存と記憶フローの詳細は [integration-and-memory.md](integration-and-memory.md) を参照してください。
+### 5. さらに読む
+
+shell ごとの設定、承認、ログ保存、記憶フローの詳細は [integration-and-memory.md](integration-and-memory.md) を参照してください。
+
+アーキテクチャと用語は [concepts.md](concepts.md) を参照してください。
+
+独自人格の作成は [engram-guide.md](engram-guide.md) を参照してください。
+
+旧バージョンからの移行は [migration.md](migration.md) を参照してください。
 
 ## `relic init` で作られるもの
 
@@ -152,9 +160,3 @@ relic claude --engram rebel
 ```bash
 relic claude --engram commander
 ```
-
-## 次に読むもの
-
-- アーキテクチャと用語は [concepts.md](concepts.md) を参照してください。
-- 旧バージョンからの移行は [migration.md](migration.md) を参照してください。
-- 独自人格の作成は [engram-guide.md](engram-guide.md) を参照してください。

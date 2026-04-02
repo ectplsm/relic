@@ -75,7 +75,7 @@ Gemini CLI — add this to `~/.gemini/settings.json`:
 }
 ```
 
-> For shell setup, approvals, and memory flow, see [Shell Integration and Memory](#shell-integration-and-memory).
+For shell setup, approvals, and memory flow, see [docs/integration-and-memory.md](docs/integration-and-memory.md).
 
 ### 3. Launch a Shell
 
@@ -107,9 +107,11 @@ As you use a Construct, conversation logs are automatically saved to `archive.md
 
 The Construct will review recent conversations, extract key facts and decisions into `memory/*.md`, promote important long-term insights to `MEMORY.md`, and update your preferences in `USER.md`. These distilled memories are then loaded into future sessions automatically.
 
-> For details on logging and memory flow, see [Shell Integration and Memory](#shell-integration-and-memory).
+### 5. Learn More
 
 For install, expanded quick start, workspace layout, and sample Engrams, see [docs/getting-started.md](docs/getting-started.md).
+
+For logging, shell setup, approvals, and memory flow, see [docs/integration-and-memory.md](docs/integration-and-memory.md).
 
 If you are upgrading from an older Relic version, see [docs/migration.md](docs/migration.md) for sample replacement, metadata migration, and cleanup steps.
 
