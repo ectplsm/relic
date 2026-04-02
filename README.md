@@ -146,7 +146,13 @@ relic refresh-samples
 # → Legacy samples remain untouched
 ```
 
-If the legacy samples had memory data (`USER.md`, `MEMORY.md`, `memory/*.md`) or archive data (`archive.md`, `archive.cursor`), it is automatically copied to the new samples during seeding. After confirming the new samples work, you can remove the old ones with `relic delete <id>`.
+If the legacy samples had memory data (`USER.md`, `MEMORY.md`, `memory/*.md`) or archive data (`archive.md`, `archive.cursor`), it is automatically copied to the new samples during seeding. Then switch your default Engram to the new one:
+
+```bash
+relic config default-engram rebel
+```
+
+After confirming the new samples work, you can remove the old ones with `relic delete <id>`.
 
 #### Other migrations
 
