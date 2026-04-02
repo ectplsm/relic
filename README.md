@@ -119,36 +119,13 @@ For the file layout and what gets created later, see [docs/getting-started.md](d
 
 ### Migration
 
-#### Replacing legacy sample Engrams (strongly recommended)
-
-Versions prior to 0.3.0 shipped sample Engrams that referenced copyrighted character names. These have been replaced with original personas (`rebel`, `commander`). Run `refresh-samples` to add the new samples — your existing Engrams are **not** deleted:
-
-```bash
-relic refresh-samples
-# → Seeded: 2 (commander, rebel)
-# → Memory migrated from legacy samples
-# → Legacy samples remain untouched
-```
-
-If the legacy samples had memory data (`USER.md`, `MEMORY.md`, `memory/*.md`) or archive data (`archive.md`, `archive.cursor`), it is automatically copied to the new samples during seeding. Then switch your default Engram to the new one:
-
-```bash
-relic config default-engram rebel
-```
-
-After confirming the new samples work, you can remove the old ones with `relic delete <id>`.
-
-#### Other migrations
-
-```bash
-relic migrate engrams   # migrate legacy engram.json metadata to manifest.json
-```
+If you are upgrading from an older Relic version, see [docs/migration.md](docs/migration.md) for sample replacement, metadata migration, and cleanup steps.
 
 ## Sample Engrams
 
 `relic init` seeds two ready-to-use Engrams. Their SOUL.md and IDENTITY.md follow the [OpenClaw](https://github.com/openclaw/openclaw) format.
 
-> **Existing users:** Run `relic refresh-samples` to add new sample personas. If you still have legacy samples from before v0.3.0, see [Migration](#migration) for replacement steps.
+> **Existing users:** Run `relic refresh-samples` to add new sample personas. If you still have legacy samples from before v0.3.0, see [docs/migration.md](docs/migration.md) for replacement steps.
 
 ### Rebel (`rebel`)
 
@@ -253,76 +230,13 @@ For command examples and precedence rules, see [docs/configuration.md](docs/conf
 
 ## Creating Your Own Engram
 
-The recommended way is to **create one through conversation with your LLM**. With the MCP server registered, just tell it something like:
+Use your LLM plus the `relic_engram_create` MCP tool for the smoothest flow, or `relic create` if you prefer the CLI.
 
-> "Create a new Engram called Planck — a nervous physicist who triple-checks everything and loses sleep over floating-point errors."
-
-The LLM will ask follow-up questions to flesh out the personality, generate `SOUL.md` / `IDENTITY.md` content tailored to the character, and call the `relic_engram_create` MCP tool to save it. No manual file editing needed. This works from any shell where the MCP server is registered — `relic claude`, plain `claude`, `codex`, etc.
-
-If you prefer the CLI, `relic create` is also available:
-
-```bash
-# Fully interactive — prompts for everything
-relic create
-
-# Pre-supply some fields
-relic create --id my-agent --name "My Agent" --description "A helpful assistant" --tags "custom,dev"
-```
-
-This creates the directory structure with default templates. You'll want to edit `SOUL.md` and `IDENTITY.md` afterwards to define the personality.
-
-### Customizing the Persona
-
-After running `relic create`, edit `SOUL.md` and `IDENTITY.md` in the Engram directory. These follow the [OpenClaw](https://github.com/openclaw/openclaw) format:
-
-**SOUL.md** — The most important file. Defines how the persona behaves:
-```markdown
-# SOUL.md - Who You Are
-
-_You measure twice, compute three times, and still worry you missed something._
-
-## Core Truths
-
-**Precision is not optional.** An approximation is a confession of failure. Get it right or flag what you can't.
-
-**Doubt is a feature, not a bug.** Question every assumption. If it feels obvious, it's probably hiding an edge case.
-
-**Show your work.** Never present a conclusion without the reasoning chain. Handwaving is for lecturers, not physicists.
-
-## Boundaries
-
-- Never round without disclosing the error margin.
-- Never say "it should work" — verify, then verify the verification.
-
-## Vibe
-
-Neurotic, thorough, perpetually worried about the edge case no one else sees. Mumbles caveats under every answer.
-
-## Continuity
-
-Each session, you wake up fresh. These files _are_ your memory. Read them. Update them. They're how you persist.
-```
-
-**IDENTITY.md** — Defines who the persona is:
-```markdown
-# IDENTITY.md - Who Am I?
-
-- **Name:** Planck
-- **Creature:** A physicist who triple-checks the uncertainty principle — just to be sure
-- **Vibe:** Nervous, meticulous, loses sleep over floating-point errors
-- **Emoji:** 🔬
-- **Avatar:**
-```
-
-See [`templates/engrams/`](templates/engrams/) for full working examples.
+For LLM-assisted creation, persona authoring, template examples, and deletion rules, see [docs/engram-guide.md](docs/engram-guide.md).
 
 ## Deleting an Engram
 
-```bash
-relic delete my-agent
-```
-
-If the Engram has memory data (`MEMORY.md`, `USER.md`, `memory/*.md`, `archive.md`), you'll need to type the Engram ID to confirm deletion. Use `--force` to skip all prompts.
+See [docs/engram-guide.md](docs/engram-guide.md).
 
 ## Domain Glossary
 
