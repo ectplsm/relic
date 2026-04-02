@@ -146,7 +146,7 @@ relic refresh-samples
 # → 旧サンプルはそのまま残ります
 ```
 
-旧サンプルに記憶データ（`USER.md`、`MEMORY.md`、`memory/*.md`）がある場合、seed 時に新しいサンプルへ自動的にコピーされます。新しいサンプルの動作を確認した後、不要であれば `relic delete <id>` で旧サンプルを削除できます。
+旧サンプルに記憶データ（`USER.md`、`MEMORY.md`、`memory/*.md`）やアーカイブデータ（`archive.md`、`archive.cursor`）がある場合、seed 時に新しいサンプルへ自動的にコピーされます。新しいサンプルの動作を確認した後、不要であれば `relic delete <id>` で旧サンプルを削除できます。
 
 #### その他のマイグレーション
 
