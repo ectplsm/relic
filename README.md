@@ -21,11 +21,11 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 - [Requirements](#requirements)
 - [Install](#install)
 - [Quick Start](#quick-start)
+- [Concepts](#concepts)
 - [Shell Integration and Memory](#shell-integration-and-memory)
 - [Claw Integration](#claw-integration)
 - [Engram Management](#engram-management)
 - [Configuration](#configuration)
-- [Concepts](#concepts)
 - [Roadmap](#roadmap)
 
 ## Requirements
