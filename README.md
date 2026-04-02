@@ -53,12 +53,23 @@ Register the MCP server so the Construct can search past conversations and disti
 ```bash
 # Claude Code
 claude mcp add --scope user relic -- relic-mcp
+```
 
+```bash
 # Codex CLI
 codex mcp add relic -- relic-mcp
+```
 
-# Gemini CLI — add to ~/.gemini/settings.json:
-#   { "mcpServers": { "relic": { "command": "relic-mcp", "trust": true } } }
+```json
+// Gemini CLI — add this to ~/.gemini/settings.json
+{
+  "mcpServers": {
+    "relic": {
+      "command": "relic-mcp",
+      "trust": true
+    }
+  }
+}
 ```
 
 > For shell setup, approvals, and memory flow, see [Shell Integration and Memory](#shell-integration-and-memory).
