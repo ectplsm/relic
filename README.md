@@ -26,7 +26,7 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 - [Claw Integration](#claw-integration)
 - [Engram Management](#engram-management)
 - [Configuration](#configuration)
-- [Roadmap](#roadmap)
+- [TODO](#todo)
 
 ## Requirements
 
@@ -161,16 +161,8 @@ Use `relic config` to manage the default Engram, Claw path, and memory window.
 
 For command examples and precedence rules, see [docs/configuration.md](docs/configuration.md).
 
-## Roadmap
+## TODO
 
-- [x] CLI with init, list, show commands
-- [x] Shell injection: Claude Code, Codex CLI, Gemini CLI
-- [x] MCP Server interface
-- [x] Claw integration (inject / extract / sync)
-- [x] `relic claw sync` — bidirectional memory sync with Claw workspaces
-- [x] `relic config` — manage default Engram, Claw path, memory window
-- [x] `relic create` — interactive Engram creation wizard + MCP tool
-- [x] `relic delete` — safe Engram deletion with memory-aware confirmation
 - [ ] Mikoshi cloud backend (`mikoshi.ectplsm.com`)
 - [ ] `relic mikoshi login` — authenticate with Mikoshi (OAuth Device Flow)
 - [ ] `relic mikoshi upload` / `relic mikoshi download` / `relic mikoshi sync` — sync Engrams with Mikoshi
