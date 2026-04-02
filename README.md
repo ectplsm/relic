@@ -402,37 +402,10 @@ The archive (`archive.md`) is the primary data store — it contains all session
 
 ## Configuration
 
-Config lives at `~/.relic/config.json` and is managed via `relic config`:
+Relic stores its runtime defaults in `~/.relic/config.json`.
+Use `relic config` to manage the default Engram, Claw path, and memory window.
 
-```bash
-# Show current configuration
-relic config show
-
-# Default Engram — used when --engram is omitted
-relic config default-engram           # get
-relic config default-engram rebel     # set
-
-# Claw directory — used by claw inject/extract/sync when --dir is omitted
-relic config claw-path                # get
-relic config claw-path ~/.openclaw    # set
-
-# Memory window — number of recent memory entries included in the prompt
-relic config memory-window            # get (default: 2)
-relic config memory-window 5          # set
-```
-
-`config.json` example:
-
-```json
-{
-  "engramsPath": "/home/user/.relic/engrams",
-  "defaultEngram": "rebel",
-  "clawPath": "/home/user/.openclaw",
-  "memoryWindowSize": 2
-}
-```
-
-CLI flags always take precedence over config values.
+For command examples and precedence rules, see [docs/configuration.md](docs/configuration.md).
 
 ## Creating Your Own Engram
 
