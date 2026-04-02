@@ -383,22 +383,10 @@ Notes:
 
 ## Memory Management
 
-Relic uses a **sliding window** for memory entries (default: 2 days), matching OpenClaw's approach:
+Relic keeps raw session logs in `archive.md` and distilled memory in `memory/*.md`,
+with `MEMORY.md` and `USER.md` always included in future sessions.
 
-- `MEMORY.md` — Always included in the prompt (curated long-term memory — objective facts and rules)
-- `USER.md` — Always included in the prompt (user profile — preferences, tendencies, work style)
-- `memory/today.md` + `memory/yesterday.md` — Always included (configurable window)
-- Older entries — **Not included in the prompt**, but searchable via MCP
-
-This keeps prompts compact while preserving full history. The Construct can recall and distill past context using MCP tools:
-
-```
-relic_archive_search   → keyword search across the full raw archive (all sessions)
-relic_archive_pending  → get un-distilled entries for memory distillation
-relic_memory_write     → write distilled memory and advance the cursor
-```
-
-The archive (`archive.md`) is the primary data store — it contains all session logs as written. The `memory/*.md` files are distilled from the archive by the Construct when the user triggers memory organization, and are used for cloud sync with Mikoshi.
+For sliding window behavior, distillation flow, and MCP memory tools, see [docs/memory.md](docs/memory.md).
 
 ## Configuration
 

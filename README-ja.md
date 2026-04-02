@@ -383,22 +383,10 @@ relic claw sync --dir /path/to/.fooclaw
 
 ## 記憶の管理
 
-Relicは OpenClaw と同じ **スライディングウィンドウ** でメモリエントリを管理します（デフォルト: 2日分）:
+Relic は生ログを `archive.md` に保持し、蒸留済み記憶を `memory/*.md` に書きます。
+`MEMORY.md` と `USER.md` は今後のセッションに常に読み込まれます。
 
-- `MEMORY.md` — 常にプロンプトに含まれる（キュレーション済み長期記憶 — 客観的事実・ルール）
-- `USER.md` — 常にプロンプトに含まれる（ユーザープロフィール — 傾向・好み・作業スタイル）
-- `memory/today.md` + `memory/yesterday.md` — 常にプロンプトに含まれる（ウィンドウ幅は変更可能）
-- それ以前のエントリ — **プロンプトには含まれない**が、MCPで検索可能
-
-プロンプトをコンパクトに保ちつつ、全履歴を保持します。ConstructはMCPツールで過去の文脈の想起と蒸留を行えます:
-
-```
-relic_archive_search   → 全セッションの生archiveをキーワード検索
-relic_archive_pending  → 未蒸留エントリを取得（記憶の蒸留用）
-relic_memory_write     → 蒸留した記憶を書き込み、カーソルを進める
-```
-
-archive（`archive.md`）が一次データです — 全セッションのログがそのまま蓄積されます。`memory/*.md` はユーザーの指示でConstructがarchiveから蒸留したもので、Mikoshiへのクラウド同期にも使われます。
+sliding window の挙動、蒸留フロー、MCP 記憶ツールの詳細は [docs/ja/memory.md](docs/ja/memory.md) を参照してください。
 
 ## 設定
 
