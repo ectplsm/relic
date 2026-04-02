@@ -1,4 +1,4 @@
-# Engram Guide
+# Engram Management
 
 This guide covers creating, customizing, and deleting Engrams.
 
