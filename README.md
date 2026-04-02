@@ -240,13 +240,7 @@ See [docs/engram-guide.md](docs/engram-guide.md).
 
 ## Domain Glossary
 
-| Term | Role | Description |
-|------|------|-------------|
-| **Relic** | Injector | The core system. Adapts personas to any AI interface. |
-| **Mikoshi** | Backend | Cloud fortress where all Engrams are stored (planned). |
-| **Engram** | Data | A persona dataset — a set of Markdown files. |
-| **Shell** | LLM | An AI CLI (Claude, Gemini, etc). A vessel with pure compute. |
-| **Construct** | Process | A live process where an Engram is loaded into a Shell. |
+For domain terminology, see [docs/glossary.md](docs/glossary.md).
 
 ## Roadmap
 
