@@ -18,4 +18,7 @@ export interface EngramRepository {
 
   /** Engramを削除 */
   delete(id: string): Promise<void>;
+
+  /** アーカイブファイル (archive.md, archive.cursor) を別Engramへコピー */
+  copyArchiveFiles(fromId: string, toId: string): Promise<boolean>;
 }

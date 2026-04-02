@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile, mkdir, rm } from "node:fs/promises";
+import { readdir, readFile, writeFile, mkdir, rm, copyFile } from "node:fs/promises";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import {
@@ -113,6 +113,26 @@ export class LocalEngramRepository implements EngramRepository {
     if (existsSync(engramDir)) {
       await rm(engramDir, { recursive: true });
     }
+  }
+
+  async copyArchiveFiles(fromId: string, toId: string): Promise<boolean> {
+    const ARCHIVE_FILES = ["archive.md", "archive.cursor"];
+    const fromDir = join(this.basePath, fromId);
+    const toDir = join(this.basePath, toId);
+
+    if (!existsSync(fromDir) || !existsSync(toDir)) {
+      return false;
+    }
+
+    let copied = false;
+    for (const filename of ARCHIVE_FILES) {
+      const src = join(fromDir, filename);
+      if (existsSync(src)) {
+        await copyFile(src, join(toDir, filename));
+        copied = true;
+      }
+    }
+    return copied;
   }
 
   // --- private ---

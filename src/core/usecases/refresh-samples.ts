@@ -159,6 +159,11 @@ export class RefreshSamples {
     newEngram.meta.updatedAt = new Date().toISOString();
 
     await this.repository.save(newEngram);
+
+    // Archive files (archive.md, archive.cursor) are outside the Engram entity
+    // but still need to be carried over during legacy migration.
+    await this.repository.copyArchiveFiles(legacyId, newId);
+
     return { from: legacyId, to: newId };
   }
 
