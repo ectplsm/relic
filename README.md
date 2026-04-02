@@ -50,18 +50,21 @@ relic config default-engram commander   # (Optional) Set your default Engram
 
 Register the MCP server so the Construct can search past conversations and distill memories. Pick your shell:
 
+Claude Code:
+
 ```bash
-# Claude Code
 claude mcp add --scope user relic -- relic-mcp
 ```
 
+Codex CLI:
+
 ```bash
-# Codex CLI
 codex mcp add relic -- relic-mcp
 ```
 
+Gemini CLI — add this to `~/.gemini/settings.json`:
+
 ```json
-// Gemini CLI — add this to ~/.gemini/settings.json
 {
   "mcpServers": {
     "relic": {
@@ -76,10 +79,23 @@ codex mcp add relic -- relic-mcp
 
 ### 3. Launch a Shell
 
+Claude Code:
+
 ```bash
-relic claude                      # Uses default Engram
-relic claude --engram commander   # Specify explicitly
+relic claude
+# Example with an explicit Engram
+relic claude --engram commander
+```
+
+Codex CLI:
+
+```bash
 relic codex
+```
+
+Gemini CLI:
+
+```bash
 relic gemini
 ```
 

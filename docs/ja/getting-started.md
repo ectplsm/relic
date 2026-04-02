@@ -16,39 +16,68 @@ Relic には Node.js 18 以上が必要です。
 
 ```bash
 relic init
+# → "Set a default Engram? (press Enter for "rebel", or enter ID, or "n" to skip):" と表示される
+
 relic list
-relic config default-engram commander
+relic config default-engram commander   # （任意）デフォルトEngramを設定
 ```
 
 `relic init` はローカル workspace を作り、サンプル Engram を seed します。
 
-### 2. MCP サーバーを登録
+### 2. 記憶機能のセットアップ (MCP)
 
 使う shell に合わせて設定します。
 
+Claude Code:
+
 ```bash
-# Claude Code
 claude mcp add --scope user relic -- relic-mcp
+```
 
-# Codex CLI
+Codex CLI:
+
+```bash
 codex mcp add relic -- relic-mcp
+```
 
-# Gemini CLI — ~/.gemini/settings.json に追加:
-#   { "mcpServers": { "relic": { "command": "relic-mcp", "trust": true } } }
+Gemini CLI — `~/.gemini/settings.json` に以下を追加:
+
+```json
+{
+  "mcpServers": {
+    "relic": {
+      "command": "relic-mcp",
+      "trust": true
+    }
+  }
+}
 ```
 
 shell ごとの設定、承認、記憶フローの詳細は [integration-and-memory.md](integration-and-memory.md) を参照してください。
 
 ### 3. Shell を起動
 
+Claude Code:
+
 ```bash
 relic claude
+# Engram を明示指定する例
 relic claude --engram commander
+```
+
+Codex CLI:
+
+```bash
 relic codex
+```
+
+Gemini CLI:
+
+```bash
 relic gemini
 ```
 
-### 4. 記憶を蒸留
+### 4. 記憶を整理する
 
 作業中、shell hook が生ログを `archive.md` に追記します。
 それを持続する記憶へ変えたいときは、Construct にこう伝えます。

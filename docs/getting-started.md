@@ -16,39 +16,68 @@ Relic requires Node.js 18 or later.
 
 ```bash
 relic init
+# → Prompts: "Set a default Engram? (press Enter for "rebel", or enter ID, or "n" to skip):"
+
 relic list
-relic config default-engram commander
+relic config default-engram commander   # (Optional) Set your default Engram
 ```
 
 `relic init` creates the local workspace and seeds sample Engrams.
 
-### 2. Register the MCP Server
+### 2. Set Up Memory (MCP)
 
 Pick the shell you use:
 
+Claude Code:
+
 ```bash
-# Claude Code
 claude mcp add --scope user relic -- relic-mcp
+```
 
-# Codex CLI
+Codex CLI:
+
+```bash
 codex mcp add relic -- relic-mcp
+```
 
-# Gemini CLI — add to ~/.gemini/settings.json:
-#   { "mcpServers": { "relic": { "command": "relic-mcp", "trust": true } } }
+Gemini CLI — add this to `~/.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "relic": {
+      "command": "relic-mcp",
+      "trust": true
+    }
+  }
+}
 ```
 
 For shell setup, approval details, and memory flow, see [integration-and-memory.md](integration-and-memory.md).
 
 ### 3. Launch a Shell
 
+Claude Code:
+
 ```bash
 relic claude
+# Example with an explicit Engram
 relic claude --engram commander
+```
+
+Codex CLI:
+
+```bash
 relic codex
+```
+
+Gemini CLI:
+
+```bash
 relic gemini
 ```
 
-### 4. Distill Memory
+### 4. Organize Memories
 
 As you work, shell hooks append raw turns to `archive.md`.
 When you want to turn those logs into durable memory, tell the Construct:
