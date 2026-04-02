@@ -37,7 +37,7 @@ codex mcp add relic -- relic-mcp
 #   { "mcpServers": { "relic": { "command": "relic-mcp", "trust": true } } }
 ```
 
-For approval setup and shell-specific details, see [mcp.md](mcp.md).
+For shell setup, approval details, and memory flow, see [integration-and-memory.md](integration-and-memory.md).
 
 ### 3. Launch a Shell
 
@@ -55,7 +55,7 @@ When you want to turn those logs into durable memory, tell the Construct:
 
 > "Organize my memories"
 
-For the memory flow itself, see [memory.md](memory.md).
+For the full logging and memory flow, see [integration-and-memory.md](integration-and-memory.md).
 
 ## What `relic init` Creates
 

@@ -37,7 +37,7 @@ codex mcp add relic -- relic-mcp
 #   { "mcpServers": { "relic": { "command": "relic-mcp", "trust": true } } }
 ```
 
-承認設定や shell ごとの詳細は [mcp.md](mcp.md) を参照してください。
+shell ごとの設定、承認、記憶フローの詳細は [integration-and-memory.md](integration-and-memory.md) を参照してください。
 
 ### 3. Shell を起動
 
@@ -55,7 +55,7 @@ relic gemini
 
 > 「記憶を整理して」
 
-記憶フローの詳細は [memory.md](memory.md) を参照してください。
+ログ保存と記憶フローの詳細は [integration-and-memory.md](integration-and-memory.md) を参照してください。
 
 ## `relic init` で作られるもの
 
