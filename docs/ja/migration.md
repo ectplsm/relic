@@ -37,13 +37,3 @@ relic delete <id>
 ```bash
 relic migrate engrams
 ```
-
-## このガイドで扱うもの
-
-このガイドには次を置きます。
-
-- 旧サンプルの置き換え
-- `relic refresh-samples`
-- 移行後の default Engram 切り替え
-- metadata migration コマンド
-- 後片付けの手順

@@ -37,13 +37,3 @@ Use this command to migrate legacy `engram.json` metadata into `manifest.json`:
 ```bash
 relic migrate engrams
 ```
-
-## What This Covers
-
-This guide is the home for:
-
-- legacy sample replacement
-- `relic refresh-samples`
-- default Engram switching after migration
-- metadata migration commands
-- cleanup guidance
