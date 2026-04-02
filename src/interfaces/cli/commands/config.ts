@@ -97,4 +97,28 @@ export function registerConfigCommand(program: Command): void {
       await saveConfig(cfg);
       console.log(`Memory window set to: ${parsed}`);
     });
+
+  // relic config distillation-batch-size [n]
+  config
+    .command("distillation-batch-size [n]")
+    .description("Get or set the number of archive entries to distill at once (default: 30)")
+    .action(async (n: string | undefined) => {
+      await ensureInitialized();
+      const cfg = await loadConfig();
+
+      if (n === undefined) {
+        console.log(String(cfg.distillationBatchSize));
+        return;
+      }
+
+      const parsed = parseInt(n, 10);
+      if (isNaN(parsed) || parsed < 1) {
+        console.error("Error: distillation-batch-size must be a positive integer");
+        process.exit(1);
+      }
+
+      cfg.distillationBatchSize = parsed;
+      await saveConfig(cfg);
+      console.log(`Distillation batch size set to: ${parsed}`);
+    });
 }

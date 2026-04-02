@@ -22,7 +22,10 @@ export interface SummonResult {
 export class Summon {
   constructor(private readonly repository: EngramRepository) {}
 
-  async execute(engramId: string, options?: { memoryWindowSize?: number }): Promise<SummonResult> {
+  async execute(
+    engramId: string,
+    options?: { memoryWindowSize?: number; distillationBatchSize?: number }
+  ): Promise<SummonResult> {
     const engram = await this.repository.get(engramId);
 
     if (!engram) {
@@ -32,6 +35,7 @@ export class Summon {
     const prompt = composeEngram(engram.files, {
       meta: engram.meta,
       memoryWindowSize: options?.memoryWindowSize,
+      distillationBatchSize: options?.distillationBatchSize,
     });
 
     return {

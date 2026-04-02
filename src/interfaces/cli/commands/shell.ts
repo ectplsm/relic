@@ -3,7 +3,12 @@ import type { Command } from "commander";
 import type { ShellLauncher } from "../../../core/ports/shell-launcher.js";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import { Summon, EngramNotFoundError } from "../../../core/usecases/index.js";
-import { resolveEngramsPath, resolveDefaultEngram, resolveMemoryWindowSize } from "../../../shared/config.js";
+import {
+  resolveEngramsPath,
+  resolveDefaultEngram,
+  resolveMemoryWindowSize,
+  resolveDistillationBatchSize,
+} from "../../../shared/config.js";
 import { ClaudeShell } from "../../../adapters/shells/claude-shell.js";
 import { GeminiShell } from "../../../adapters/shells/gemini-shell.js";
 import { CodexShell } from "../../../adapters/shells/codex-shell.js";
@@ -65,9 +70,13 @@ export function registerShellCommands(program: Command): void {
         const summon = new Summon(repo);
 
         const memoryWindowSize = await resolveMemoryWindowSize();
+        const distillationBatchSize = await resolveDistillationBatchSize();
 
         try {
-          const result = await summon.execute(engramId, { memoryWindowSize });
+          const result = await summon.execute(engramId, {
+            memoryWindowSize,
+            distillationBatchSize,
+          });
 
           console.log(`Summoning "${result.engramName}" into ${launcher.name}...`);
           console.log();
