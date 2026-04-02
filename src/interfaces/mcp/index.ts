@@ -28,7 +28,10 @@ import { LocalEngramRepository } from "../../adapters/local/index.js";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
-import { resolveEngramsPath } from "../../shared/config.js";
+import {
+  resolveDistillationBatchSize,
+  resolveEngramsPath,
+} from "../../shared/config.js";
 
 const server = new McpServer({
   name: "relic",
@@ -182,7 +185,7 @@ server.tool(
     limit: z
       .number()
       .optional()
-      .describe("Max entries to return (default: 30)"),
+      .describe("Max entries to return (default: config.distillationBatchSize)"),
     path: z
       .string()
       .optional()
@@ -191,9 +194,10 @@ server.tool(
   async (args) => {
     const engramsPath = await resolveEngramsPath(args.path);
     const archivePending = new ArchivePending(engramsPath);
+    const defaultLimit = await resolveDistillationBatchSize();
 
     try {
-      const result = await archivePending.execute(args.id, args.limit);
+      const result = await archivePending.execute(args.id, args.limit ?? defaultLimit);
 
       if (result.entries.length === 0) {
         return {

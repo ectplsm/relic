@@ -21,6 +21,10 @@ relic config claw-path ~/.openclaw    # set
 # Memory window — number of recent memory entries included in the prompt
 relic config memory-window            # get (default: 2)
 relic config memory-window 5          # set
+
+# Distillation batch size — number of archive entries distilled at once
+relic config distillation-batch-size      # get (default: 30)
+relic config distillation-batch-size 50   # set
 ```
 
 ## `config.json` Example
@@ -30,7 +34,8 @@ relic config memory-window 5          # set
   "engramsPath": "/home/user/.relic/engrams",
   "defaultEngram": "rebel",
   "clawPath": "/home/user/.openclaw",
-  "memoryWindowSize": 2
+  "memoryWindowSize": 2,
+  "distillationBatchSize": 30
 }
 ```
 

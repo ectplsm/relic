@@ -23,6 +23,8 @@ export const RelicConfigSchema = z.object({
   clawPath: z.string().optional(),
   /** システムプロンプトに含める直近メモリエントリ数 (default: 2) */
   memoryWindowSize: z.number().int().min(1).default(2),
+  /** 一度の記憶蒸留で扱う archive エントリ数 (default: 30) */
+  distillationBatchSize: z.number().int().min(1).default(30),
 });
 
 export type RelicConfig = z.infer<typeof RelicConfigSchema>;
@@ -187,6 +189,16 @@ export async function resolveMemoryWindowSize(): Promise<number> {
   await ensureInitialized();
   const config = await loadConfig();
   return config.memoryWindowSize;
+}
+
+/**
+ * 記憶蒸留のバッチ件数を解決する。
+ * 優先順位: config.distillationBatchSize > 30 (デフォルト)
+ */
+export async function resolveDistillationBatchSize(): Promise<number> {
+  await ensureInitialized();
+  const config = await loadConfig();
+  return config.distillationBatchSize;
 }
 
 export { CONFIG_PATH, RELIC_DIR, TEMPLATES_DIR };

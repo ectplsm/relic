@@ -10,6 +10,8 @@ export interface ComposeOptions {
   currentDate?: string;
   /** システムプロンプトに含める直近メモリエントリ数（デフォルト: 2） */
   memoryWindowSize?: number;
+  /** 一度の記憶蒸留で扱う archive エントリ数（デフォルト: 30） */
+  distillationBatchSize?: number;
 }
 
 /**
@@ -56,7 +58,11 @@ export function composeEngram(
     sections.push(
       wrapSection(
         "RELIC",
-        composeRelicSection(options.meta, options.currentDate)
+        composeRelicSection(
+          options.meta,
+          options.distillationBatchSize,
+          options.currentDate
+        )
       )
     );
   }
@@ -72,9 +78,11 @@ export function composeEngram(
  */
 function composeRelicSection(
   meta: EngramMeta,
+  distillationBatchSize?: number,
   currentDate?: string,
 ): string {
   const today = currentDate ?? new Date().toISOString().split("T")[0];
+  const batchSize = distillationBatchSize ?? 30;
 
   return `# Relic System
 
@@ -96,7 +104,7 @@ To recall past context, use \`relic_archive_search\` to search your archive by k
 ## Distillation
 
 When the user asks you to organize or distill memories:
-1. Call \`relic_archive_pending\` **once** to get un-distilled session entries (up to 30)
+1. Call \`relic_archive_pending\` **once** to get un-distilled session entries (up to ${batchSize})
 2. Review and distill them into:
    - **content**: key facts, decisions, and insights for \`memory/YYYY-MM-DD.md\`
    - **long_term** (optional): only the most important, enduring facts for \`MEMORY.md\` (e.g. project architecture decisions, key constraints, hard rules)
