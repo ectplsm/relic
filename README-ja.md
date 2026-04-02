@@ -113,41 +113,9 @@ Constructが最近の会話を振り返り、重要な事実や決定を `memory
 
 ## `relic init` で作られるもの
 
-`relic init` を実行すると `~/.relic/` が作成され、`config.json` と、`~/.relic/engrams/` 配下に2つのサンプルEngramが生成されます。
+`relic init` はローカルの Relic workspace を作成し、`config.json` を書き、サンプル Engram を seed します。
 
-```
-~/.relic/
-├── config.json
-└── engrams/
-    ├── rebel/
-    │   ├── engram.json
-    │   ├── manifest.json
-    │   ├── SOUL.md
-    │   ├── IDENTITY.md
-    │   └── memory/
-    │       └── YYYY-MM-DD.md
-    └── commander/
-        ├── engram.json
-        ├── manifest.json
-        ├── SOUL.md
-        ├── IDENTITY.md
-        └── memory/
-            └── YYYY-MM-DD.md
-```
-
-- `config.json` には `engramsPath`、`defaultEngram`、`clawPath`、`memoryWindowSize` などのRelic全体設定が入ります。
-- `engrams/<id>/` は1つのEngramの `workspace` です。ペルソナファイルとそのEngram用の記憶はここに保存されます。
-- `engram.json` には表示名、説明、タグなどの編集可能なプロフィール情報が入ります。
-- `manifest.json` には Engram ID やタイムスタンプなどのシステム管理情報が入ります。
-- `SOUL.md` と `IDENTITY.md` がペルソナ本体を定義します。
-- `memory/YYYY-MM-DD.md` には日付ごとの蒸留済み記憶が入ります。`relic init` では各サンプルEngramに初期メモリが1件入ります。
-
-Engramを使い続けると、同じ `workspace` に追加のファイルが増えていきます。
-
-- `archive.md` は shell hook が生の会話ログを書き始めた時点で `engrams/<id>/` 配下に作られます。
-- `MEMORY.md` は、とくに重要な蒸留結果を長期記憶へ昇格したときに作成または追記されます。
-- `USER.md` は記憶の蒸留時に作成・更新され、ユーザーの好み・傾向・作業スタイルを記録します。
-- `~/.relic/hooks/` と `~/.relic/gemini-system-default.md` は `relic init` ではなく、各Shellの初回起動時に hook 登録や Gemini のプロンプトキャッシュが必要になった時点で作られます。
+ファイル構成と、後から作られるファイルの詳細は [docs/ja/getting-started.md](docs/ja/getting-started.md) を参照してください。
 
 ### マイグレーション
 
