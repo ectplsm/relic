@@ -12,9 +12,9 @@
 /_/ |_/_____/_____/___/\____/
 ```
 
-**同一人格・同一記憶のAIペルソナを、あらゆるコーディングCLIに注入します。**
+**同一人格・同一記憶のAIペルソナを、あらゆるコーディングCLIに注入。**
 
-Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code・Codex CLI・Gemini CLIといったコーディングアシスタントに注入します。OpenClawをはじめとするClaw系エージェントフレームワークとも連携可能。ひとつの人格を、あらゆるShellで共有しましょう。
+Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code・Codex CLI・Gemini CLIといったコーディングアシスタントに横断的に注入します。OpenClawをはじめとするClaw系エージェントフレームワークとも連携可能。ひとつの人格を、あらゆるShellで共有しましょう。
 
 ## 目次
 
@@ -150,7 +150,7 @@ Relic は OpenClaw をはじめとする Claw 系フレームワークと Engram
 
 ## Engram の管理
 
-LLM と `relic_engram_create` MCP ツールを組み合わせるのが一番スムーズです。CLI 派なら `relic create` も使えます。
+Engram の作成には、LLM と `relic_engram_create` MCP ツールを組み合わせるのが一番スムーズです。CLI 派なら `relic create` も使えます。
 
 LLM 対話での作成、ペルソナ設計、テンプレート例、削除ルールの詳細は [docs/ja/engram-guide.md](docs/ja/engram-guide.md) を参照してください。
 

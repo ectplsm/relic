@@ -14,7 +14,7 @@
 
 **Inject a unified AI persona with persistent memory into any coding CLI.**
 
-Relic manages AI **Engrams** (memory + personality) and injects them into coding assistants like Claude Code, Codex CLI, Gemini CLI. Also integrates with OpenClaw and other Claw-based agent frameworks. One persona, any shell.
+Relic manages AI **Engrams** (memory + personality) and injects them across coding assistants like Claude Code, Codex CLI, and Gemini CLI. It also integrates with OpenClaw and other Claw-based agent frameworks. One persona, shared across any shell.
 
 ## Table of Contents
 
@@ -150,7 +150,7 @@ For command details, overwrite behavior, and the behavior matrix, see [docs/claw
 
 ## Engram Management
 
-Use your LLM plus the `relic_engram_create` MCP tool for the smoothest flow, or `relic create` if you prefer the CLI.
+For Engram creation, the smoothest path is to use your LLM with the `relic_engram_create` MCP tool. If you prefer the CLI, use `relic create`.
 
 For LLM-assisted creation, persona authoring, template examples, and deletion rules, see [docs/engram-guide.md](docs/engram-guide.md).
 
