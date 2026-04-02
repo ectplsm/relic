@@ -21,6 +21,7 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 - [Requirements](#requirements)
 - [Install](#install)
 - [Quick Start](#quick-start)
+- [Docs](#docs)
 - [What `relic init` Creates](#what-relic-init-creates)
 - [Sample Engrams](#sample-engrams)
 - [How It Works](#how-it-works)
@@ -94,6 +95,21 @@ As you use a Construct, conversation logs are automatically saved to `archive.md
 The Construct will review recent conversations, extract key facts and decisions into `memory/*.md`, promote important long-term insights to `MEMORY.md`, and update your preferences in `USER.md`. These distilled memories are then loaded into future sessions automatically.
 
 > For details on the memory system, see [Memory Management](#memory-management).
+
+## Docs
+
+Detailed guides are being split out of this README into focused documents:
+
+- [Getting Started](docs/getting-started.md)
+- [Configuration](docs/configuration.md)
+- [Engram Guide](docs/engram-guide.md)
+- [Migration](docs/migration.md)
+- [Memory](docs/memory.md)
+- [MCP](docs/mcp.md)
+- [Claw Integration](docs/claw-integration.md)
+- [Glossary](docs/glossary.md)
+
+Japanese versions live under [docs/ja/](docs/ja/).
 
 ## What `relic init` Creates
 
@@ -239,143 +255,12 @@ relic claude --engram commander
 7. **OpenClaw & Claws** — Engrams can be injected into, extracted from, and synced with OpenClaw and other Claw-based agent frameworks via `relic claw`.
 8. **Mikoshi** — Cloud backend where the full Engram is stored and synced, including persona files plus distilled memory (planned).
 
-## Supported Shells
+## MCP and Shell Integration
 
-| Shell | Command | Injection Method |
-|-------|---------|-----------------|
-| [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt` (direct override) |
-| [Codex CLI](https://github.com/openai/codex) | `relic codex` | `-c developer_instructions` (developer-role message) |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `GEMINI_SYSTEM_MD` (system prompt) |
+Relic supports Claude Code, Codex CLI, and Gemini CLI.
+Background hooks append raw conversation logs to `archive.md`, while the MCP server handles archive search and memory distillation.
 
-All shell commands support:
-- `--engram <id>` — Engram to inject (optional if `defaultEngram` is configured)
-- `--path <dir>` — Override Engrams directory
-- `--cwd <dir>` — Working directory for the Shell (default: current directory)
-
-Extra arguments are passed through to the underlying CLI.
-
-## Conversation Log Recording
-
-Using each shell's `hook` mechanism, conversation content is appended to `archive.md` after every prompt and response.
-
-The following hooks are used for each shell:
-
-| Shell | Hook |
-|-------|------|
-| [Claude Code](https://github.com/anthropics/claude-code) | Stop hook |
-| [Codex CLI](https://github.com/openai/codex) | Stop hook |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | AfterAgent hook |
-
-#### Claude Code
-
-On the **first run** of `relic claude`, a one-time setup happens automatically:
-
-- **Stop hook** — registers `~/.relic/hooks/claude-stop.js` in `~/.claude/settings.json` to log each conversation turn directly to the archive, without going through the LLM
-
-#### Codex CLI
-
-On the **first run** of `relic codex`, a one-time setup happens automatically:
-
-- **Stop hook** — registers `~/.relic/hooks/codex-stop.js` in `~/.codex/hooks.json` to log each conversation turn directly to the archive, without going through the LLM
-
-> **Note:** Codex hooks require the experimental feature flag `features.codex_hooks=true`. This is automatically enabled by `relic codex` on every launch via `-c features.codex_hooks=true`. If the unstable feature warning is distracting, add the following to `~/.codex/config.toml`:
->
-> ```toml
-> # Must be at the top level (not under any [section])
-> suppress_unstable_features_warning = true
-> ```
-
-#### Gemini CLI
-
-On the **first run** of `relic gemini`, two one-time setups happen automatically:
-
-1. **AfterAgent hook** — registers `~/.relic/hooks/gemini-after-agent.js` in `~/.gemini/settings.json` to log each conversation turn without going through the LLM
-2. **Default system prompt cache** — captures Gemini CLI's built-in system prompt to `~/.relic/gemini-system-default.md` via `GEMINI_WRITE_SYSTEM_MD`
-
-The Engram persona is then appended to the cached default prompt and injected via `GEMINI_SYSTEM_MD` on every launch.
-
-## MCP Server
-
-Relic's [MCP](https://modelcontextprotocol.io/) server is paired with CLI injection to handle memory recall.
-Session logs and memory entries are written automatically by a **background hook** — without going through the LLM. Memory distillation and recall, on the other hand, is performed via the MCP server.
-
-### Available Tools
-
-| Tool | Description |
-|------|-------------|
-| `relic_engram_create` | Create a new Engram with optional LLM-generated SOUL.md and IDENTITY.md |
-| `relic_archive_search` | Search the Engram's raw archive by keyword (newest-first) |
-| `relic_archive_pending` | Get un-distilled archive entries since the last distillation (up to 30) |
-| `relic_memory_write` | Write distilled memory to `memory/*.md`, optionally append to `MEMORY.md`, optionally update `USER.md`, and advance the archive cursor |
-
-Session logs are written automatically by background hooks (Stop hook for Claude Code and Codex CLI, AfterAgent hook for Gemini CLI). Memory distillation is triggered by the user — ask the Construct to "organize memories" and it will fetch pending entries, distill key insights, and write them to `memory/*.md`. Especially important facts can be promoted to `MEMORY.md` (long-term memory included in every session) via the `long_term` parameter. User tendencies and preferences can be updated in `USER.md` via the `user_profile` parameter.
-
-### Setup
-
-#### Claude Code
-
-```bash
-claude mcp add --scope user relic -- relic-mcp
-```
-
-To suppress confirmation dialogs and auto-approve Relic tools across all projects, add the following to `~/.claude/settings.json`:
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Edit(~/.relic/engrams/**)",
-      "mcp__relic__relic_engram_create",
-      "mcp__relic__relic_archive_search",
-      "mcp__relic__relic_archive_pending",
-      "mcp__relic__relic_memory_write"
-    ]
-  },
-}
-```
-
-> **Note:** The "Always allow" option in the confirmation dialog saves to `~/.claude.json` (project-scoped cache) — it does **not** persist globally. For global auto-approval, `~/.claude/settings.json` is the right place.
-
-#### Codex CLI
-
-```bash
-codex mcp add relic -- relic-mcp
-```
-
-To suppress confirmation dialogs and auto-approve Relic tools, add the following to `~/.codex/config.toml`:
-
-```toml
-[mcp_servers.relic.tools.relic_engram_create]
-approval_mode = "approve"
-
-[mcp_servers.relic.tools.relic_archive_search]
-approval_mode = "approve"
-
-[mcp_servers.relic.tools.relic_archive_pending]
-approval_mode = "approve"
-
-[mcp_servers.relic.tools.relic_memory_write]
-approval_mode = "approve"
-```
-
-> **Note:** `trust_level = "trusted"` in `[projects."..."]` does **not** cover MCP tool approvals. Per-tool `approval_mode` is the only reliable way to auto-approve MCP tools in Codex CLI.
-
-#### Gemini CLI
-
-Add to `~/.gemini/settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "relic": {
-      "command": "relic-mcp",
-      "trust": true
-    }
-  }
-}
-```
-
-> **Note:** `trust: true` is required to suppress confirmation dialogs for Relic tools. Without it, dialogs will appear on every call even if you select "Allow for all future sessions" — this is a known bug in Gemini CLI where the tool name is saved in the wrong format, causing the saved rule to never match.
+For shell compatibility, hook behavior, MCP tools, setup, and approval details, see [docs/mcp.md](docs/mcp.md).
 
 ## Claw Integration
 
