@@ -3,6 +3,7 @@ import type { Command } from "commander";
 import { Init } from "../../../core/usecases/init.js";
 import { setDefaultEngram, loadConfig } from "../../../shared/config.js";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
+import { printRelicBanner } from "../banner.js";
 
 function ask(question: string): Promise<string> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -23,6 +24,7 @@ export function registerInitCommand(program: Command): void {
       const result = await init.execute();
 
       if (result.created) {
+        printRelicBanner();
         console.log("Initialized RELIC:");
         console.log(`  Config:  ${result.configPath}`);
         console.log(`  Engrams: ${result.engramsPath}`);
