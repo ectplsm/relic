@@ -4,13 +4,7 @@
 # PROJECT RELIC
 ![NPM Downloads](https://img.shields.io/npm/dt/%40ectplsm%2Frelic)
 
-```
-    ____  ________    ____________
-   / __ \/ ____/ /   /  _/ ____/
-  / /_/ / __/ / /    / // /
- / _, _/ /___/ /____/ // /___
-/_/ |_/_____/_____/___/\____/
-```
+<img src="assets/relic-hero.svg" alt="PROJECT RELIC" width="720">
 
 **Inject a unified AI persona with persistent memory into any coding CLI.**
 

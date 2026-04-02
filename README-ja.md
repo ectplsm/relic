@@ -4,13 +4,7 @@
 # PROJECT RELIC
 ![NPM Downloads](https://img.shields.io/npm/dt/%40ectplsm%2Frelic)
 
-```
-    ____  ________    ____________
-   / __ \/ ____/ /   /  _/ ____/
-  / /_/ / __/ / /    / // /
- / _, _/ /___/ /____/ // /___
-/_/ |_/_____/_____/___/\____/
-```
+<img src="assets/relic-hero.svg" alt="PROJECT RELIC" width="720">
 
 **同一人格・同一記憶のAIペルソナを、あらゆるコーディングCLIに注入。**
 
