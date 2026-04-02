@@ -21,7 +21,6 @@ Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code
 - [動作要件](#動作要件)
 - [インストール](#インストール)
 - [クイックスタート](#クイックスタート)
-- [Docs](#docs)
 - [`relic init` で作られるもの](#relic-init-で作られるもの)
 - [サンプルEngram](#サンプルengram)
 - [仕組み](#仕組み)
@@ -94,20 +93,7 @@ Constructが最近の会話を振り返り、重要な事実や決定を `memory
 
 > 記憶システムの詳細は [記憶の管理](#記憶の管理) を参照してください。
 
-## Docs
-
-詳細ガイドは README から順次切り出して、用途ごとに整理します。
-
-- [はじめに](docs/ja/getting-started.md)
-- [設定](docs/ja/configuration.md)
-- [Engram ガイド](docs/ja/engram-guide.md)
-- [マイグレーション](docs/ja/migration.md)
-- [記憶](docs/ja/memory.md)
-- [MCP](docs/ja/mcp.md)
-- [Claw 連携](docs/ja/claw-integration.md)
-- [用語集](docs/ja/glossary.md)
-
-英語版は [docs/](docs/) にあります。
+詳細な運用ガイドは [docs/](docs/) と [docs/ja/](docs/ja/) に分けて置いています。
 
 ## `relic init` で作られるもの
 

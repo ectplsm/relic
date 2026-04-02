@@ -21,7 +21,6 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 - [Requirements](#requirements)
 - [Install](#install)
 - [Quick Start](#quick-start)
-- [Docs](#docs)
 - [What `relic init` Creates](#what-relic-init-creates)
 - [Sample Engrams](#sample-engrams)
 - [How It Works](#how-it-works)
@@ -94,20 +93,7 @@ The Construct will review recent conversations, extract key facts and decisions 
 
 > For details on the memory system, see [Memory Management](#memory-management).
 
-## Docs
-
-Detailed guides are being split out of this README into focused documents:
-
-- [Getting Started](docs/getting-started.md)
-- [Configuration](docs/configuration.md)
-- [Engram Guide](docs/engram-guide.md)
-- [Migration](docs/migration.md)
-- [Memory](docs/memory.md)
-- [MCP](docs/mcp.md)
-- [Claw Integration](docs/claw-integration.md)
-- [Glossary](docs/glossary.md)
-
-Japanese versions live under [docs/ja/](docs/ja/).
+Detailed operational guides live under [docs/](docs/) and [docs/ja/](docs/ja/).
 
 ## What `relic init` Creates
 
