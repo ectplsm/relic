@@ -21,12 +21,10 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 - [Requirements](#requirements)
 - [Install](#install)
 - [Quick Start](#quick-start)
-- [MCP and Shell Integration](#mcp-and-shell-integration)
+- [Shell Integration and Memory](#shell-integration-and-memory)
 - [Claw Integration](#claw-integration)
-- [Memory Management](#memory-management)
+- [Engram Management](#engram-management)
 - [Configuration](#configuration)
-- [Creating Your Own Engram](#creating-your-own-engram)
-- [Deleting an Engram](#deleting-an-engram)
 - [Concepts](#concepts)
 - [Roadmap](#roadmap)
 
@@ -69,7 +67,7 @@ codex mcp add relic -- relic-mcp
 #   { "mcpServers": { "relic": { "command": "relic-mcp", "trust": true } } }
 ```
 
-> For auto-approval setup and per-shell details, see [MCP and Shell Integration](#mcp-and-shell-integration).
+> For shell setup, approvals, and memory flow, see [Shell Integration and Memory](#shell-integration-and-memory).
 
 ### 3. Launch a Shell
 
@@ -88,7 +86,7 @@ As you use a Construct, conversation logs are automatically saved to `archive.md
 
 The Construct will review recent conversations, extract key facts and decisions into `memory/*.md`, promote important long-term insights to `MEMORY.md`, and update your preferences in `USER.md`. These distilled memories are then loaded into future sessions automatically.
 
-> For details on the memory system, see [Memory Management](#memory-management).
+> For details on logging and memory flow, see [Shell Integration and Memory](#shell-integration-and-memory).
 
 For install, expanded quick start, workspace layout, and sample Engrams, see [docs/getting-started.md](docs/getting-started.md).
 
@@ -136,12 +134,12 @@ If you are upgrading from an older Relic version, see [docs/migration.md](docs/m
 
 For the full system model and domain terms, see [docs/concepts.md](docs/concepts.md).
 
-## MCP and Shell Integration
+## Shell Integration and Memory
 
 Relic supports Claude Code, Codex CLI, and Gemini CLI.
-Background hooks append raw conversation logs to `archive.md`, while the MCP server handles archive search and memory distillation.
+Background hooks append raw conversation logs to `archive.md`, and the MCP server handles archive search and memory distillation.
 
-For shell compatibility, hook behavior, MCP tools, setup, and approval details, see [docs/mcp.md](docs/mcp.md).
+For shell compatibility, hook behavior, setup, approvals, prompt inclusion, and distillation flow, see [docs/integration-and-memory.md](docs/integration-and-memory.md).
 
 ## Claw Integration
 
@@ -150,12 +148,11 @@ The default rule is `Agent Name = Engram ID`, and `relic claw` handles persona t
 
 For command details, overwrite behavior, and the behavior matrix, see [docs/claw-integration.md](docs/claw-integration.md).
 
-## Memory Management
+## Engram Management
 
-Relic keeps raw session logs in `archive.md` and distilled memory in `memory/*.md`,
-with `MEMORY.md` and `USER.md` always included in future sessions.
+Use your LLM plus the `relic_engram_create` MCP tool for the smoothest flow, or `relic create` if you prefer the CLI.
 
-For sliding window behavior, distillation flow, and MCP memory tools, see [docs/memory.md](docs/memory.md).
+For LLM-assisted creation, persona authoring, template examples, and deletion rules, see [docs/engram-guide.md](docs/engram-guide.md).
 
 ## Configuration
 
@@ -163,16 +160,6 @@ Relic stores its runtime defaults in `~/.relic/config.json`.
 Use `relic config` to manage the default Engram, Claw path, and memory window.
 
 For command examples and precedence rules, see [docs/configuration.md](docs/configuration.md).
-
-## Creating Your Own Engram
-
-Use your LLM plus the `relic_engram_create` MCP tool for the smoothest flow, or `relic create` if you prefer the CLI.
-
-For LLM-assisted creation, persona authoring, template examples, and deletion rules, see [docs/engram-guide.md](docs/engram-guide.md).
-
-## Deleting an Engram
-
-See [docs/engram-guide.md](docs/engram-guide.md).
 
 ## Roadmap
 
