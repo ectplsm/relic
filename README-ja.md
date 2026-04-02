@@ -25,9 +25,7 @@ Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code
 - [`relic init` で作られるもの](#relic-init-で作られるもの)
 - [サンプルEngram](#サンプルengram)
 - [仕組み](#仕組み)
-- [対応Shell](#対応shell)
-- [対話ログの記録](#対話ログの記録)
-- [MCPサーバー](#mcpサーバー)
+- [MCP と Shell 連携](#mcp-と-shell-連携)
 - [Claw連携](#claw連携)
 - [記憶の管理](#記憶の管理)
 - [設定](#設定)
@@ -75,7 +73,7 @@ codex mcp add relic -- relic-mcp
 #   { "mcpServers": { "relic": { "command": "relic-mcp", "trust": true } } }
 ```
 
-> 自動承認の設定やShellごとの詳細は [MCPサーバー](#mcpサーバー) を参照してください。
+> 自動承認の設定やShellごとの詳細は [MCP と Shell 連携](#mcp-と-shell-連携) を参照してください。
 
 ### 3. Shellを起動
 

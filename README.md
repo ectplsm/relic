@@ -25,9 +25,7 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 - [What `relic init` Creates](#what-relic-init-creates)
 - [Sample Engrams](#sample-engrams)
 - [How It Works](#how-it-works)
-- [Supported Shells](#supported-shells)
-- [Conversation Log Recording](#conversation-log-recording)
-- [MCP Server](#mcp-server)
+- [MCP and Shell Integration](#mcp-and-shell-integration)
 - [Claw Integration](#claw-integration)
 - [Memory Management](#memory-management)
 - [Configuration](#configuration)
@@ -75,7 +73,7 @@ codex mcp add relic -- relic-mcp
 #   { "mcpServers": { "relic": { "command": "relic-mcp", "trust": true } } }
 ```
 
-> For auto-approval setup and per-shell details, see [MCP Server](#mcp-server).
+> For auto-approval setup and per-shell details, see [MCP and Shell Integration](#mcp-and-shell-integration).
 
 ### 3. Launch a Shell
 
