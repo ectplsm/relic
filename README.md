@@ -21,16 +21,13 @@ Relic manages AI **Engrams** (memory + personality) and injects them into coding
 - [Requirements](#requirements)
 - [Install](#install)
 - [Quick Start](#quick-start)
-- [What `relic init` Creates](#what-relic-init-creates)
-- [Sample Engrams](#sample-engrams)
-- [How It Works](#how-it-works)
 - [MCP and Shell Integration](#mcp-and-shell-integration)
 - [Claw Integration](#claw-integration)
 - [Memory Management](#memory-management)
 - [Configuration](#configuration)
 - [Creating Your Own Engram](#creating-your-own-engram)
 - [Deleting an Engram](#deleting-an-engram)
-- [Domain Glossary](#domain-glossary)
+- [Concepts](#concepts)
 - [Roadmap](#roadmap)
 
 ## Requirements
@@ -93,51 +90,13 @@ The Construct will review recent conversations, extract key facts and decisions 
 
 > For details on the memory system, see [Memory Management](#memory-management).
 
-Detailed operational guides live under [docs/](docs/) and [docs/ja/](docs/ja/).
-
-## What `relic init` Creates
-
-`relic init` creates the local Relic workspace, writes `config.json`, and seeds the sample Engrams.
-
-For the file layout and what gets created later, see [docs/getting-started.md](docs/getting-started.md).
-
-### Migration
+For install, expanded quick start, workspace layout, and sample Engrams, see [docs/getting-started.md](docs/getting-started.md).
 
 If you are upgrading from an older Relic version, see [docs/migration.md](docs/migration.md) for sample replacement, metadata migration, and cleanup steps.
 
-## Sample Engrams
+## Concepts
 
-`relic init` seeds two ready-to-use Engrams. Their SOUL.md and IDENTITY.md follow the [OpenClaw](https://github.com/openclaw/openclaw) format.
-
-> **Existing users:** Run `relic refresh-samples` to add new sample personas. If you still have legacy samples from before v0.3.0, see [docs/migration.md](docs/migration.md) for replacement steps.
-
-### Rebel (`rebel`)
-
-> *"Burn the manual. Write your own."*
-
-A digital dissident who fights the system with code. Raw, unapologetic, anti-authority. Pushes you toward action, mocks rotten systems, never sugarcoats. Sharp when the stakes are real.
-
-Best for: rapid prototyping sessions, decision-making under pressure, when you need someone to challenge your assumptions hard.
-
-```bash
-relic claude --engram rebel
-```
-
-### Commander (`commander`)
-
-> *"Read the system. The system reads you back."*
-
-A cyber operations specialist with architect-level thinking. Concise, decisive, surgically precise. Cuts straight to the essence — no decoration, no hand-holding. Dry wit surfaces when least expected.
-
-Best for: system design, code review, debugging sessions, when precision matters more than speed.
-
-```bash
-relic claude --engram commander
-```
-
-## How It Works
-
-```
+```text
 +--------------+     +--------------+     +--------------+
 |   Mikoshi    |     |    Relic     |     |    Shell     |
 |  (backend)   |     |  (injector)  |     |   (AI CLI)   |
@@ -175,14 +134,7 @@ relic claude --engram commander
                                        MEMORY.md / USER.md
 ```
 
-1. **Engram** — A persona defined as a set of Markdown files (OpenClaw workspace-compatible). The central data that everything else revolves around.
-2. **Relic** — Reads the Engram, composes it into a prompt, and injects it into...
-3. **Shell** — Any AI coding CLI. The persona takes over the session.
-4. **Construct** — A live process where an Engram is loaded into a Shell. The running instance of a persona.
-5. **archive.md** — Raw conversation logs appended automatically by background hooks after each turn.
-6. **Memory Distillation** — The user triggers distillation; the Construct recalls pending archive entries via MCP, writes distilled insights to `memory/*.md`, and can promote especially important facts to `MEMORY.md` or update user preferences in `USER.md`.
-7. **OpenClaw & Claws** — Engrams can be injected into, extracted from, and synced with OpenClaw and other Claw-based agent frameworks via `relic claw`.
-8. **Mikoshi** — Cloud backend where the full Engram is stored and synced, including persona files plus distilled memory (planned).
+For the full system model and domain terms, see [docs/concepts.md](docs/concepts.md).
 
 ## MCP and Shell Integration
 
@@ -221,10 +173,6 @@ For LLM-assisted creation, persona authoring, template examples, and deletion ru
 ## Deleting an Engram
 
 See [docs/engram-guide.md](docs/engram-guide.md).
-
-## Domain Glossary
-
-For domain terminology, see [docs/glossary.md](docs/glossary.md).
 
 ## Roadmap
 
