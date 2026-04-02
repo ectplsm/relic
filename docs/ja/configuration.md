@@ -21,6 +21,10 @@ relic config claw-path ~/.openclaw    # 設定
 # メモリウィンドウ — プロンプトに含める直近メモリエントリ数
 relic config memory-window            # 取得（デフォルト: 2）
 relic config memory-window 5          # 設定
+
+# 蒸留バッチ件数 — 一度に蒸留する archive エントリ数
+relic config distillation-batch-size      # 取得（デフォルト: 30）
+relic config distillation-batch-size 50   # 設定
 ```
 
 ## `config.json` の例
@@ -30,7 +34,8 @@ relic config memory-window 5          # 設定
   "engramsPath": "/home/user/.relic/engrams",
   "defaultEngram": "rebel",
   "clawPath": "/home/user/.openclaw",
-  "memoryWindowSize": 2
+  "memoryWindowSize": 2,
+  "distillationBatchSize": 30
 }
 ```
 

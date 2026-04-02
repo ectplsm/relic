@@ -111,7 +111,7 @@ relic gemini
             └── YYYY-MM-DD.md
 ```
 
-- `config.json` には `engramsPath`、`defaultEngram`、`clawPath`、`memoryWindowSize` などの Relic 全体設定が入ります
+- `config.json` には `engramsPath`、`defaultEngram`、`clawPath`、`memoryWindowSize`、`distillationBatchSize` などの Relic 全体設定が入ります
 - `engrams/<id>/` は 1 つの Engram workspace です
 - `engram.json` には表示名、説明、タグなどの編集可能なプロフィール情報が入ります
 - `manifest.json` には Engram ID やタイムスタンプなどのシステム管理情報が入ります

@@ -178,7 +178,7 @@ For LLM-assisted creation, persona authoring, template examples, and deletion ru
 ## Configuration
 
 Relic stores its runtime defaults in `~/.relic/config.json`.
-Use `relic config` to manage the default Engram, Claw path, and memory window.
+Use `relic config` to manage the default Engram, Claw path, memory window, and distillation batch size.
 
 For command examples and precedence rules, see [docs/configuration.md](docs/configuration.md).
 

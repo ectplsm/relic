@@ -112,7 +112,7 @@ Engrams under `~/.relic/engrams/`.
 ```
 
 - `config.json` stores global Relic settings such as `engramsPath`, `defaultEngram`,
-  `clawPath`, and `memoryWindowSize`
+  `clawPath`, `memoryWindowSize`, and `distillationBatchSize`
 - `engrams/<id>/` is one Engram workspace
 - `engram.json` stores editable profile fields like display name, description, and tags
 - `manifest.json` stores system-managed fields like the Engram ID and timestamps
