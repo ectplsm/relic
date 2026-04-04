@@ -12,6 +12,7 @@ import {
 import { ClaudeShell } from "../../../adapters/shells/claude-shell.js";
 import { GeminiShell } from "../../../adapters/shells/gemini-shell.js";
 import { CodexShell } from "../../../adapters/shells/codex-shell.js";
+import { isResumeArgs } from "../../../adapters/shells/resume-detect.js";
 
 
 interface ShellDef {
@@ -47,6 +48,7 @@ export function registerShellCommands(program: Command): void {
       .option("-p, --path <dir>", "Override engrams directory path")
       .option("--cwd <dir>", "Working directory for the Shell (default: current directory)")
       .allowUnknownOption(true)
+      .allowExcessArguments(true)
       .action(async (opts: { engram?: string; path?: string; cwd?: string }, cmd: Command) => {
         const launcher = shell.create();
 
@@ -78,13 +80,26 @@ export function registerShellCommands(program: Command): void {
             distillationBatchSize,
           });
 
-          console.log(`Summoning "${result.engramName}" into ${launcher.name}...`);
-          console.log();
-
           // --engram, --path, --cwd 以外の引数をShellにパススルー
           const extraArgs = cmd.args;
           const cwd = opts.cwd ? resolve(opts.cwd) : process.cwd();
-          await launcher.launch(result.prompt, { extraArgs, cwd, engramId });
+
+          // resume 系操作の検出
+          const skipInjection = isResumeArgs(launcher.name, extraArgs);
+
+          if (skipInjection) {
+            console.log(`Resuming ${launcher.name} session (${result.engramName})...`);
+          } else {
+            console.log(`Summoning "${result.engramName}" into ${launcher.name}...`);
+          }
+          console.log();
+
+          await launcher.launch(result.prompt, {
+            extraArgs,
+            cwd,
+            engramId,
+            skipInjection,
+          });
         } catch (err) {
           if (err instanceof EngramNotFoundError) {
             console.error(`Error: ${err.message}`);

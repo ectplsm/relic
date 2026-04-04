@@ -42,11 +42,19 @@ export class CodexShell implements ShellLauncher {
       console.log();
     }
 
-    const args: string[] = [
-      "-c", `developer_instructions=${JSON.stringify(wrapWithOverride(prompt))}`,
+    const args: string[] = [];
+
+    // resume 系操作時は injection をスキップ（前回セッションに焼き付き済み）
+    if (!options?.skipInjection) {
+      args.push(
+        "-c", `developer_instructions=${JSON.stringify(wrapWithOverride(prompt))}`,
+      );
+    }
+
+    args.push(
       "-c", "features.codex_hooks=true",
       ...(options?.extraArgs ?? []),
-    ];
+    );
 
     const env: Record<string, string> = {};
     if (options?.engramId) env.RELIC_ENGRAM_ID = options.engramId;

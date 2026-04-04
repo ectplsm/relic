@@ -40,11 +40,14 @@ export class ClaudeShell implements ShellLauncher {
       console.log();
     }
 
-    const args = [
-      "--system-prompt",
-      prompt,
-      ...(options?.extraArgs ?? []),
-    ];
+    const args: string[] = [];
+
+    // resume 系操作時は injection をスキップ（前回セッションに焼き付き済み）
+    if (!options?.skipInjection) {
+      args.push("--system-prompt", prompt);
+    }
+
+    args.push(...(options?.extraArgs ?? []));
 
     const env: Record<string, string> = {};
     if (options?.engramId) env.RELIC_ENGRAM_ID = options.engramId;

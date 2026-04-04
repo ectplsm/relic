@@ -133,6 +133,19 @@ export class GeminiShell implements ShellLauncher {
       console.log();
     }
 
+    // resume 系操作時は injection をスキップ（前回セッションに焼き付き済み）
+    if (options?.skipInjection) {
+      const env: Record<string, string> = {};
+      if (options?.engramId) env.RELIC_ENGRAM_ID = options.engramId;
+      await spawnShell(
+        this.command,
+        [...(options?.extraArgs ?? [])],
+        options?.cwd,
+        Object.keys(env).length > 0 ? env : undefined,
+      );
+      return;
+    }
+
     // 2. デフォルトシステムプロンプトをキャッシュから読む、なければキャプチャ
     let defaultPrompt: string;
     if (existsSync(GEMINI_DEFAULT_CACHE)) {
