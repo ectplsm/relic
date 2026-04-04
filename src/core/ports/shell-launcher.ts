@@ -18,6 +18,12 @@ export interface ShellLaunchOptions {
   cwd?: string;
   /** 注入するEngram ID（Shell固有のセットアップに使用） */
   engramId?: string;
+  /**
+   * true の場合、Engram prompt の injection をスキップする。
+   * resume 系操作では前回セッションに injection 済みのため再注入は不要。
+   * hook セットアップと RELIC_ENGRAM_ID は skipInjection 時も維持される。
+   */
+  skipInjection?: boolean;
 }
 
 /**
