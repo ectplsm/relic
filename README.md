@@ -1,7 +1,7 @@
 | English | [日本語](README-ja.md) |
 |:---:|:---:|
 
-# PROJECT RELIC
+# Relic: AI Persona Injection System
 ![NPM Downloads](https://img.shields.io/npm/dt/%40ectplsm%2Frelic)
 
 <img src="assets/relic-hero.svg" alt="PROJECT RELIC" width="720">
