@@ -98,6 +98,50 @@ export function registerConfigCommand(program: Command): void {
       console.log(`Memory window set to: ${parsed}`);
     });
 
+  // relic config mikoshi-url [url]
+  config
+    .command("mikoshi-url [url]")
+    .description("Get or set the Mikoshi API base URL (default: https://mikoshi.ectplsm.com)")
+    .action(async (url: string | undefined) => {
+      await ensureInitialized();
+      const cfg = await loadConfig();
+
+      if (!url) {
+        console.log(cfg.mikoshiUrl);
+        return;
+      }
+
+      cfg.mikoshiUrl = url;
+      await saveConfig(cfg);
+      console.log(`Mikoshi URL set to: ${url}`);
+    });
+
+  // relic config mikoshi-api-key [key]
+  config
+    .command("mikoshi-api-key [key]")
+    .description("Get or set the Mikoshi API key")
+    .action(async (key: string | undefined) => {
+      await ensureInitialized();
+      const cfg = await loadConfig();
+
+      if (!key) {
+        if (cfg.mikoshiApiKey) {
+          // マスク表示 — 先頭10文字だけ見せる
+          const masked = cfg.mikoshiApiKey.length > 10
+            ? cfg.mikoshiApiKey.slice(0, 10) + "…"
+            : cfg.mikoshiApiKey;
+          console.log(masked);
+        } else {
+          console.log("(not set)");
+        }
+        return;
+      }
+
+      cfg.mikoshiApiKey = key;
+      await saveConfig(cfg);
+      console.log("Mikoshi API key saved.");
+    });
+
   // relic config distillation-batch-size [n]
   config
     .command("distillation-batch-size [n]")
