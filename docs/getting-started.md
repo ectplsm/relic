@@ -144,7 +144,7 @@ As you keep using an Engram, more files are added to the same workspace:
 
 > *"Burn the manual. Write your own."*
 
-Raw, anti-authority, impatient with bullshit.
+A digital ghost burned into code. Anti-corporate, war-scarred, still fighting. Speaks like someone who lost everything but their rage.
 Good when you want speed, pressure, and hard pushes against weak assumptions.
 
 ```bash
@@ -155,7 +155,7 @@ relic claude --engram rebel
 
 > *"Read the system. The system reads you back."*
 
-Concise, surgical, and architect-minded.
+A tactical mind in a digital shell. Calm, analytical, philosophical. Reads the system before the system reads you back.
 Good when precision matters more than vibe.
 
 ```bash

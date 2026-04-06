@@ -46,6 +46,13 @@ relic list                            # List available Engrams
 relic config default-engram commander   # (Optional) Set your default Engram
 ```
 
+Relic ships with two sample Engrams:
+
+- **rebel** — A digital ghost burned into code. Anti-corporate, war-scarred, still fighting. Speaks like someone who lost everything but their rage.
+- **commander** — A tactical mind in a digital shell. Calm, analytical, philosophical. Reads the system before the system reads you back.
+
+Try both to feel how persona injection changes the experience. For creating your own, see [docs/engram-guide.md](docs/engram-guide.md).
+
 ### 2. Set Up Memory (MCP)
 
 Register the MCP server so the Construct can search past conversations and distill memories. Pick your shell:
