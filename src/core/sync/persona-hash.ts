@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { normalizeText } from "./normalize.js";
 
 const HEADER = "mikoshi.persona.v1";
 
@@ -22,8 +23,8 @@ export function computePersonaHash(
 ): string | null {
   if (!soul || !identity) return null;
 
-  const normSoul = normalize(soul);
-  const normIdentity = normalize(identity);
+  const normSoul = normalizeText(soul, { stripTrailingNewlines: true });
+  const normIdentity = normalizeText(identity, { stripTrailingNewlines: true });
 
   const soulBytes = Buffer.byteLength(normSoul, "utf-8");
   const identityBytes = Buffer.byteLength(normIdentity, "utf-8");
@@ -40,18 +41,4 @@ export function computePersonaHash(
 
   const hex = createHash("sha256").update(payload, "utf-8").digest("hex");
   return `sha256:${hex}`;
-}
-
-/** 正規化: BOM 除去 → 改行統一 → 末尾改行 strip */
-function normalize(text: string): string {
-  let s = text;
-  // strip leading BOM
-  if (s.charCodeAt(0) === 0xfeff) {
-    s = s.slice(1);
-  }
-  // normalize line endings to \n
-  s = s.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-  // strip trailing \n
-  s = s.replace(/\n+$/, "");
-  return s;
 }
