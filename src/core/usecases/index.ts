@@ -69,3 +69,10 @@ export {
   type MikoshiPullResult,
   type MikoshiPullDiff,
 } from "./mikoshi-pull.js";
+export {
+  MikoshiMemoryPush,
+  MikoshiMemoryPushEngramNotFoundError,
+  MikoshiMemoryPushNoFilesError,
+  MikoshiMemoryPushCloudNotFoundError,
+  type MikoshiMemoryPushResult,
+} from "./mikoshi-memory-push.js";
