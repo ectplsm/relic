@@ -23,6 +23,12 @@ import {
   MikoshiMemoryPushNoFilesError,
   MikoshiMemoryPushCloudNotFoundError,
 } from "../../../core/usecases/mikoshi-memory-push.js";
+import {
+  MikoshiMemoryPull,
+  MikoshiMemoryPullEngramNotFoundError,
+  MikoshiMemoryPullCloudNotFoundError,
+  MikoshiMemoryPullDecryptError,
+} from "../../../core/usecases/mikoshi-memory-pull.js";
 import { MikoshiApiError } from "../../../core/ports/mikoshi.js";
 import { readPassphrase } from "../../../core/sync/crypto.js";
 import { createInterface } from "node:readline";
@@ -342,6 +348,103 @@ export function registerMikoshiCommand(program: Command): void {
         }
         if (err instanceof MikoshiMemoryPushCloudNotFoundError) {
           console.error(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiApiError) {
+          handleMikoshiApiError(err);
+        }
+        throw err;
+      }
+    });
+
+  // relic mikoshi memory pull [engram-id]
+  memory
+    .command("pull [engram-id]")
+    .description("Download and decrypt remote memory from Mikoshi")
+    .option("-p, --path <dir>", "Override engrams directory path")
+    .option("-y, --yes", "Skip overwrite confirmation")
+    .action(async (engramIdArg: string | undefined, opts: { path?: string; yes?: boolean }) => {
+      await ensureInitialized();
+
+      const engramId = engramIdArg ?? await resolveDefaultEngram();
+      if (!engramId) {
+        console.error("Error: No engram-id specified and no default Engram configured.");
+        console.error("  Set one with: relic config default-engram <id>");
+        process.exit(1);
+      }
+
+      const apiKey = await resolveMikoshiApiKey();
+      if (!apiKey) {
+        console.error("Error: Mikoshi API key is not configured.");
+        console.error("  Set one with: relic config mikoshi-api-key <key>");
+        process.exit(1);
+      }
+
+      // パスフレーズ入力
+      let passphrase: string;
+      try {
+        passphrase = await readPassphrase("Passphrase for memory decryption: ");
+      } catch {
+        console.error("Cancelled.");
+        process.exit(1);
+        return;
+      }
+
+      if (!passphrase) {
+        console.error("Error: Passphrase cannot be empty.");
+        process.exit(1);
+      }
+
+      const engramsPath = await resolveEngramsPath(opts.path);
+      const mikoshiUrl = await resolveMikoshiUrl();
+      const repo = new LocalEngramRepository(engramsPath);
+      const client = new MikoshiApiClient(mikoshiUrl, apiKey);
+      const usecase = new MikoshiMemoryPull(repo, client);
+
+      try {
+        const { result, apply } = await usecase.check(engramId, passphrase);
+
+        switch (result.outcome) {
+          case "no_remote_memory":
+            console.log(`\n  Engram "${result.engramName}" has no memory on Mikoshi.\n`);
+            return;
+          case "already_synced":
+            console.log(`\n  ✅ "${result.engramName}" memory is already synced.\n`);
+            return;
+          case "pulled": {
+            const diff = result.diff!;
+            console.log(`\n  Engram: ${result.engramName} (${result.engramId})`);
+            console.log(`  Cloud:  ${result.cloudEngramId}`);
+            console.log();
+            for (const p of diff.added)   console.log(`  + ${p}`);
+            for (const p of diff.changed) console.log(`  ~ ${p}`);
+            for (const p of diff.removed) console.log(`  - ${p}`);
+            console.log();
+
+            if (!opts.yes) {
+              const confirmed = await confirm("  Overwrite local memory files? [y/N] ");
+              if (!confirmed) {
+                console.log("  Skipped.\n");
+                return;
+              }
+            }
+
+            await apply!();
+            console.log(`  ✅ Local memory updated from Mikoshi.\n`);
+            break;
+          }
+        }
+      } catch (err) {
+        if (err instanceof MikoshiMemoryPullEngramNotFoundError) {
+          console.error(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiMemoryPullCloudNotFoundError) {
+          console.error(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiMemoryPullDecryptError) {
+          console.error("Error: Failed to decrypt memory. Wrong passphrase or corrupted data.");
           process.exit(1);
         }
         if (err instanceof MikoshiApiError) {
