@@ -14,6 +14,7 @@ import { registerMigrateCommand } from "./commands/migrate.js";
 import { registerRefreshSamplesCommand } from "./commands/refresh-samples.js";
 import { registerCreateCommand } from "./commands/create.js";
 import { registerDeleteCommand } from "./commands/delete.js";
+import { registerMikoshiCommand } from "./commands/mikoshi.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, "../../../package.json"), "utf-8"));
@@ -35,5 +36,6 @@ registerClawCommand(program);
 registerConfigCommand(program);
 registerMigrateCommand(program);
 registerRefreshSamplesCommand(program);
+registerMikoshiCommand(program);
 
 program.parse();
