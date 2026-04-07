@@ -4,13 +4,15 @@ import type {
   SyncStatusResponse,
 } from "../ports/mikoshi.js";
 import { computePersonaHash } from "../sync/persona-hash.js";
+import { computeMemoryContentHash, type MemoryFileEntry } from "../sync/memory-hash.js";
+import type { EngramFiles } from "../entities/engram.js";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export type PersonaDriftStatus = "synced" | "local_differs" | "remote_only" | "unavailable";
-export type MemoryDriftStatus = "synced" | "local_differs" | "not_uploaded" | "unavailable";
+export type MemoryDriftStatus = "synced" | "local_differs" | "not_uploaded" | "local_empty";
 
 export interface MikoshiStatusResult {
   engramId: string;
@@ -25,6 +27,8 @@ export interface MikoshiStatusResult {
   };
   memory: {
     status: MemoryDriftStatus;
+    localHash: string | null;
+    remoteHash: string | null;
     remoteExists: boolean;
     remoteSummary: SyncStatusResponse["memory"]["summary"] | null;
   };
@@ -80,8 +84,13 @@ export class MikoshiStatus {
     const remotePersonaHash = syncStatus.persona.token?.hash ?? null;
     const personaStatus = classifyPersonaDrift(localPersonaHash, remotePersonaHash);
 
-    // 6. Memory drift 判定
-    const memoryStatus = classifyMemoryDrift(syncStatus);
+    // 6. ローカル memory content hash 計算
+    const localMemoryFiles = collectMemoryFiles(local.files);
+    const localMemoryHash = computeMemoryContentHash(localMemoryFiles);
+
+    // 7. Memory drift 判定
+    const remoteMemoryHash = syncStatus.memory.token?.memoryContentHash ?? null;
+    const memoryStatus = classifyMemoryDrift(localMemoryHash, remoteMemoryHash, syncStatus.memory.exists);
 
     return {
       engramId,
@@ -95,6 +104,8 @@ export class MikoshiStatus {
       },
       memory: {
         status: memoryStatus,
+        localHash: localMemoryHash,
+        remoteHash: remoteMemoryHash,
         remoteExists: syncStatus.memory.exists,
         remoteSummary: syncStatus.memory.summary,
       },
@@ -116,10 +127,27 @@ function classifyPersonaDrift(
 }
 
 function classifyMemoryDrift(
-  syncStatus: SyncStatusResponse,
+  localHash: string | null,
+  remoteHash: string | null,
+  remoteExists: boolean,
 ): MemoryDriftStatus {
-  if (!syncStatus.memory.exists) return "not_uploaded";
-  // memory content hash 比較はクライアント暗号化の都合で
-  // ローカル hash 計算が必要。初期版ではリモート有無だけ判定する。
-  return "unavailable";
+  if (!localHash) return "local_empty";
+  if (!remoteExists) return "not_uploaded";
+  if (!remoteHash) return "not_uploaded";
+  return localHash === remoteHash ? "synced" : "local_differs";
+}
+
+/**
+ * EngramFiles から memory 系ファイルを MemoryFileEntry[] に変換
+ */
+function collectMemoryFiles(files: EngramFiles): MemoryFileEntry[] {
+  const entries: MemoryFileEntry[] = [];
+  if (files.user) entries.push({ path: "USER.md", content: files.user });
+  if (files.memory) entries.push({ path: "MEMORY.md", content: files.memory });
+  if (files.memoryEntries) {
+    for (const [date, content] of Object.entries(files.memoryEntries)) {
+      entries.push({ path: `memory/${date}.md`, content });
+    }
+  }
+  return entries;
 }

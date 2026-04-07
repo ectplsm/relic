@@ -82,6 +82,10 @@ export function registerMikoshiCommand(program: Command): void {
         const memoryIcon = statusIcon(result.memory.status);
         const memoryLabel = statusLabel(result.memory.status);
         console.log(`  Memory:   ${memoryIcon} ${memoryLabel}`);
+        if (result.memory.status === "local_differs") {
+          console.log(`    local:  ${result.memory.localHash}`);
+          console.log(`    remote: ${result.memory.remoteHash}`);
+        }
         if (result.memory.remoteExists && result.memory.remoteSummary) {
           const s = result.memory.remoteSummary;
           console.log(`    entries: ${s.memoryEntryCount}, latest: ${s.latestMemoryDate ?? "—"}`);
@@ -277,7 +281,7 @@ function statusIcon(status: string): string {
     case "local_differs": return "⚠️";
     case "remote_only":   return "⚠️";
     case "not_uploaded":  return "—";
-    case "unavailable":   return "?";
+    case "local_empty":   return "—";
     default:              return "?";
   }
 }
@@ -288,7 +292,7 @@ function statusLabel(status: string): string {
     case "local_differs": return "local differs";
     case "remote_only":   return "remote only (no local persona hash)";
     case "not_uploaded":  return "not uploaded";
-    case "unavailable":   return "comparison unavailable";
+    case "local_empty":   return "local empty";
     default:              return status;
   }
 }
