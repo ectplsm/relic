@@ -61,3 +61,11 @@ export {
   MikoshiPushPersonaHashError,
   type MikoshiPushResult,
 } from "./mikoshi-push.js";
+export {
+  MikoshiPull,
+  MikoshiPullEngramNotFoundError,
+  MikoshiPullCloudNotFoundError,
+  MikoshiPullPersonaMissingError,
+  type MikoshiPullResult,
+  type MikoshiPullDiff,
+} from "./mikoshi-pull.js";
