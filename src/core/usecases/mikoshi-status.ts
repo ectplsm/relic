@@ -4,8 +4,7 @@ import type {
   SyncStatusResponse,
 } from "../ports/mikoshi.js";
 import { computePersonaHash } from "../sync/persona-hash.js";
-import { computeMemoryContentHash, type MemoryFileEntry } from "../sync/memory-hash.js";
-import type { EngramFiles } from "../entities/engram.js";
+import { computeMemoryContentHash, collectMemoryFiles } from "../sync/memory-hash.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -135,19 +134,4 @@ function classifyMemoryDrift(
   if (!remoteExists) return "not_uploaded";
   if (!remoteHash) return "not_uploaded";
   return localHash === remoteHash ? "synced" : "local_differs";
-}
-
-/**
- * EngramFiles から memory 系ファイルを MemoryFileEntry[] に変換
- */
-function collectMemoryFiles(files: EngramFiles): MemoryFileEntry[] {
-  const entries: MemoryFileEntry[] = [];
-  if (files.user) entries.push({ path: "USER.md", content: files.user });
-  if (files.memory) entries.push({ path: "MEMORY.md", content: files.memory });
-  if (files.memoryEntries) {
-    for (const [date, content] of Object.entries(files.memoryEntries)) {
-      entries.push({ path: `memory/${date}.md`, content });
-    }
-  }
-  return entries;
 }

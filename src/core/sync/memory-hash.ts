@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { normalizeText } from "./normalize.js";
+import type { EngramFiles } from "../entities/engram.js";
 
 const HEADER = "mikoshi.memory.v1";
 
@@ -45,4 +46,32 @@ export function computeMemoryContentHash(
   const payload = parts.join("\n");
   const hex = createHash("sha256").update(payload, "utf-8").digest("hex");
   return `sha256:${hex}`;
+}
+
+/**
+ * EngramFiles から memory 系ファイルを MemoryFileEntry[] に変換。
+ * 対象: USER.md, MEMORY.md, memory/*.md
+ */
+export function collectMemoryFiles(files: EngramFiles): MemoryFileEntry[] {
+  const entries: MemoryFileEntry[] = [];
+  if (files.user) entries.push({ path: "USER.md", content: files.user });
+  if (files.memory) entries.push({ path: "MEMORY.md", content: files.memory });
+  if (files.memoryEntries) {
+    for (const [date, content] of Object.entries(files.memoryEntries)) {
+      entries.push({ path: `memory/${date}.md`, content });
+    }
+  }
+  return entries;
+}
+
+/**
+ * MemoryFileEntry[] を { "USER.md": "...", "memory/2026-04-03.md": "..." } に変換。
+ * 暗号化バンドルの入力用。
+ */
+export function memoryFilesToRecord(entries: MemoryFileEntry[]): Record<string, string> {
+  const record: Record<string, string> = {};
+  for (const e of entries) {
+    record[e.path] = e.content;
+  }
+  return record;
 }
