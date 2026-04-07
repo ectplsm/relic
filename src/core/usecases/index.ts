@@ -49,3 +49,9 @@ export {
   ArchiveCursorUpdateEngramNotFoundError,
   type ArchiveCursorUpdateResult,
 } from "./archive-cursor-update.js";
+export {
+  MikoshiStatus,
+  MikoshiStatusEngramNotFoundError,
+  MikoshiStatusCloudNotFoundError,
+  type MikoshiStatusResult,
+} from "./mikoshi-status.js";
