@@ -6,6 +6,11 @@ import {
   MikoshiStatusEngramNotFoundError,
   MikoshiStatusCloudNotFoundError,
 } from "../../../core/usecases/mikoshi-status.js";
+import {
+  MikoshiPush,
+  MikoshiPushEngramNotFoundError,
+  MikoshiPushPersonaHashError,
+} from "../../../core/usecases/mikoshi-push.js";
 import { MikoshiApiError } from "../../../core/ports/mikoshi.js";
 import {
   ensureInitialized,
@@ -83,23 +88,99 @@ export function registerMikoshiCommand(program: Command): void {
         }
         if (err instanceof MikoshiStatusCloudNotFoundError) {
           console.log(`\n  Engram "${engramId}" is not registered on Mikoshi.`);
-          console.log("  Upload it first with: relic mikoshi push (coming soon)\n");
+          console.log("  Upload it with: relic mikoshi push\n");
           process.exit(0);
         }
         if (err instanceof MikoshiApiError) {
-          if (err.isUnauthorized) {
-            console.error("Error: Mikoshi API key is invalid or expired.");
-            console.error("  Update with: relic config mikoshi-api-key <key>");
-          } else if (err.isRateLimited) {
-            console.error("Error: Mikoshi rate limit exceeded. Try again later.");
-          } else {
-            console.error(`Error: Mikoshi API returned ${err.status}: ${err.message}`);
-          }
-          process.exit(1);
+          handleMikoshiApiError(err);
         }
         throw err;
       }
     });
+  // relic mikoshi push [engram-id]
+  mikoshi
+    .command("push [engram-id]")
+    .description("Push local Engram persona to Mikoshi cloud")
+    .option("-p, --path <dir>", "Override engrams directory path")
+    .action(async (engramIdArg: string | undefined, opts: { path?: string }) => {
+      await ensureInitialized();
+
+      const engramId = engramIdArg ?? await resolveDefaultEngram();
+      if (!engramId) {
+        console.error("Error: No engram-id specified and no default Engram configured.");
+        console.error("  Set one with: relic config default-engram <id>");
+        process.exit(1);
+      }
+
+      const apiKey = await resolveMikoshiApiKey();
+      if (!apiKey) {
+        console.error("Error: Mikoshi API key is not configured.");
+        console.error("  Set one with: relic config mikoshi-api-key <key>");
+        process.exit(1);
+      }
+
+      const engramsPath = await resolveEngramsPath(opts.path);
+      const mikoshiUrl = await resolveMikoshiUrl();
+      const repo = new LocalEngramRepository(engramsPath);
+      const client = new MikoshiApiClient(mikoshiUrl, apiKey);
+      const usecase = new MikoshiPush(repo, client);
+
+      try {
+        const result = await usecase.execute(engramId);
+
+        switch (result.outcome) {
+          case "created":
+            console.log(`\n  ✅ Created "${result.engramName}" on Mikoshi.`);
+            console.log(`  Cloud ID: ${result.cloudEngramId}\n`);
+            break;
+          case "updated":
+            console.log(`\n  ✅ Persona updated for "${result.engramName}".`);
+            console.log(`  Hash: ${result.newPersonaHash}\n`);
+            break;
+          case "already_synced":
+            console.log(`\n  ✅ "${result.engramName}" is already synced.\n`);
+            break;
+          case "conflict":
+            console.error(`\n  ⚠️  Persona conflict for "${result.engramName}".`);
+            console.error("  The remote persona was updated since you last checked.");
+            if (result.conflictRemoteHash) {
+              console.error(`  Remote hash: ${result.conflictRemoteHash}`);
+            }
+            console.error("  Re-run 'relic mikoshi status' to review the current state.\n");
+            process.exit(1);
+            break;
+        }
+      } catch (err) {
+        if (err instanceof MikoshiPushEngramNotFoundError) {
+          console.error(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiPushPersonaHashError) {
+          console.error(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiApiError) {
+          handleMikoshiApiError(err);
+        }
+        throw err;
+      }
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Shared error handler
+// ---------------------------------------------------------------------------
+
+function handleMikoshiApiError(err: MikoshiApiError): never {
+  if (err.isUnauthorized) {
+    console.error("Error: Mikoshi API key is invalid or expired.");
+    console.error("  Update with: relic config mikoshi-api-key <key>");
+  } else if (err.isRateLimited) {
+    console.error("Error: Mikoshi rate limit exceeded. Try again later.");
+  } else {
+    console.error(`Error: Mikoshi API returned ${err.status}: ${err.message}`);
+  }
+  process.exit(1);
 }
 
 // ---------------------------------------------------------------------------
