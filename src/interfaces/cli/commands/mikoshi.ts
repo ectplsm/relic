@@ -45,6 +45,46 @@ export function registerMikoshiCommand(program: Command): void {
     .command("mikoshi")
     .description("Manage cloud sync with Mikoshi");
 
+  // relic mikoshi list
+  mikoshi
+    .command("list")
+    .description("List all Engrams registered on Mikoshi")
+    .action(async () => {
+      await ensureInitialized();
+
+      const apiKey = await resolveMikoshiApiKey();
+      if (!apiKey) {
+        printError("Error: Mikoshi API key is not configured.");
+        console.error("  Set one with: relic config mikoshi-api-key <key>");
+        process.exit(1);
+      }
+
+      const mikoshiUrl = await resolveMikoshiUrl();
+      const client = new MikoshiApiClient(mikoshiUrl, apiKey);
+
+      try {
+        const engrams = await client.getEngrams();
+
+        if (engrams.length === 0) {
+          console.log("\n  No Engrams on Mikoshi.\n");
+          return;
+        }
+
+        console.log();
+        for (const e of engrams) {
+          const mem = e.memory?.hasMemory ? "memory" : "";
+          const vis = e.visibility === "PRIVATE" ? dim("private") : e.visibility.toLowerCase();
+          console.log(`  ${e.name} ${dim(`(${e.sourceEngramId})`)}  ${vis}  ${mem}`);
+        }
+        console.log(`\n  ${engrams.length} engram(s)\n`);
+      } catch (err) {
+        if (err instanceof MikoshiApiError) {
+          handleMikoshiApiError(err);
+        }
+        throw err;
+      }
+    });
+
   // relic mikoshi status [engram-id]
   mikoshi
     .command("status [engram-id]")
@@ -56,7 +96,7 @@ export function registerMikoshiCommand(program: Command): void {
       // Engram ID 解決
       const engramId = engramIdArg ?? await resolveDefaultEngram();
       if (!engramId) {
-        console.error("Error: No engram-id specified and no default Engram configured.");
+        printError("Error: No engram-id specified and no default Engram configured.");
         console.error("  Set one with: relic config default-engram <id>");
         process.exit(1);
       }
@@ -64,7 +104,7 @@ export function registerMikoshiCommand(program: Command): void {
       // API key 必須チェック
       const apiKey = await resolveMikoshiApiKey();
       if (!apiKey) {
-        console.error("Error: Mikoshi API key is not configured.");
+        printError("Error: Mikoshi API key is not configured.");
         console.error("  Set one with: relic config mikoshi-api-key <key>");
         process.exit(1);
       }
@@ -107,7 +147,7 @@ export function registerMikoshiCommand(program: Command): void {
         console.log();
       } catch (err) {
         if (err instanceof MikoshiStatusEngramNotFoundError) {
-          console.error(`Error: ${err.message}`);
+          printError(`Error: ${err.message}`);
           process.exit(1);
         }
         if (err instanceof MikoshiStatusCloudNotFoundError) {
@@ -131,14 +171,14 @@ export function registerMikoshiCommand(program: Command): void {
 
       const engramId = engramIdArg ?? await resolveDefaultEngram();
       if (!engramId) {
-        console.error("Error: No engram-id specified and no default Engram configured.");
+        printError("Error: No engram-id specified and no default Engram configured.");
         console.error("  Set one with: relic config default-engram <id>");
         process.exit(1);
       }
 
       const apiKey = await resolveMikoshiApiKey();
       if (!apiKey) {
-        console.error("Error: Mikoshi API key is not configured.");
+        printError("Error: Mikoshi API key is not configured.");
         console.error("  Set one with: relic config mikoshi-api-key <key>");
         process.exit(1);
       }
@@ -176,11 +216,11 @@ export function registerMikoshiCommand(program: Command): void {
         }
       } catch (err) {
         if (err instanceof MikoshiPushEngramNotFoundError) {
-          console.error(`Error: ${err.message}`);
+          printError(`Error: ${err.message}`);
           process.exit(1);
         }
         if (err instanceof MikoshiPushPersonaHashError) {
-          console.error(`Error: ${err.message}`);
+          printError(`Error: ${err.message}`);
           process.exit(1);
         }
         if (err instanceof MikoshiApiError) {
@@ -201,14 +241,14 @@ export function registerMikoshiCommand(program: Command): void {
 
       const engramId = engramIdArg ?? await resolveDefaultEngram();
       if (!engramId) {
-        console.error("Error: No engram-id specified and no default Engram configured.");
+        printError("Error: No engram-id specified and no default Engram configured.");
         console.error("  Set one with: relic config default-engram <id>");
         process.exit(1);
       }
 
       const apiKey = await resolveMikoshiApiKey();
       if (!apiKey) {
-        console.error("Error: Mikoshi API key is not configured.");
+        printError("Error: Mikoshi API key is not configured.");
         console.error("  Set one with: relic config mikoshi-api-key <key>");
         process.exit(1);
       }
@@ -249,15 +289,15 @@ export function registerMikoshiCommand(program: Command): void {
         console.log(`  ✅ Local persona updated from Mikoshi.\n`);
       } catch (err) {
         if (err instanceof MikoshiPullEngramNotFoundError) {
-          console.error(`Error: ${err.message}`);
+          printError(`Error: ${err.message}`);
           process.exit(1);
         }
         if (err instanceof MikoshiPullCloudNotFoundError) {
-          console.error(`Error: Engram "${engramId}" not found on Mikoshi.`);
+          printError(`Error: Engram "${engramId}" not found on Mikoshi.`);
           process.exit(1);
         }
         if (err instanceof MikoshiPullPersonaMissingError) {
-          console.error(`Error: ${err.message}`);
+          printError(`Error: ${err.message}`);
           process.exit(1);
         }
         if (err instanceof MikoshiApiError) {
@@ -281,22 +321,26 @@ export function registerMikoshiCommand(program: Command): void {
 
       const engramId = engramIdArg ?? await resolveDefaultEngram();
       if (!engramId) {
-        console.error("Error: No engram-id specified and no default Engram configured.");
+        printError("Error: No engram-id specified and no default Engram configured.");
         console.error("  Set one with: relic config default-engram <id>");
         process.exit(1);
       }
 
       const apiKey = await resolveMikoshiApiKey();
       if (!apiKey) {
-        console.error("Error: Mikoshi API key is not configured.");
+        printError("Error: Mikoshi API key is not configured.");
         console.error("  Set one with: relic config mikoshi-api-key <key>");
         process.exit(1);
       }
 
-      // パスフレーズ入力
+      // パスフレーズ入力（暗号化時は警告 + 確認入力）
+      console.log();
+      console.log(yellow("  ⚠ This passphrase encrypts your memory data."));
+      console.log(yellow("    If you lose it, your uploaded memory CANNOT be recovered."));
+      console.log();
       let passphrase: string;
       try {
-        passphrase = await readPassphrase("Passphrase for memory encryption: ");
+        passphrase = await readPassphrase("Passphrase: ");
       } catch {
         console.error("Cancelled.");
         process.exit(1);
@@ -304,7 +348,22 @@ export function registerMikoshiCommand(program: Command): void {
       }
 
       if (!passphrase) {
-        console.error("Error: Passphrase cannot be empty.");
+        printError("Error: Passphrase cannot be empty.");
+        process.exit(1);
+      }
+
+      // 確認入力
+      let confirm2: string;
+      try {
+        confirm2 = await readPassphrase("Confirm passphrase: ");
+      } catch {
+        console.error("Cancelled.");
+        process.exit(1);
+        return;
+      }
+
+      if (passphrase !== confirm2) {
+        printError("Error: Passphrases do not match.");
         process.exit(1);
       }
 
@@ -339,15 +398,15 @@ export function registerMikoshiCommand(program: Command): void {
         }
       } catch (err) {
         if (err instanceof MikoshiMemoryPushEngramNotFoundError) {
-          console.error(`Error: ${err.message}`);
+          printError(`Error: ${err.message}`);
           process.exit(1);
         }
         if (err instanceof MikoshiMemoryPushNoFilesError) {
-          console.error(`Error: ${err.message}`);
+          printError(`Error: ${err.message}`);
           process.exit(1);
         }
         if (err instanceof MikoshiMemoryPushCloudNotFoundError) {
-          console.error(`Error: ${err.message}`);
+          printError(`Error: ${err.message}`);
           process.exit(1);
         }
         if (err instanceof MikoshiApiError) {
@@ -368,14 +427,14 @@ export function registerMikoshiCommand(program: Command): void {
 
       const engramId = engramIdArg ?? await resolveDefaultEngram();
       if (!engramId) {
-        console.error("Error: No engram-id specified and no default Engram configured.");
+        printError("Error: No engram-id specified and no default Engram configured.");
         console.error("  Set one with: relic config default-engram <id>");
         process.exit(1);
       }
 
       const apiKey = await resolveMikoshiApiKey();
       if (!apiKey) {
-        console.error("Error: Mikoshi API key is not configured.");
+        printError("Error: Mikoshi API key is not configured.");
         console.error("  Set one with: relic config mikoshi-api-key <key>");
         process.exit(1);
       }
@@ -391,7 +450,7 @@ export function registerMikoshiCommand(program: Command): void {
       }
 
       if (!passphrase) {
-        console.error("Error: Passphrase cannot be empty.");
+        printError("Error: Passphrase cannot be empty.");
         process.exit(1);
       }
 
@@ -416,9 +475,18 @@ export function registerMikoshiCommand(program: Command): void {
             console.log(`\n  Engram: ${result.engramName} (${result.engramId})`);
             console.log(`  Cloud:  ${result.cloudEngramId}`);
             console.log();
-            for (const p of diff.added)   console.log(`  + ${p}`);
-            for (const p of diff.changed) console.log(`  ~ ${p}`);
-            for (const p of diff.removed) console.log(`  - ${p}`);
+            if (diff.added.length > 0) {
+              console.log(`  ${dim("Added (remote has, local doesn't):")}`);
+              for (const p of diff.added)   console.log(`    \x1b[32m+ ${p}\x1b[0m`);
+            }
+            if (diff.changed.length > 0) {
+              console.log(`  ${dim("Changed (content differs):")}`);
+              for (const p of diff.changed) console.log(`    ${yellow(`~ ${p}`)}`);
+            }
+            if (diff.removed.length > 0) {
+              console.log(`  ${dim("Removed (local has, remote doesn't):")}`);
+              for (const p of diff.removed) console.log(`    ${red(`- ${p}`)}`);
+            }
             console.log();
 
             if (!opts.yes) {
@@ -436,15 +504,15 @@ export function registerMikoshiCommand(program: Command): void {
         }
       } catch (err) {
         if (err instanceof MikoshiMemoryPullEngramNotFoundError) {
-          console.error(`Error: ${err.message}`);
+          printError(`Error: ${err.message}`);
           process.exit(1);
         }
         if (err instanceof MikoshiMemoryPullCloudNotFoundError) {
-          console.error(`Error: ${err.message}`);
+          printError(`Error: ${err.message}`);
           process.exit(1);
         }
         if (err instanceof MikoshiMemoryPullDecryptError) {
-          console.error("Error: Failed to decrypt memory. Wrong passphrase or corrupted data.");
+          printError("Error: Failed to decrypt memory. Wrong passphrase or corrupted data.");
           process.exit(1);
         }
         if (err instanceof MikoshiApiError) {
@@ -461,14 +529,18 @@ export function registerMikoshiCommand(program: Command): void {
 
 function handleMikoshiApiError(err: MikoshiApiError): never {
   if (err.isUnauthorized) {
-    console.error("Error: Mikoshi API key is invalid or expired.");
+    console.error(red("Error: Mikoshi API key is invalid or expired."));
     console.error("  Update with: relic config mikoshi-api-key <key>");
   } else if (err.isRateLimited) {
-    console.error("Error: Mikoshi rate limit exceeded. Try again later.");
+    console.error(red("Error: Mikoshi rate limit exceeded. Try again later."));
   } else {
-    console.error(`Error: Mikoshi API returned ${err.status}: ${err.message}`);
+    console.error(red(`Error: Mikoshi API returned ${err.status}: ${err.message}`));
   }
   process.exit(1);
+}
+
+function printError(msg: string): void {
+  console.error(red(msg));
 }
 
 // ---------------------------------------------------------------------------
@@ -506,3 +578,11 @@ function confirm(prompt: string): Promise<boolean> {
     });
   });
 }
+
+// ---------------------------------------------------------------------------
+// ANSI colors
+// ---------------------------------------------------------------------------
+
+const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
+const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
+const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
