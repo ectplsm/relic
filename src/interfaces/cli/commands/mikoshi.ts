@@ -11,7 +11,14 @@ import {
   MikoshiPushEngramNotFoundError,
   MikoshiPushPersonaHashError,
 } from "../../../core/usecases/mikoshi-push.js";
+import {
+  MikoshiPull,
+  MikoshiPullEngramNotFoundError,
+  MikoshiPullCloudNotFoundError,
+  MikoshiPullPersonaMissingError,
+} from "../../../core/usecases/mikoshi-pull.js";
 import { MikoshiApiError } from "../../../core/ports/mikoshi.js";
+import { createInterface } from "node:readline";
 import {
   ensureInitialized,
   resolveEngramsPath,
@@ -165,6 +172,83 @@ export function registerMikoshiCommand(program: Command): void {
         throw err;
       }
     });
+
+  // relic mikoshi pull [engram-id]
+  mikoshi
+    .command("pull [engram-id]")
+    .description("Pull remote persona files from Mikoshi to local Engram")
+    .option("-p, --path <dir>", "Override engrams directory path")
+    .option("-y, --yes", "Skip overwrite confirmation")
+    .action(async (engramIdArg: string | undefined, opts: { path?: string; yes?: boolean }) => {
+      await ensureInitialized();
+
+      const engramId = engramIdArg ?? await resolveDefaultEngram();
+      if (!engramId) {
+        console.error("Error: No engram-id specified and no default Engram configured.");
+        console.error("  Set one with: relic config default-engram <id>");
+        process.exit(1);
+      }
+
+      const apiKey = await resolveMikoshiApiKey();
+      if (!apiKey) {
+        console.error("Error: Mikoshi API key is not configured.");
+        console.error("  Set one with: relic config mikoshi-api-key <key>");
+        process.exit(1);
+      }
+
+      const engramsPath = await resolveEngramsPath(opts.path);
+      const mikoshiUrl = await resolveMikoshiUrl();
+      const repo = new LocalEngramRepository(engramsPath);
+      const client = new MikoshiApiClient(mikoshiUrl, apiKey);
+      const usecase = new MikoshiPull(repo, client);
+
+      try {
+        const { result, apply } = await usecase.check(engramId);
+
+        if (result.outcome === "already_synced") {
+          console.log(`\n  ✅ "${result.engramName}" is already synced.\n`);
+          return;
+        }
+
+        // 差分表示
+        const diff = result.diff!;
+        console.log(`\n  Engram: ${result.engramName} (${result.engramId})`);
+        console.log(`  Cloud:  ${result.cloudEngramId}`);
+        console.log();
+        if (diff.soulDiffers) console.log("  SOUL.md     — differs");
+        if (diff.identityDiffers) console.log("  IDENTITY.md — differs");
+        console.log();
+
+        // 確認プロンプト
+        if (!opts.yes) {
+          const confirmed = await confirm("  Overwrite local persona files? [y/N] ");
+          if (!confirmed) {
+            console.log("  Skipped.\n");
+            return;
+          }
+        }
+
+        await apply!();
+        console.log(`  ✅ Local persona updated from Mikoshi.\n`);
+      } catch (err) {
+        if (err instanceof MikoshiPullEngramNotFoundError) {
+          console.error(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiPullCloudNotFoundError) {
+          console.error(`Error: Engram "${engramId}" not found on Mikoshi.`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiPullPersonaMissingError) {
+          console.error(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiApiError) {
+          handleMikoshiApiError(err);
+        }
+        throw err;
+      }
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -207,4 +291,14 @@ function statusLabel(status: string): string {
     case "unavailable":   return "comparison unavailable";
     default:              return status;
   }
+}
+
+function confirm(prompt: string): Promise<boolean> {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(prompt, (answer) => {
+      rl.close();
+      resolve(answer.trim().toLowerCase() === "y");
+    });
+  });
 }
