@@ -39,6 +39,32 @@ export const MikoshiEngramSchema = z.object({
 export type MikoshiEngram = z.infer<typeof MikoshiEngramSchema>;
 
 // ---------------------------------------------------------------------------
+// Engram detail (with persona content)
+// ---------------------------------------------------------------------------
+
+export const PersonaFileWithContentSchema = z.object({
+  fileType: z.enum(["SOUL", "IDENTITY", "ENGRAM_JSON"]),
+  filename: z.string(),
+  content: z.string(),
+});
+
+export const MikoshiEngramDetailSchema = z.object({
+  id: z.string(),
+  sourceEngramId: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  visibility: z.enum(["PRIVATE", "UNLISTED", "PUBLIC"]),
+  tags: z.array(z.string()),
+  avatarUrl: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  personaFiles: z.array(PersonaFileWithContentSchema),
+  memory: MemorySummarySchema.optional(),
+});
+
+export type MikoshiEngramDetail = z.infer<typeof MikoshiEngramDetailSchema>;
+
+// ---------------------------------------------------------------------------
 // Create engram
 // ---------------------------------------------------------------------------
 
@@ -242,6 +268,9 @@ export interface MikoshiClient {
 
   /** sourceEngramId でリモートEngramを検索 (一覧から絞り込み) */
   getEngramBySourceId(sourceEngramId: string): Promise<MikoshiEngram | null>;
+
+  /** Engram 詳細取得 (persona content 込み) */
+  getEngram(engramId: string): Promise<MikoshiEngramDetail>;
 
   /** 新しいEngramをクラウドに作成 */
   createEngram(input: CreateEngramInput): Promise<CreateEngramResponse>;

@@ -1,6 +1,7 @@
 import {
   MikoshiApiError,
   MikoshiEngramSchema,
+  MikoshiEngramDetailSchema,
   CreateEngramResponseSchema,
   SyncStatusResponseSchema,
   UpdatePersonaResponseSchema,
@@ -8,6 +9,7 @@ import {
   DownloadMemoryResponseSchema,
   type MikoshiClient,
   type MikoshiEngram,
+  type MikoshiEngramDetail,
   type CreateEngramInput,
   type CreateEngramResponse,
   type SyncStatusResponse,
@@ -47,6 +49,11 @@ export class MikoshiApiClient implements MikoshiClient {
   async getEngramBySourceId(sourceEngramId: string): Promise<MikoshiEngram | null> {
     const engrams = await this.getEngrams();
     return engrams.find((e) => e.sourceEngramId === sourceEngramId) ?? null;
+  }
+
+  async getEngram(engramId: string): Promise<MikoshiEngramDetail> {
+    const data = await this.request("GET", `/api/v1/engrams/${enc(engramId)}`);
+    return MikoshiEngramDetailSchema.parse(data);
   }
 
   async createEngram(input: CreateEngramInput): Promise<CreateEngramResponse> {
