@@ -19,6 +19,8 @@ export const RelicConfigSchema = z.object({
   mikoshiUrl: z.string().default("https://mikoshi.ectplsm.com"),
   /** Mikoshi APIキー */
   mikoshiApiKey: z.string().optional(),
+  /** Mikoshi memory 暗号化パスフレーズ */
+  mikoshiPassphrase: z.string().optional(),
   /** --engram 未指定時に召喚するデフォルトEngram ID */
   defaultEngram: z.string().optional(),
   /** claw inject/extract/sync で使うClawディレクトリ (default: ~/.openclaw) */
@@ -219,6 +221,15 @@ export async function resolveMikoshiApiKey(): Promise<string | undefined> {
   await ensureInitialized();
   const config = await loadConfig();
   return config.mikoshiApiKey;
+}
+
+/**
+ * Mikoshi パスフレーズを解決する。未設定時はundefined。
+ */
+export async function resolveMikoshiPassphrase(): Promise<string | undefined> {
+  await ensureInitialized();
+  const config = await loadConfig();
+  return config.mikoshiPassphrase;
 }
 
 export { CONFIG_PATH, RELIC_DIR, TEMPLATES_DIR };

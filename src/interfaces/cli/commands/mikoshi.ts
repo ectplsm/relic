@@ -38,6 +38,9 @@ import {
   resolveDefaultEngram,
   resolveMikoshiUrl,
   resolveMikoshiApiKey,
+  resolveMikoshiPassphrase,
+  loadConfig,
+  saveConfig,
 } from "../../../shared/config.js";
 
 export function registerMikoshiCommand(program: Command): void {
@@ -333,39 +336,8 @@ export function registerMikoshiCommand(program: Command): void {
         process.exit(1);
       }
 
-      // パスフレーズ入力（暗号化時は警告 + 確認入力）
-      console.log();
-      console.log(yellow("  ⚠ This passphrase encrypts your memory data."));
-      console.log(yellow("    If you lose it, your uploaded memory CANNOT be recovered."));
-      console.log();
-      let passphrase: string;
-      try {
-        passphrase = await readPassphrase("Passphrase: ");
-      } catch {
-        console.error("Cancelled.");
-        process.exit(1);
-        return; // unreachable but satisfies TS
-      }
-
-      if (!passphrase) {
-        printError("Error: Passphrase cannot be empty.");
-        process.exit(1);
-      }
-
-      // 確認入力
-      let confirm2: string;
-      try {
-        confirm2 = await readPassphrase("Confirm passphrase: ");
-      } catch {
-        console.error("Cancelled.");
-        process.exit(1);
-        return;
-      }
-
-      if (passphrase !== confirm2) {
-        printError("Error: Passphrases do not match.");
-        process.exit(1);
-      }
+      // パスフレーズ解決: config 優先 → 対話入力
+      const passphrase = await resolvePassphraseForEncrypt();
 
       const engramsPath = await resolveEngramsPath(opts.path);
       const mikoshiUrl = await resolveMikoshiUrl();
@@ -439,20 +411,8 @@ export function registerMikoshiCommand(program: Command): void {
         process.exit(1);
       }
 
-      // パスフレーズ入力
-      let passphrase: string;
-      try {
-        passphrase = await readPassphrase("Passphrase for memory decryption: ");
-      } catch {
-        console.error("Cancelled.");
-        process.exit(1);
-        return;
-      }
-
-      if (!passphrase) {
-        printError("Error: Passphrase cannot be empty.");
-        process.exit(1);
-      }
+      // パスフレーズ解決: config 優先 → 対話入力
+      const passphrase = await resolvePassphraseForDecrypt();
 
       const engramsPath = await resolveEngramsPath(opts.path);
       const mikoshiUrl = await resolveMikoshiUrl();
@@ -586,3 +546,89 @@ function confirm(prompt: string): Promise<boolean> {
 const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
 const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
+
+// ---------------------------------------------------------------------------
+// Passphrase helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * 暗号化用パスフレーズを解決する。
+ * config に保存済みならそれを使い、なければ対話入力 + 確認 + config 保存を提案。
+ */
+async function resolvePassphraseForEncrypt(): Promise<string> {
+  const saved = await resolveMikoshiPassphrase();
+  if (saved) {
+    console.log(dim("  Using saved passphrase from config."));
+    return saved;
+  }
+
+  console.log();
+  console.log(yellow("  ⚠ This passphrase encrypts your memory data."));
+  console.log(yellow("    If you lose it, your uploaded memory CANNOT be recovered."));
+  console.log();
+
+  let passphrase: string;
+  try {
+    passphrase = await readPassphrase("Passphrase: ");
+  } catch {
+    console.error("Cancelled.");
+    process.exit(1);
+  }
+
+  if (!passphrase) {
+    printError("Error: Passphrase cannot be empty.");
+    process.exit(1);
+  }
+
+  // 確認入力
+  let confirm2: string;
+  try {
+    confirm2 = await readPassphrase("Confirm passphrase: ");
+  } catch {
+    console.error("Cancelled.");
+    process.exit(1);
+  }
+
+  if (passphrase !== confirm2) {
+    printError("Error: Passphrases do not match.");
+    process.exit(1);
+  }
+
+  // config に保存するか聞く
+  const shouldSave = await confirm("  Save passphrase to config for future use? [y/N] ");
+  if (shouldSave) {
+    const cfg = await loadConfig();
+    cfg.mikoshiPassphrase = passphrase;
+    await saveConfig(cfg);
+    console.log(dim("  Passphrase saved to config."));
+  }
+
+  return passphrase;
+}
+
+/**
+ * 復号用パスフレーズを解決する。
+ * config に保存済みならそれを使い、なければ対話入力。
+ */
+async function resolvePassphraseForDecrypt(): Promise<string> {
+  const saved = await resolveMikoshiPassphrase();
+  if (saved) {
+    console.log(dim("  Using saved passphrase from config."));
+    return saved;
+  }
+
+  let passphrase: string;
+  try {
+    passphrase = await readPassphrase("Passphrase for memory decryption: ");
+  } catch {
+    console.error("Cancelled.");
+    process.exit(1);
+  }
+
+  if (!passphrase) {
+    printError("Error: Passphrase cannot be empty.");
+    process.exit(1);
+  }
+
+  return passphrase;
+}

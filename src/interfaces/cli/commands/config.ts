@@ -142,6 +142,28 @@ export function registerConfigCommand(program: Command): void {
       console.log("Mikoshi API key saved.");
     });
 
+  // relic config mikoshi-passphrase [value]
+  config
+    .command("mikoshi-passphrase [value]")
+    .description("Get or set the passphrase for Mikoshi memory encryption")
+    .action(async (value: string | undefined) => {
+      await ensureInitialized();
+      const cfg = await loadConfig();
+
+      if (!value) {
+        if (cfg.mikoshiPassphrase) {
+          console.log("(set)");
+        } else {
+          console.log("(not set)");
+        }
+        return;
+      }
+
+      cfg.mikoshiPassphrase = value;
+      await saveConfig(cfg);
+      console.log("Mikoshi passphrase saved.");
+    });
+
   // relic config distillation-batch-size [n]
   config
     .command("distillation-batch-size [n]")
