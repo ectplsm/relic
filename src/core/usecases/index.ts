@@ -76,3 +76,11 @@ export {
   MikoshiMemoryPushCloudNotFoundError,
   type MikoshiMemoryPushResult,
 } from "./mikoshi-memory-push.js";
+export {
+  MikoshiMemoryPull,
+  MikoshiMemoryPullEngramNotFoundError,
+  MikoshiMemoryPullCloudNotFoundError,
+  MikoshiMemoryPullDecryptError,
+  type MikoshiMemoryPullResult,
+  type MikoshiMemoryPullDiff,
+} from "./mikoshi-memory-pull.js";
