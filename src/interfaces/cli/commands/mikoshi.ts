@@ -17,7 +17,14 @@ import {
   MikoshiPullCloudNotFoundError,
   MikoshiPullPersonaMissingError,
 } from "../../../core/usecases/mikoshi-pull.js";
+import {
+  MikoshiMemoryPush,
+  MikoshiMemoryPushEngramNotFoundError,
+  MikoshiMemoryPushNoFilesError,
+  MikoshiMemoryPushCloudNotFoundError,
+} from "../../../core/usecases/mikoshi-memory-push.js";
 import { MikoshiApiError } from "../../../core/ports/mikoshi.js";
+import { readPassphrase } from "../../../core/sync/crypto.js";
 import { createInterface } from "node:readline";
 import {
   ensureInitialized,
@@ -244,6 +251,96 @@ export function registerMikoshiCommand(program: Command): void {
           process.exit(1);
         }
         if (err instanceof MikoshiPullPersonaMissingError) {
+          console.error(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiApiError) {
+          handleMikoshiApiError(err);
+        }
+        throw err;
+      }
+    });
+
+  // relic mikoshi memory push [engram-id]
+  const memory = mikoshi
+    .command("memory")
+    .description("Manage encrypted memory sync with Mikoshi");
+
+  memory
+    .command("push [engram-id]")
+    .description("Encrypt and upload local memory to Mikoshi")
+    .option("-p, --path <dir>", "Override engrams directory path")
+    .action(async (engramIdArg: string | undefined, opts: { path?: string }) => {
+      await ensureInitialized();
+
+      const engramId = engramIdArg ?? await resolveDefaultEngram();
+      if (!engramId) {
+        console.error("Error: No engram-id specified and no default Engram configured.");
+        console.error("  Set one with: relic config default-engram <id>");
+        process.exit(1);
+      }
+
+      const apiKey = await resolveMikoshiApiKey();
+      if (!apiKey) {
+        console.error("Error: Mikoshi API key is not configured.");
+        console.error("  Set one with: relic config mikoshi-api-key <key>");
+        process.exit(1);
+      }
+
+      // パスフレーズ入力
+      let passphrase: string;
+      try {
+        passphrase = await readPassphrase("Passphrase for memory encryption: ");
+      } catch {
+        console.error("Cancelled.");
+        process.exit(1);
+        return; // unreachable but satisfies TS
+      }
+
+      if (!passphrase) {
+        console.error("Error: Passphrase cannot be empty.");
+        process.exit(1);
+      }
+
+      const engramsPath = await resolveEngramsPath(opts.path);
+      const mikoshiUrl = await resolveMikoshiUrl();
+      const repo = new LocalEngramRepository(engramsPath);
+      const client = new MikoshiApiClient(mikoshiUrl, apiKey);
+      const usecase = new MikoshiMemoryPush(repo, client);
+
+      try {
+        const result = await usecase.execute(engramId, passphrase);
+
+        switch (result.outcome) {
+          case "uploaded":
+            console.log(`\n  ✅ Memory uploaded for "${result.engramName}".`);
+            console.log(`  Version: ${result.version}`);
+            console.log(`  Content hash: ${result.memoryContentHash}`);
+            console.log(`  Bundle hash:  ${result.bundleHash}\n`);
+            break;
+          case "conflict":
+            console.error(`\n  ⚠️  Memory conflict for "${result.engramName}".`);
+            console.error("  The remote memory was updated since you last checked.");
+            if (result.conflictRemoteHash) {
+              console.error(`  Remote hash:    ${result.conflictRemoteHash}`);
+            }
+            if (result.conflictRemoteVersion) {
+              console.error(`  Remote version: ${result.conflictRemoteVersion}`);
+            }
+            console.error("  Re-run 'relic mikoshi status' to review the current state.\n");
+            process.exit(1);
+            break;
+        }
+      } catch (err) {
+        if (err instanceof MikoshiMemoryPushEngramNotFoundError) {
+          console.error(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiMemoryPushNoFilesError) {
+          console.error(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiMemoryPushCloudNotFoundError) {
           console.error(`Error: ${err.message}`);
           process.exit(1);
         }
