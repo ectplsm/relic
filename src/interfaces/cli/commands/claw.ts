@@ -111,9 +111,9 @@ export function registerClawCommand(program: Command): void {
             details.push("USER.md");
           }
           if (details.length > 0) {
-            console.log(`✅ Memory synced: ${details.join(", ")}`);
+            console.log(`✅ Memory synced: ${details.join(", ")} (${opts.engram})`);
           } else {
-            console.log(`✅ Memory already in sync`);
+            console.log(`✅ Memory already in sync (${opts.engram})`);
           }
         } catch (err) {
           if (
@@ -183,9 +183,9 @@ export function registerClawCommand(program: Command): void {
             details.push("USER.md");
           }
           if (details.length > 0) {
-            console.log(`✅ Memory synced: ${details.join(", ")}`);
+            console.log(`✅ Memory synced: ${details.join(", ")} (${agentName})`);
           } else {
-            console.log(`✅ Memory already in sync`);
+            console.log(`✅ Memory already in sync (${agentName})`);
           }
         } catch (err) {
           if (
@@ -276,9 +276,9 @@ export function registerClawCommand(program: Command): void {
             details.push("USER.md");
           }
           if (details.length > 0) {
-            console.log(`✅ Memory synced: ${details.join(", ")}`);
+            console.log(`✅ Memory synced: ${details.join(", ")} (${agentName})`);
           } else {
-            console.log(`✅ Memory already in sync`);
+            console.log(`✅ Memory already in sync (${agentName})`);
           }
         } catch (err) {
           if (

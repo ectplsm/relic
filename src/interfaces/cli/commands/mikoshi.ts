@@ -607,7 +607,7 @@ async function runSingleMikoshiSync(
     case "synced": {
       const details = summarizeMergedMemory(result.mergedPaths ?? []);
       if (details.length > 0) {
-        spinner.stop(`${prefix}✅ Memory synced: ${details.join(", ")}`);
+        spinner.stop(`${prefix}✅ Memory synced: ${details.join(", ")} (${engramId})`);
       } else {
         spinner.stop(`${prefix}✅ Memory synced (${engramId})`);
       }
