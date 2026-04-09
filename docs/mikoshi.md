@@ -50,7 +50,7 @@ relic config mikoshi-passphrase <passphrase>
 ```
 
 That passphrase encrypts your memory bundle before upload.
-Lose it, and your uploaded memory is unrecoverable.
+**Lose it, and your uploaded memory is unrecoverable. Keep it somewhere safe.**
 
 ## Command Flow
 

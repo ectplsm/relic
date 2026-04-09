@@ -51,7 +51,7 @@ relic config mikoshi-passphrase <passphrase>
 ```
 
 この passphrase は memory bundle の暗号化に使われます。
-失くしたら、アップロード済み memory は復元不能です。
+**失くしたら、アップロード済み memory は復元不能です。忘れないようにご注意ください。**
 
 ## コマンドフロー
 
