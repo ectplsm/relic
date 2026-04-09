@@ -60,8 +60,7 @@ relic config mikoshi-passphrase <passphrase>
 ```bash
 relic mikoshi list
 relic mikoshi status rebel
-relic mikoshi push rebel
-relic mikoshi memory push rebel
+relic mikoshi push --engram rebel
 relic mikoshi status rebel
 ```
 
@@ -69,46 +68,83 @@ relic mikoshi status rebel
 
 - `relic mikoshi list` は API key で見える cloud Engram を一覧表示
 - `relic mikoshi status <id>` はローカルの persona / memory hash と cloud 側を比較
-- `relic mikoshi push <id>` は平文の persona ファイルを Mikoshi に作成または更新
-- `relic mikoshi memory push <id>` はローカル memory を暗号化してアップロード
+- `relic mikoshi push <id>` は平文の persona ファイルを Mikoshi に作成または更新し、その後 memory も自動 sync する
+
+## コマンド一覧
+
+| コマンド | 方向 | 説明 |
+|---------|------|------|
+| `relic mikoshi push -e <id>` | Relic → Mikoshi | ペルソナ push + 自動 sync（`--no-sync` で sync をスキップ） |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | 新規取り込みまたはペルソナのみ上書き後、その対象を自動 sync（`--create`, `--yes`, `--no-sync`） |
+| `relic mikoshi sync` | Relic ↔ Mikoshi | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`--target` で単一対象指定可） |
 
 ## Persona コマンド
 
 ローカルの persona ファイルを push:
 
 ```bash
-relic mikoshi push <engram-id>
+relic mikoshi push --engram <engram-id>
 ```
 
 cloud 側の persona ファイルをローカル Engram へ pull:
 
 ```bash
-relic mikoshi pull <engram-id>
+relic mikoshi pull --engram <engram-id>
 ```
 
 ローカル Engram がまだ無い場合は、Mikoshi から新規作成しながら pull:
 
 ```bash
-relic mikoshi pull <engram-id> --create
+relic mikoshi pull --engram <engram-id> --create
 ```
 
 注意点:
 
 - persona sync の対象は `SOUL.md` と `IDENTITY.md`
+- 成功した `push` と `pull` は、`--no-sync` を付けない限り memory sync まで自動で走る
 - `--create` を付けると、ローカル Engram 未作成時に remote の persona 情報から新規作成する
-- `--create` で使うのは remote の `name` / `description` / `tags` までで、memory は別途同期する
+- `--create` で使うのは remote の `name` / `description` / `tags` までで、その後 memory は auto-sync に任せる
 - persona drift は明示的で、安全性重視
 - 最後に確認した状態から remote が変わっていれば、Mikoshi は `409 Conflict` で上書きを拒否する
 
-## Memory コマンド
+## Sync
 
-ローカル memory を client-side で暗号化してアップロード:
+通常運用:
+
+```bash
+relic mikoshi sync
+```
+
+特定の 1 対象だけ同期:
+
+```bash
+relic mikoshi sync --target <engram-id>
+```
+
+注意点:
+
+- memory は基本的に単調増加するデータとして扱い、通常は `sync` を使う
+- `sync` は最初にローカルと remote の memory をマージし、その後で遅れている側を更新する
+- `sync` の対象は `USER.md`, `MEMORY.md`, `memory/*.md`
+- `--target` を付けなければ、ローカルにあり、かつ Mikoshi にも存在する Engram をまとめて同期する
+- `archive.md` はアップロードされない
+- memory overwrite も optimistic concurrency を使うので、`409 Conflict` で失敗しうる
+
+## Advanced Memory コマンド
+
+互換維持のための旧サブコマンド:
+
+```bash
+relic mikoshi memory sync <engram-id>
+```
+
+手動でアップロードだけ行う場合:
 
 ```bash
 relic mikoshi memory push <engram-id>
 ```
 
-remote memory をダウンロードして復号:
+手動でダウンロードだけ行う場合:
 
 ```bash
 relic mikoshi memory pull <engram-id>
@@ -116,9 +152,8 @@ relic mikoshi memory pull <engram-id>
 
 注意点:
 
-- memory sync の対象は `USER.md`, `MEMORY.md`, `memory/*.md`
-- `archive.md` はアップロードされない
-- memory overwrite も optimistic concurrency を使うので、`409 Conflict` で失敗しうる
+- `relic mikoshi memory sync` は互換のため残っているが、主役は `relic mikoshi sync`
+- `memory push` と `memory pull` は手動 fallback 用
 
 ## Status の見方
 

@@ -59,8 +59,7 @@ Recommended first-run flow:
 ```bash
 relic mikoshi list
 relic mikoshi status rebel
-relic mikoshi push rebel
-relic mikoshi memory push rebel
+relic mikoshi push --engram rebel
 relic mikoshi status rebel
 ```
 
@@ -68,46 +67,83 @@ What each step does:
 
 - `relic mikoshi list` lists cloud Engrams visible to your API key
 - `relic mikoshi status <id>` compares local persona and memory hashes against cloud state
-- `relic mikoshi push <id>` creates or updates plaintext persona files on Mikoshi
-- `relic mikoshi memory push <id>` encrypts and uploads local memory files
+- `relic mikoshi push <id>` creates or updates plaintext persona files on Mikoshi, then auto-syncs memory
+
+## Command Summary
+
+| Command | Direction | Description |
+|---------|-----------|-------------|
+| `relic mikoshi push -e <id>` | Relic → Mikoshi | Push persona + auto-sync (`--no-sync` skips sync) |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | New import or persona-only overwrite, then auto-sync that target (`--create`, `--yes`, `--no-sync`) |
+| `relic mikoshi sync` | Relic ↔ Mikoshi | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `--target` limits sync to one target) |
 
 ## Persona Commands
 
 Push local persona files:
 
 ```bash
-relic mikoshi push <engram-id>
+relic mikoshi push --engram <engram-id>
 ```
 
 Pull remote persona files into the local Engram:
 
 ```bash
-relic mikoshi pull <engram-id>
+relic mikoshi pull --engram <engram-id>
 ```
 
 Create a new local Engram from Mikoshi if it does not exist yet:
 
 ```bash
-relic mikoshi pull <engram-id> --create
+relic mikoshi pull --engram <engram-id> --create
 ```
 
 Notes:
 
 - persona sync handles `SOUL.md` and `IDENTITY.md`
+- successful `push` and `pull` run memory sync automatically unless you pass `--no-sync`
 - `--create` creates a new local Engram from remote persona data when the local Engram does not exist yet
 - `--create` uses remote `name`, `description`, and `tags`, but keeps memory sync as a separate step
 - persona drift is explicit and safety-sensitive
 - if the remote changed since your last check, Mikoshi rejects the overwrite with `409 Conflict`
 
-## Memory Commands
+## Sync
 
-Upload local memory after encrypting it client-side:
+Normal operation:
+
+```bash
+relic mikoshi sync
+```
+
+One target only:
+
+```bash
+relic mikoshi sync --target <engram-id>
+```
+
+Notes:
+
+- memory is treated as monotonically growing data and `sync` is the default workflow
+- `sync` merges local and remote memory first, then updates whichever side is behind
+- `sync` handles `USER.md`, `MEMORY.md`, and `memory/*.md`
+- `sync` scans all local Engrams that also exist on Mikoshi unless you pass `--target`
+- `archive.md` is never uploaded
+- memory overwrite also uses optimistic concurrency and can fail with `409 Conflict`
+
+## Advanced Memory Commands
+
+Manual sync of one target through the legacy subcommand:
+
+```bash
+relic mikoshi memory sync <engram-id>
+```
+
+Manual upload only:
 
 ```bash
 relic mikoshi memory push <engram-id>
 ```
 
-Download and decrypt remote memory:
+Manual download only:
 
 ```bash
 relic mikoshi memory pull <engram-id>
@@ -115,9 +151,8 @@ relic mikoshi memory pull <engram-id>
 
 Notes:
 
-- memory sync handles `USER.md`, `MEMORY.md`, and `memory/*.md`
-- `archive.md` is never uploaded
-- memory overwrite also uses optimistic concurrency and can fail with `409 Conflict`
+- `relic mikoshi memory sync` remains for compatibility, but `relic mikoshi sync` is the main path now
+- `memory push` and `memory pull` are manual fallback commands
 
 ## Status Meanings
 

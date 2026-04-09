@@ -85,3 +85,10 @@ export {
   type MikoshiMemoryPullResult,
   type MikoshiMemoryPullDiff,
 } from "./mikoshi-memory-pull.js";
+export {
+  MikoshiMemorySync,
+  MikoshiMemorySyncEngramNotFoundError,
+  MikoshiMemorySyncCloudNotFoundError,
+  MikoshiMemorySyncDecryptError,
+  type MikoshiMemorySyncResult,
+} from "./mikoshi-memory-sync.js";

@@ -29,6 +29,12 @@ import {
   MikoshiMemoryPullCloudNotFoundError,
   MikoshiMemoryPullDecryptError,
 } from "../../../core/usecases/mikoshi-memory-pull.js";
+import {
+  MikoshiMemorySync,
+  MikoshiMemorySyncEngramNotFoundError,
+  MikoshiMemorySyncCloudNotFoundError,
+  MikoshiMemorySyncDecryptError,
+} from "../../../core/usecases/mikoshi-memory-sync.js";
 import { MikoshiApiError } from "../../../core/ports/mikoshi.js";
 import { readPassphrase } from "../../../core/sync/crypto.js";
 import { createInterface } from "node:readline";
@@ -168,11 +174,17 @@ export function registerMikoshiCommand(program: Command): void {
   mikoshi
     .command("push [engram-id]")
     .description("Push local Engram persona to Mikoshi cloud")
+    .option("-e, --engram <id>", "Engram ID to push")
+    .option("--no-sync", "Skip automatic memory sync after push")
     .option("-p, --path <dir>", "Override engrams directory path")
-    .action(async (engramIdArg: string | undefined, opts: { path?: string }) => {
+    .action(async (engramIdArg: string | undefined, opts: {
+      engram?: string;
+      sync: boolean;
+      path?: string;
+    }) => {
       await ensureInitialized();
 
-      const engramId = engramIdArg ?? await resolveDefaultEngram();
+      const engramId = await resolveCommandEngramId(engramIdArg, opts.engram);
       if (!engramId) {
         printError("Error: No engram-id specified and no default Engram configured.");
         console.error("  Set one with: relic config default-engram <id>");
@@ -231,23 +243,33 @@ export function registerMikoshiCommand(program: Command): void {
         }
         throw err;
       }
+
+      if (!opts.sync) return;
+
+      const passphrase = await resolvePassphraseForSync();
+      const syncUsecase = new MikoshiMemorySync(repo, client);
+      await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
     });
 
   // relic mikoshi pull [engram-id]
   mikoshi
     .command("pull [engram-id]")
     .description("Pull remote persona files from Mikoshi to local Engram")
+    .option("-e, --engram <id>", "Engram ID to pull")
     .option("-p, --path <dir>", "Override engrams directory path")
     .option("-c, --create", "Create the local Engram if it does not exist")
     .option("-y, --yes", "Skip overwrite confirmation")
+    .option("--no-sync", "Skip automatic memory sync after pull")
     .action(async (engramIdArg: string | undefined, opts: {
+      engram?: string;
       path?: string;
       create?: boolean;
       yes?: boolean;
+      sync: boolean;
     }) => {
       await ensureInitialized();
 
-      const engramId = engramIdArg ?? await resolveDefaultEngram();
+      const engramId = await resolveCommandEngramId(engramIdArg, opts.engram);
       if (!engramId) {
         printError("Error: No engram-id specified and no default Engram configured.");
         console.error("  Set one with: relic config default-engram <id>");
@@ -273,14 +295,28 @@ export function registerMikoshiCommand(program: Command): void {
         });
 
         if (result.outcome === "already_synced") {
-          console.log(`\n  ✅ "${result.engramName}" is already synced.\n`);
+          console.log(`\n  ✅ "${result.engramName}" is already synced.`);
+          if (opts.sync) {
+            const passphrase = await resolvePassphraseForSync();
+            const syncUsecase = new MikoshiMemorySync(repo, client);
+            await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
+          } else {
+            console.log();
+          }
           return;
         }
 
         const localBefore = await repo.get(engramId);
         if (!localBefore) {
           await apply!();
-          console.log(`\n  ✅ Created local Engram "${result.engramName}" from Mikoshi.\n`);
+          console.log(`\n  ✅ Created local Engram "${result.engramName}" from Mikoshi.`);
+          if (opts.sync) {
+            const passphrase = await resolvePassphraseForSync();
+            const syncUsecase = new MikoshiMemorySync(repo, client);
+            await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
+          } else {
+            console.log();
+          }
           return;
         }
 
@@ -303,7 +339,14 @@ export function registerMikoshiCommand(program: Command): void {
         }
 
         await apply!();
-        console.log(`  ✅ Local persona updated from Mikoshi.\n`);
+        console.log(`  ✅ Local persona updated from Mikoshi.`);
+        if (opts.sync) {
+          const passphrase = await resolvePassphraseForSync();
+          const syncUsecase = new MikoshiMemorySync(repo, client);
+          await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
+        } else {
+          console.log();
+        }
       } catch (err) {
         if (err instanceof MikoshiPullCreateFlagRequiredError) {
           printError(`Error: ${err.message}`);
@@ -324,10 +367,145 @@ export function registerMikoshiCommand(program: Command): void {
       }
     });
 
+  mikoshi
+    .command("sync")
+    .description("Bidirectional memory sync between local Engrams and Mikoshi")
+    .option("-t, --target <id>", "Sync one target only by Engram ID")
+    .option("-p, --path <dir>", "Override engrams directory path")
+    .action(async (opts: { target?: string; path?: string }) => {
+      await ensureInitialized();
+
+      const apiKey = await resolveMikoshiApiKey();
+      if (!apiKey) {
+        printError("Error: Mikoshi API key is not configured.");
+        console.error("  Set one with: relic config mikoshi-api-key <key>");
+        process.exit(1);
+      }
+
+      const passphrase = await resolvePassphraseForSync();
+      const engramsPath = await resolveEngramsPath(opts.path);
+      const mikoshiUrl = await resolveMikoshiUrl();
+      const repo = new LocalEngramRepository(engramsPath);
+      const client = new MikoshiApiClient(mikoshiUrl, apiKey);
+      const usecase = new MikoshiMemorySync(repo, client);
+
+      try {
+        if (opts.target) {
+          const targetId = opts.target.trim();
+          if (!targetId) {
+            printError(`Error: Invalid sync target "${opts.target}".`);
+            process.exit(1);
+          }
+
+          await runSingleMikoshiSync(usecase, targetId, passphrase);
+          return;
+        }
+
+        const localEngrams = await repo.list();
+        if (localEngrams.length === 0) {
+          console.log("No local Engrams found.");
+          return;
+        }
+
+        const cloudEngrams = await client.getEngrams();
+        const cloudIds = new Set(cloudEngrams.map((engram) => engram.sourceEngramId));
+        const syncableIds = localEngrams
+          .map((engram) => engram.id)
+          .filter((id) => cloudIds.has(id));
+        const skippedIds = localEngrams
+          .map((engram) => engram.id)
+          .filter((id) => !cloudIds.has(id));
+
+        if (syncableIds.length === 0) {
+          console.log("No matching Mikoshi targets found.");
+          if (skippedIds.length > 0) {
+            console.log(`  Skipped (not on Mikoshi): ${skippedIds.join(", ")}`);
+          }
+          return;
+        }
+
+        for (const engramId of syncableIds) {
+          await runSingleMikoshiSync(usecase, engramId, passphrase);
+        }
+
+        if (skippedIds.length > 0) {
+          console.log(`  Skipped (not on Mikoshi): ${skippedIds.join(", ")}`);
+        }
+      } catch (err) {
+        if (err instanceof MikoshiMemorySyncEngramNotFoundError) {
+          printError(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiMemorySyncCloudNotFoundError) {
+          printError(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiMemorySyncDecryptError) {
+          printError("Error: Failed to decrypt memory. Wrong passphrase or corrupted data.");
+          process.exit(1);
+        }
+        if (err instanceof MikoshiApiError) {
+          handleMikoshiApiError(err);
+        }
+        throw err;
+      }
+    });
+
   // relic mikoshi memory push [engram-id]
   const memory = mikoshi
     .command("memory")
     .description("Manage encrypted memory sync with Mikoshi");
+
+  memory
+    .command("sync [engram-id]")
+    .description("Merge local and remote memory, then synchronize both sides")
+    .option("-p, --path <dir>", "Override engrams directory path")
+    .action(async (engramIdArg: string | undefined, opts: { path?: string }) => {
+      await ensureInitialized();
+
+      const engramId = engramIdArg ?? await resolveDefaultEngram();
+      if (!engramId) {
+        printError("Error: No engram-id specified and no default Engram configured.");
+        console.error("  Set one with: relic config default-engram <id>");
+        process.exit(1);
+      }
+
+      const apiKey = await resolveMikoshiApiKey();
+      if (!apiKey) {
+        printError("Error: Mikoshi API key is not configured.");
+        console.error("  Set one with: relic config mikoshi-api-key <key>");
+        process.exit(1);
+      }
+
+      const passphrase = await resolvePassphraseForSync();
+
+      const engramsPath = await resolveEngramsPath(opts.path);
+      const mikoshiUrl = await resolveMikoshiUrl();
+      const repo = new LocalEngramRepository(engramsPath);
+      const client = new MikoshiApiClient(mikoshiUrl, apiKey);
+      const usecase = new MikoshiMemorySync(repo, client);
+
+      try {
+        await runSingleMikoshiSync(usecase, engramId, passphrase);
+      } catch (err) {
+        if (err instanceof MikoshiMemorySyncEngramNotFoundError) {
+          printError(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiMemorySyncCloudNotFoundError) {
+          printError(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiMemorySyncDecryptError) {
+          printError("Error: Failed to decrypt memory. Wrong passphrase or corrupted data.");
+          process.exit(1);
+        }
+        if (err instanceof MikoshiApiError) {
+          handleMikoshiApiError(err);
+        }
+        throw err;
+      }
+    });
 
   memory
     .command("push [engram-id]")
@@ -645,4 +823,116 @@ async function resolvePassphraseForDecrypt(): Promise<string> {
   }
 
   return passphrase;
+}
+
+async function resolvePassphraseForSync(): Promise<string> {
+  const saved = await resolveMikoshiPassphrase();
+  if (saved) {
+    console.log(dim("  Using saved passphrase from config."));
+    return saved;
+  }
+
+  let passphrase: string;
+  try {
+    passphrase = await readPassphrase("Passphrase for memory sync: ");
+  } catch {
+    console.error("Cancelled.");
+    process.exit(1);
+  }
+
+  if (!passphrase) {
+    printError("Error: Passphrase cannot be empty.");
+    process.exit(1);
+  }
+
+  let confirm2: string;
+  try {
+    confirm2 = await readPassphrase("Confirm passphrase: ");
+  } catch {
+    console.error("Cancelled.");
+    process.exit(1);
+  }
+
+  if (passphrase !== confirm2) {
+    printError("Error: Passphrases do not match.");
+    process.exit(1);
+  }
+
+  return passphrase;
+}
+
+async function resolveCommandEngramId(
+  positionalEngramId: string | undefined,
+  optionEngramId: string | undefined,
+): Promise<string | undefined> {
+  const positional = positionalEngramId?.trim();
+  const option = optionEngramId?.trim();
+
+  if (positional && option && positional !== option) {
+    printError(`Error: Conflicting Engram IDs: "${positional}" and "${option}".`);
+    process.exit(1);
+  }
+
+  return positional ?? option ?? await resolveDefaultEngram();
+}
+
+async function runSingleMikoshiSync(
+  usecase: MikoshiMemorySync,
+  engramId: string,
+  passphrase: string,
+  options?: { prefix?: string },
+): Promise<void> {
+  const prefix = options?.prefix ?? "  ";
+  const result = await usecase.execute(engramId, passphrase);
+
+  switch (result.outcome) {
+    case "already_synced":
+      console.log(`${prefix}Already in sync (${engramId})`);
+      if (!options?.prefix) {
+        console.log();
+      }
+      return;
+    case "synced": {
+      const details = summarizeMergedMemory(result.mergedPaths ?? []);
+      if (details.length > 0) {
+        console.log(`${prefix}${engramId}: merged ${details.join(", ")}`);
+      } else {
+        console.log(`${prefix}Memory synced (${engramId})`);
+      }
+      if (!options?.prefix) {
+        console.log();
+      }
+      return;
+    }
+    case "conflict":
+      console.error(`\n  ⚠️  Memory sync conflict for "${result.engramName}".`);
+      console.error("  The remote memory changed during sync.");
+      if (result.conflictRemoteHash) {
+        console.error(`  Remote hash:    ${result.conflictRemoteHash}`);
+      }
+      if (result.conflictRemoteVersion) {
+        console.error(`  Remote version: ${result.conflictRemoteVersion}`);
+      }
+      console.error("  Re-run 'relic mikoshi sync' to merge again.\n");
+      process.exit(1);
+  }
+}
+
+function summarizeMergedMemory(paths: string[]): string[] {
+  const details: string[] = [];
+  const memoryEntries = paths.filter(
+    (path) => path.startsWith("memory/") && path.endsWith(".md"),
+  );
+
+  if (memoryEntries.length > 0) {
+    details.push(`${memoryEntries.length} memory file(s)`);
+  }
+  if (paths.includes("MEMORY.md")) {
+    details.push("MEMORY.md");
+  }
+  if (paths.includes("USER.md")) {
+    details.push("USER.md");
+  }
+
+  return details;
 }
