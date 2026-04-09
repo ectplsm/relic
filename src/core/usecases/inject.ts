@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { EngramFiles } from "../entities/engram.js";
 import { INJECT_FILE_MAP, resolveWorkspacePath } from "../../shared/openclaw.js";
@@ -11,6 +11,7 @@ export interface InjectPersonaDiffResult {
   engramId: string;
   engramName: string;
   targetPath: string;
+  targetExists: boolean;
   soul: InjectPersonaFileDiff;
   identity: InjectPersonaFileDiff;
   overwriteRequired: boolean;
@@ -42,6 +43,7 @@ export class Inject {
   ): Promise<InjectPersonaDiffResult> {
     const { engram, targetPath } = await this.loadInjectTarget(engramId, options);
     const mergeIdentity = options?.mergeIdentity ?? false;
+    const targetExists = existsSync(targetPath);
 
     const soul = await this.compareTargetFile(
       join(targetPath, INJECT_FILE_MAP.soul!),
@@ -59,6 +61,7 @@ export class Inject {
       engramId: engram.meta.id,
       engramName: engram.meta.name,
       targetPath,
+      targetExists,
       soul,
       identity,
       overwriteRequired: soul === "different" || identity === "different",
@@ -73,6 +76,8 @@ export class Inject {
     }
   ): Promise<InjectResult> {
     const { engram, targetPath } = await this.loadInjectTarget(engramId, options);
+
+    await mkdir(targetPath, { recursive: true });
 
     const filesWritten = await this.writeFiles(
       targetPath,
@@ -105,11 +110,6 @@ export class Inject {
     }
 
     const targetPath = resolveWorkspacePath(engramId, options?.openclawDir);
-
-    if (!existsSync(targetPath)) {
-      throw new InjectWorkspaceNotFoundError(engramId);
-    }
-
     return { engram, targetPath };
   }
 

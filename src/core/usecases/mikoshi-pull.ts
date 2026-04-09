@@ -28,7 +28,7 @@ export interface MikoshiPullResult {
 
 export class MikoshiPullEngramNotFoundError extends Error {
   constructor(public readonly engramId: string) {
-    super(`Engram "${engramId}" not found locally. Use "relic mikoshi download" to import it first.`);
+    super(`Engram "${engramId}" not found locally. Use "relic mikoshi pull" to create or update it.`);
     this.name = "MikoshiPullEngramNotFoundError";
   }
 }

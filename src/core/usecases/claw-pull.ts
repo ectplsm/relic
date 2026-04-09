@@ -34,7 +34,7 @@ export interface ClawPullResult {
 
 export class ClawPullEngramNotFoundError extends Error {
   constructor(public readonly engramId: string) {
-    super(`Engram "${engramId}" not found locally. Use "relic claw extract" to import it first.`);
+    super(`Engram "${engramId}" not found locally. Use "relic claw pull" to create or update it.`);
     this.name = "ClawPullEngramNotFoundError";
   }
 }

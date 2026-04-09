@@ -11,6 +11,7 @@ import {
 import {
   MikoshiPush,
   MikoshiPushEngramNotFoundError,
+  MikoshiPushPersonaConflictError,
   MikoshiPushPersonaHashError,
 } from "../../../core/usecases/mikoshi-push.js";
 import {
@@ -172,10 +173,12 @@ export function registerMikoshiCommand(program: Command): void {
     .command("push")
     .description("Push local Engram persona to Mikoshi cloud")
     .requiredOption("-e, --engram <id>", "Engram ID to push")
+    .option("-y, --yes", "Skip create/overwrite confirmation")
     .option("--no-sync", "Skip automatic memory sync after push")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(async (opts: {
       engram: string;
+      yes?: boolean;
       sync: boolean;
       path?: string;
     }) => {
@@ -196,35 +199,41 @@ export function registerMikoshiCommand(program: Command): void {
       const client = new MikoshiApiClient(mikoshiUrl, apiKey);
       const usecase = new MikoshiPush(repo, client);
 
-      const spinner = startSpinner("Pushing persona to Mikoshi...");
       try {
-        const result = await usecase.execute(engramId);
+        const spinner = startSpinner("Checking remote persona...");
+        const { result, apply } = await usecase.check(engramId);
+        spinner.stop();
 
-        switch (result.outcome) {
-          case "created":
-            spinner.stop(`✅ Created "${result.engramName}" on Mikoshi.`);
-            printLine(`Cloud ID: ${result.cloudEngramId}`);
-            break;
-          case "updated":
-            spinner.stop(`✅ Persona updated for "${result.engramName}".`);
-            printLine(`Hash: ${result.newPersonaHash}`);
-            break;
-          case "already_synced":
-            spinner.stop(`✅ Persona already in sync (${result.engramName})`);
-            break;
-          case "conflict":
-            spinner.stop();
-            printErrorLine(`⚠ Persona conflict for "${result.engramName}".`);
-            printErrorLine("The remote persona was updated since you last checked.");
-            if (result.conflictRemoteHash) {
-              printErrorDetail(`Remote hash: ${result.conflictRemoteHash}`);
+        if (result.outcome === "already_synced") {
+          printLine(`✅ Persona already in sync (${result.engramName})`);
+        } else {
+          if (result.outcome === "create_required") {
+            if (
+              !opts.yes &&
+              !(await confirm(`Engram "${engramId}" does not exist on Mikoshi. Create it? [y/N] `))
+            ) {
+              printLine("Skipped.");
+              return;
             }
-            printErrorLine("Re-run 'relic mikoshi status' to review the current state.");
-            process.exit(1);
-            break;
+          } else if (
+            !opts.yes &&
+            !(await confirm(`Overwrite Mikoshi persona with the local Relic version for "${engramId}"? [y/N] `))
+          ) {
+            printLine("Skipped.");
+            return;
+          }
+
+          const applySpinner = startSpinner("Pushing persona to Mikoshi...");
+          const applied = await apply!();
+          if (applied.action === "created") {
+            applySpinner.stop(`✅ Created "${result.engramName}" on Mikoshi.`);
+            printLine(`Cloud ID: ${applied.cloudEngramId}`);
+          } else {
+            applySpinner.stop(`✅ Persona updated for "${result.engramName}".`);
+            printLine(`Hash: ${applied.newPersonaHash}`);
+          }
         }
       } catch (err) {
-        spinner.stop();
         if (err instanceof MikoshiPushEngramNotFoundError) {
           printError(`Error: ${err.message}`);
           process.exit(1);
@@ -233,64 +242,13 @@ export function registerMikoshiCommand(program: Command): void {
           printError(`Error: ${err.message}`);
           process.exit(1);
         }
-        if (err instanceof MikoshiApiError) {
-          handleMikoshiApiError(err);
-        }
-        throw err;
-      }
-
-      if (!opts.sync) return;
-
-      const passphrase = await resolvePassphraseForSync();
-      const syncUsecase = new MikoshiMemorySync(repo, client);
-      await runSingleMikoshiSync(syncUsecase, engramId, passphrase);
-    });
-
-  // relic mikoshi download -e <id>
-  mikoshi
-    .command("download")
-    .description("Download a remote Engram from Mikoshi to local (first-time import)")
-    .requiredOption("-e, --engram <id>", "Engram ID to download")
-    .option("--no-sync", "Skip automatic memory sync after download")
-    .option("-p, --path <dir>", "Override engrams directory path")
-    .action(async (opts: {
-      engram: string;
-      sync: boolean;
-      path?: string;
-    }) => {
-      await ensureInitialized();
-
-      const engramId = opts.engram.trim();
-
-      const apiKey = await resolveMikoshiApiKey();
-      if (!apiKey) {
-        printError("Error: Mikoshi API key is not configured.");
-        printErrorDetail("Set one with: relic config mikoshi-api-key <key>");
-        process.exit(1);
-      }
-
-      const engramsPath = await resolveEngramsPath(opts.path);
-      const mikoshiUrl = await resolveMikoshiUrl();
-      const repo = new LocalEngramRepository(engramsPath);
-      const client = new MikoshiApiClient(mikoshiUrl, apiKey);
-      const usecase = new MikoshiDownload(repo, client);
-
-      const spinner = startSpinner("Downloading from Mikoshi...");
-      try {
-        const result = await usecase.execute(engramId);
-        spinner.stop(`✅ Downloaded "${result.engramName}" from Mikoshi.`);
-      } catch (err) {
-        spinner.stop();
-        if (err instanceof MikoshiDownloadAlreadyExistsError) {
-          printError(`Error: ${err.message}`);
-          process.exit(1);
-        }
-        if (err instanceof MikoshiDownloadCloudNotFoundError) {
-          printError(`Error: Engram "${engramId}" not found on Mikoshi.`);
-          process.exit(1);
-        }
-        if (err instanceof MikoshiDownloadPersonaMissingError) {
-          printError(`Error: ${err.message}`);
+        if (err instanceof MikoshiPushPersonaConflictError) {
+          printErrorLine(`⚠ Persona conflict for "${engramId}".`);
+          printErrorLine("The remote persona was updated since you last checked.");
+          if (err.conflictRemoteHash) {
+            printErrorDetail(`Remote hash: ${err.conflictRemoteHash}`);
+          }
+          printErrorLine("Re-run 'relic mikoshi status' to review the current state.");
           process.exit(1);
         }
         if (err instanceof MikoshiApiError) {
@@ -309,9 +267,9 @@ export function registerMikoshiCommand(program: Command): void {
   // relic mikoshi pull -e <id>
   mikoshi
     .command("pull")
-    .description("Update local persona files from Mikoshi (existing Engram required)")
+    .description("Pull persona from Mikoshi into local Relic")
     .requiredOption("-e, --engram <id>", "Engram ID to pull")
-    .option("-y, --yes", "Skip persona overwrite confirmation")
+    .option("-y, --yes", "Skip create/overwrite confirmation")
     .option("--no-sync", "Skip automatic memory sync after pull")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(async (opts: {
@@ -335,14 +293,25 @@ export function registerMikoshiCommand(program: Command): void {
       const mikoshiUrl = await resolveMikoshiUrl();
       const repo = new LocalEngramRepository(engramsPath);
       const client = new MikoshiApiClient(mikoshiUrl, apiKey);
+      const download = new MikoshiDownload(repo, client);
       const usecase = new MikoshiPull(repo, client);
 
-      const spinner = startSpinner("Checking remote persona...");
       try {
-        const { result, apply } = await usecase.check(engramId);
+        const local = await repo.get(engramId);
 
-        if (result.outcome === "already_synced") {
-          spinner.stop(`✅ Persona already in sync (${result.engramName})`);
+        if (!local) {
+          if (
+            !opts.yes &&
+            !(await confirm(`Local Engram "${engramId}" does not exist. Create it from Mikoshi? [y/N] `))
+          ) {
+            printLine("Skipped.");
+            return;
+          }
+
+          const spinner = startSpinner("Pulling persona from Mikoshi...");
+          const result = await download.execute(engramId);
+          spinner.stop(`✅ Pulled "${result.engramName}" from Mikoshi.`);
+
           if (opts.sync) {
             const passphrase = await resolvePassphraseForSync();
             const syncUsecase = new MikoshiMemorySync(repo, client);
@@ -351,8 +320,20 @@ export function registerMikoshiCommand(program: Command): void {
           return;
         }
 
-        // 差分表示
+        const spinner = startSpinner("Checking remote persona...");
+        const { result, apply } = await usecase.check(engramId);
         spinner.stop();
+
+        if (result.outcome === "already_synced") {
+          printLine(`✅ Persona already in sync (${result.engramName})`);
+          if (opts.sync) {
+            const passphrase = await resolvePassphraseForSync();
+            const syncUsecase = new MikoshiMemorySync(repo, client);
+            await runSingleMikoshiSync(syncUsecase, engramId, passphrase);
+          }
+          return;
+        }
+
         const diff = result.diff!;
         printLine(`Engram: ${result.engramName} (${result.engramId})`);
         printLine(`Cloud:  ${result.cloudEngramId}`);
@@ -379,8 +360,19 @@ export function registerMikoshiCommand(program: Command): void {
           await runSingleMikoshiSync(syncUsecase, engramId, passphrase);
         }
       } catch (err) {
-        spinner.stop();
         if (err instanceof MikoshiPullEngramNotFoundError) {
+          printError(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiDownloadAlreadyExistsError) {
+          printError(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiDownloadCloudNotFoundError) {
+          printError(`Error: Engram "${engramId}" not found on Mikoshi.`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiDownloadPersonaMissingError) {
           printError(`Error: ${err.message}`);
           process.exit(1);
         }

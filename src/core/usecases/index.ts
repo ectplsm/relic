@@ -67,7 +67,9 @@ export {
   MikoshiPush,
   MikoshiPushEngramNotFoundError,
   MikoshiPushPersonaHashError,
+  MikoshiPushPersonaConflictError,
   type MikoshiPushResult,
+  type MikoshiPushApplyResult,
 } from "./mikoshi-push.js";
 export {
   MikoshiDownload,
