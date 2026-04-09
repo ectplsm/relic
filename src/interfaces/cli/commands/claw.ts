@@ -16,7 +16,6 @@ import {
   SyncOpenclawDirNotFoundError,
 } from "../../../core/usecases/index.js";
 import {
-  resolveDefaultEngram,
   resolveEngramsPath,
   resolveClawPath,
 } from "../../../shared/config.js";
@@ -316,47 +315,8 @@ export function registerClawCommand(program: Command): void {
           }
 
           if (!opts.all) {
-            const defaultEngram = await resolveDefaultEngram();
-            if (!defaultEngram) {
-              console.error("Error: No default Engram configured.");
-              console.error("  Set one with: relic config default-engram <id>");
-              console.error("  Or pass --target <id> or --all.");
-              process.exit(1);
-            }
-
-            const engram = await repo.get(defaultEngram);
-            if (!engram) {
-              console.error(`Error: Engram "${defaultEngram}" not found.`);
-              process.exit(1);
-            }
-
-            const workspacePath = resolveWorkspacePath(defaultEngram, clawDir);
-            if (!existsSync(workspacePath)) {
-              console.error(`Error: Claw agent "${defaultEngram}" workspace not found.`);
-              process.exit(1);
-            }
-
-            const result = await sync.syncPair({
-              engramId: defaultEngram,
-              workspacePath,
-            });
-
-            const details: string[] = [];
-            if (result.memoryFilesMerged > 0) {
-              details.push(`${result.memoryFilesMerged} memory file(s)`);
-            }
-            if (result.memoryIndexMerged) {
-              details.push("MEMORY.md");
-            }
-            if (result.userMerged) {
-              details.push("USER.md");
-            }
-            if (details.length > 0) {
-              console.log(`  ${defaultEngram}: merged ${details.join(", ")}`);
-            } else {
-              console.log(`  Already in sync (${defaultEngram})`);
-            }
-            return;
+            console.error("Error: Specify --target <id> or --all.");
+            process.exit(1);
           }
 
           const result = await sync.execute(clawDir);

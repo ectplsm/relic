@@ -156,26 +156,21 @@ export function registerMikoshiCommand(program: Command): void {
         throw err;
       }
     });
-  // relic mikoshi push [engram-id]
+  // relic mikoshi push -e <id>
   mikoshi
-    .command("push [engram-id]")
+    .command("push")
     .description("Push local Engram persona to Mikoshi cloud")
-    .option("-e, --engram <id>", "Engram ID to push")
+    .requiredOption("-e, --engram <id>", "Engram ID to push")
     .option("--no-sync", "Skip automatic memory sync after push")
     .option("-p, --path <dir>", "Override engrams directory path")
-    .action(async (engramIdArg: string | undefined, opts: {
-      engram?: string;
+    .action(async (opts: {
+      engram: string;
       sync: boolean;
       path?: string;
     }) => {
       await ensureInitialized();
 
-      const engramId = await resolveCommandEngramId(engramIdArg, opts.engram);
-      if (!engramId) {
-        printError("Error: No engram-id specified and no default Engram configured.");
-        console.error("  Set one with: relic config default-engram <id>");
-        process.exit(1);
-      }
+      const engramId = opts.engram.trim();
 
       const apiKey = await resolveMikoshiApiKey();
       if (!apiKey) {
@@ -362,6 +357,15 @@ export function registerMikoshiCommand(program: Command): void {
     .action(async (opts: { target?: string; all?: boolean; path?: string }) => {
       await ensureInitialized();
 
+      if (opts.target && opts.all) {
+        printError("Error: --target and --all cannot be used together.");
+        process.exit(1);
+      }
+      if (!opts.target && !opts.all) {
+        printError("Error: Specify --target <id> or --all.");
+        process.exit(1);
+      }
+
       const apiKey = await resolveMikoshiApiKey();
       if (!apiKey) {
         printError("Error: Mikoshi API key is not configured.");
@@ -377,11 +381,6 @@ export function registerMikoshiCommand(program: Command): void {
       const usecase = new MikoshiMemorySync(repo, client);
 
       try {
-        if (opts.target && opts.all) {
-          printError("Error: --target and --all cannot be used together.");
-          process.exit(1);
-        }
-
         if (opts.target) {
           const targetId = opts.target.trim();
           if (!targetId) {
@@ -390,19 +389,6 @@ export function registerMikoshiCommand(program: Command): void {
           }
 
           await runSingleMikoshiSync(usecase, targetId, passphrase);
-          return;
-        }
-
-        if (!opts.all) {
-          const defaultEngram = await resolveDefaultEngram();
-          if (!defaultEngram) {
-            printError("Error: No default Engram configured.");
-            console.error("  Set one with: relic config default-engram <id>");
-            console.error("  Or pass --target <id> or --all.");
-            process.exit(1);
-          }
-
-          await runSingleMikoshiSync(usecase, defaultEngram, passphrase);
           return;
         }
 
@@ -559,21 +545,6 @@ async function resolvePassphraseForSync(): Promise<string> {
   }
 
   return passphrase;
-}
-
-async function resolveCommandEngramId(
-  positionalEngramId: string | undefined,
-  optionEngramId: string | undefined,
-): Promise<string | undefined> {
-  const positional = positionalEngramId?.trim();
-  const option = optionEngramId?.trim();
-
-  if (positional && option && positional !== option) {
-    printError(`Error: Conflicting Engram IDs: "${positional}" and "${option}".`);
-    process.exit(1);
-  }
-
-  return positional ?? option ?? await resolveDefaultEngram();
 }
 
 function resolveRequiredCommandEngramId(
