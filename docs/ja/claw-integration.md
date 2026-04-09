@@ -20,7 +20,7 @@ Claw コマンドはすべて `relic claw` 配下です。
 |---------|------|------|
 | `relic claw inject -e <id>` | Relic → Claw | ペルソナ注入 + 自動 sync（`--yes` で上書き確認をスキップ、`--no-sync` で sync をスキップ、非 OpenClaw は `--merge-identity`） |
 | `relic claw extract -a <name>` | Claw → Relic | 新規取り込みまたはペルソナのみ上書き後、その対象を自動 sync（`--force`, `--yes`, `--no-sync`） |
-| `relic claw sync --target <id>` | Relic ↔ Claw | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`--target` は単一対象、`--all` は全対象） |
+| `relic claw sync --engram <id>` | Relic ↔ Claw | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`--engram` は単一対象、`--all` は全対象） |
 
 ## Inject
 
@@ -90,12 +90,12 @@ relic claw extract --agent rebel --dir /path/to/.fooclaw
 Engram と agent の両方が存在する対象だけが同期されます。
 `inject` の後にも自動実行されます（`--no-sync` でスキップ可）。
 
-`--target` か `--all` のどちらかが必須です。
-`--target <id>` で特定の対象だけ、`--all` で全対象を走査します。
+`--engram` か `--all` のどちらかが必須です。
+`--engram <id>` で特定の対象だけ、`--all` で全対象を走査します。
 
 ```bash
 # 特定の1対象だけ同期
-relic claw sync --target rebel
+relic claw sync --engram rebel
 
 # マッチする対象をすべて同期
 relic claw sync --all
@@ -127,8 +127,8 @@ relic claw sync --dir /path/to/.fooclaw
 | `extract` | ローカルEngram既存あり・ペルソナ差分あり | `--force` | `SOUL.md` / `IDENTITY.md` の上書き前に確認を出し、その後その対象だけ自動sync |
 | `extract` | ローカルEngram既存あり・ペルソナ差分あり | `--force --yes` | 確認なしで `SOUL.md` / `IDENTITY.md` を上書きし、その後その対象だけ自動sync |
 | `extract` | 成功時全般 | `--no-sync` | 自動対象 sync をスキップ |
-| `sync` | target 指定なし | なし | エラー — `--target` か `--all` が必須 |
-| `sync` | 特定対象 | `--target <id>` | `agentName = engramId` の1対象だけ同期 |
+| `sync` | target 指定なし | なし | エラー — `--engram` か `--all` が必須 |
+| `sync` | 特定対象 | `--engram <id>` | `agentName = engramId` の1対象だけ同期 |
 | `sync` | 全対象 | `--all` | マッチするすべての対象を走査して同期 |
 
 補足:

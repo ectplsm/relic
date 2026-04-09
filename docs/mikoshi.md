@@ -76,7 +76,7 @@ What each step does:
 | `relic mikoshi status -e <id>` | — | Show sync status between local and cloud |
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | Push persona + auto-sync (`--no-sync` skips sync) |
 | `relic mikoshi pull -e <id>` | Mikoshi → Relic | New import or persona-only overwrite, then auto-sync that target (`--create`, `--yes`, `--no-sync`) |
-| `relic mikoshi sync --target <id>` | Relic ↔ Mikoshi | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `--target` = one target, `--all` = all targets) |
+| `relic mikoshi sync --engram <id>` | Relic ↔ Mikoshi | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `--engram` = one target, `--all` = all targets) |
 
 ## Persona Commands
 
@@ -112,7 +112,7 @@ Notes:
 One target:
 
 ```bash
-relic mikoshi sync --target <engram-id>
+relic mikoshi sync --engram <engram-id>
 ```
 
 All matching targets:
@@ -121,7 +121,7 @@ All matching targets:
 relic mikoshi sync --all
 ```
 
-Either `--target` or `--all` is required.
+Either `--engram` or `--all` is required.
 
 Notes:
 

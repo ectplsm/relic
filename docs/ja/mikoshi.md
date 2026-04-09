@@ -77,7 +77,7 @@ relic mikoshi status -e rebel
 | `relic mikoshi status -e <id>` | — | ローカルと cloud の同期状態を表示 |
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | ペルソナ push + 自動 sync（`--no-sync` で sync をスキップ） |
 | `relic mikoshi pull -e <id>` | Mikoshi → Relic | 新規取り込みまたはペルソナのみ上書き後、その対象を自動 sync（`--create`, `--yes`, `--no-sync`） |
-| `relic mikoshi sync --target <id>` | Relic ↔ Mikoshi | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`--target` は単一対象、`--all` は全対象） |
+| `relic mikoshi sync --engram <id>` | Relic ↔ Mikoshi | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`--engram` は単一対象、`--all` は全対象） |
 
 ## Persona コマンド
 
@@ -113,7 +113,7 @@ relic mikoshi pull --engram <engram-id> --create
 特定の 1 対象だけ同期:
 
 ```bash
-relic mikoshi sync --target <engram-id>
+relic mikoshi sync --engram <engram-id>
 ```
 
 全対象を同期:
@@ -122,7 +122,7 @@ relic mikoshi sync --target <engram-id>
 relic mikoshi sync --all
 ```
 
-`--target` か `--all` のどちらかが必須です。
+`--engram` か `--all` のどちらかが必須です。
 
 注意点:
 

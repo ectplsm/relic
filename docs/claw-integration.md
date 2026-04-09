@@ -20,7 +20,7 @@ All Claw commands live under `relic claw`.
 |---------|-----------|-------------|
 | `relic claw inject -e <id>` | Relic → Claw | Push persona + auto-sync (`--yes` skips overwrite confirmation, `--no-sync` skips sync, `--merge-identity` for non-OpenClaw) |
 | `relic claw extract -a <name>` | Claw → Relic | New import or persona-only overwrite, then auto-sync that target (`--force`, `--yes`, `--no-sync`) |
-| `relic claw sync --target <id>` | Relic ↔ Claw | Bidirectional merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `--target` = one target, `--all` = all targets) |
+| `relic claw sync --engram <id>` | Relic ↔ Claw | Bidirectional merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `--engram` = one target, `--all` = all targets) |
 
 ## Inject
 
@@ -91,13 +91,13 @@ relic claw extract --agent rebel --dir /path/to/.fooclaw
 Only targets where both the Engram and agent exist are synced.
 It also runs automatically after `inject` unless you pass `--no-sync`.
 
-Either `--target` or `--all` is required.
-Use `--target <id>` to sync only one target by shared Engram/agent name.
+Either `--engram` or `--all` is required.
+Use `--engram <id>` to sync only one target by shared Engram/agent name.
 Use `--all` to scan all matching targets.
 
 ```bash
 # Sync only one matching target
-relic claw sync --target rebel
+relic claw sync --engram rebel
 
 # Sync all matching targets
 relic claw sync --all
@@ -129,8 +129,8 @@ Merge rules:
 | `extract` | Local Engram exists, persona differs | `--force` | Ask for confirmation before overwriting `SOUL.md` / `IDENTITY.md`, then auto-sync that target |
 | `extract` | Local Engram exists, persona differs | `--force --yes` | Overwrite `SOUL.md` / `IDENTITY.md` without confirmation, then auto-sync that target |
 | `extract` | any successful extract | `--no-sync` | Skip the automatic targeted sync |
-| `sync` | no target specified | none | Fail — `--target` or `--all` is required |
-| `sync` | explicit target | `--target <id>` | Sync one matching target where `agentName = engramId` |
+| `sync` | no target specified | none | Fail — `--engram` or `--all` is required |
+| `sync` | explicit target | `--engram <id>` | Sync one matching target where `agentName = engramId` |
 | `sync` | all targets | `--all` | Scan and sync all matching targets |
 
 Notes:

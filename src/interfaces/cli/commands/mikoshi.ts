@@ -340,18 +340,18 @@ export function registerMikoshiCommand(program: Command): void {
   mikoshi
     .command("sync")
     .description("Bidirectional memory sync between local Engrams and Mikoshi")
-    .option("-t, --target <id>", "Sync one target only by Engram ID")
+    .option("-e, --engram <id>", "Engram ID to sync")
     .option("--all", "Sync all matching targets")
     .option("-p, --path <dir>", "Override engrams directory path")
-    .action(async (opts: { target?: string; all?: boolean; path?: string }) => {
+    .action(async (opts: { engram?: string; all?: boolean; path?: string }) => {
       await ensureInitialized();
 
-      if (opts.target && opts.all) {
-        printError("Error: --target and --all cannot be used together.");
+      if (opts.engram && opts.all) {
+        printError("Error: --engram and --all cannot be used together.");
         process.exit(1);
       }
-      if (!opts.target && !opts.all) {
-        printError("Error: Specify --target <id> or --all.");
+      if (!opts.engram && !opts.all) {
+        printError("Error: Specify --engram <id> or --all.");
         process.exit(1);
       }
 
@@ -370,14 +370,14 @@ export function registerMikoshiCommand(program: Command): void {
       const usecase = new MikoshiMemorySync(repo, client);
 
       try {
-        if (opts.target) {
-          const targetId = opts.target.trim();
-          if (!targetId) {
-            printError(`Error: Invalid sync target "${opts.target}".`);
+        if (opts.engram) {
+          const engramId = opts.engram.trim();
+          if (!engramId) {
+            printError(`Error: Invalid Engram ID "${opts.engram}".`);
             process.exit(1);
           }
 
-          await runSingleMikoshiSync(usecase, targetId, passphrase);
+          await runSingleMikoshiSync(usecase, engramId, passphrase);
           return;
         }
 

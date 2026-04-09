@@ -251,13 +251,13 @@ export function registerClawCommand(program: Command): void {
   claw
     .command("sync")
     .description("Bidirectional memory sync between Engrams and Claw workspaces")
-    .option("-t, --target <id>", "Sync one target only by shared Engram/agent name")
+    .option("-e, --engram <id>", "Engram ID to sync")
     .option("--all", "Sync all matching targets")
     .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(
       async (opts: {
-        target?: string;
+        engram?: string;
         all?: boolean;
         dir?: string;
         path?: string;
@@ -268,31 +268,36 @@ export function registerClawCommand(program: Command): void {
         const sync = new Sync(repo, engramsPath);
 
         try {
-          if (opts.target && opts.all) {
-            console.error("Error: --target and --all cannot be used together.");
+          if (opts.engram && opts.all) {
+            console.error("Error: --engram and --all cannot be used together.");
             process.exit(1);
           }
 
-          if (opts.target) {
-            const targetId = opts.target.trim();
-            if (!targetId) {
-              console.error(`Error: Invalid sync target "${opts.target}".`);
+          if (!opts.engram && !opts.all) {
+            console.error("Error: Specify --engram <id> or --all.");
+            process.exit(1);
+          }
+
+          if (opts.engram) {
+            const engramId = opts.engram.trim();
+            if (!engramId) {
+              console.error(`Error: Invalid Engram ID "${opts.engram}".`);
               process.exit(1);
             }
-            const engram = await repo.get(targetId);
+            const engram = await repo.get(engramId);
             if (!engram) {
-              console.error(`Error: Engram "${targetId}" not found.`);
+              console.error(`Error: Engram "${engramId}" not found.`);
               process.exit(1);
             }
 
-            const workspacePath = resolveWorkspacePath(targetId, clawDir);
+            const workspacePath = resolveWorkspacePath(engramId, clawDir);
             if (!existsSync(workspacePath)) {
-              console.error(`Error: Claw agent "${targetId}" workspace not found.`);
+              console.error(`Error: Claw agent "${engramId}" workspace not found.`);
               process.exit(1);
             }
 
             const result = await sync.syncPair({
-              engramId: targetId,
+              engramId,
               workspacePath,
             });
 
@@ -307,16 +312,11 @@ export function registerClawCommand(program: Command): void {
               details.push("USER.md");
             }
             if (details.length > 0) {
-              console.log(`  ${targetId}: merged ${details.join(", ")}`);
+              console.log(`  ${engramId}: merged ${details.join(", ")}`);
             } else {
-              console.log(`  Already in sync (${targetId})`);
+              console.log(`  Already in sync (${engramId})`);
             }
             return;
-          }
-
-          if (!opts.all) {
-            console.error("Error: Specify --target <id> or --all.");
-            process.exit(1);
           }
 
           const result = await sync.execute(clawDir);
