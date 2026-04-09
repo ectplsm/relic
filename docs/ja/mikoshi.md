@@ -138,6 +138,7 @@ relic mikoshi sync --all
 - `sync --all` を使うと、ローカルにあり、かつ Mikoshi にも存在する Engram をまとめて同期する
 - `archive.md` はアップロードされない
 - memory overwrite も optimistic concurrency を使うので、`409 Conflict` で失敗しうる
+- `sync` が `409 Conflict` で失敗したら、`relic mikoshi sync` を再実行して新しい remote state を取り直し、もう一度マージする
 
 ## Status の見方
 

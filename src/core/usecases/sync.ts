@@ -3,6 +3,7 @@ import { readdir, readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import type { EngramRepository } from "../ports/engram-repository.js";
+import { mergeMemoryRecords } from "../sync/memory-merge.js";
 import { extractAgentName, MEMORY_DIR } from "../../shared/openclaw.js";
 
 const DEFAULT_OPENCLAW_DIR = join(homedir(), ".openclaw");
@@ -107,39 +108,28 @@ export class Sync {
     const relicEntries = await this.readMemoryDir(relicMemDir);
     const openclawEntries = await this.readMemoryDir(openclawMemDir);
 
-    // 全日付の union
-    const allDates = new Set([
-      ...Object.keys(relicEntries),
-      ...Object.keys(openclawEntries),
-    ]);
+    const relicRecord = Object.fromEntries(
+      Object.entries(relicEntries).map(([date, content]) => [`memory/${date}.md`, content]),
+    );
+    const openclawRecord = Object.fromEntries(
+      Object.entries(openclawEntries).map(([date, content]) => [`memory/${date}.md`, content]),
+    );
+    const { merged, changedPaths } = mergeMemoryRecords(relicRecord, openclawRecord);
 
-    let mergedCount = 0;
-
-    for (const date of allDates) {
-      const relicContent = relicEntries[date];
-      const openclawContent = openclawEntries[date];
-
-      if (relicContent && !openclawContent) {
-        // RELIC にだけある → OpenClaw にコピー
-        await mkdir(openclawMemDir, { recursive: true });
-        await writeFile(join(openclawMemDir, `${date}.md`), relicContent, "utf-8");
-        mergedCount++;
-      } else if (!relicContent && openclawContent) {
-        // OpenClaw にだけある → RELIC にコピー
-        await mkdir(relicMemDir, { recursive: true });
-        await writeFile(join(relicMemDir, `${date}.md`), openclawContent, "utf-8");
-        mergedCount++;
-      } else if (relicContent && openclawContent && relicContent !== openclawContent) {
-        // 両方にあるが内容が違う → マージして両方に書き込み
-        const merged = this.mergeContents(relicContent, openclawContent);
-        await writeFile(join(relicMemDir, `${date}.md`), merged, "utf-8");
-        await writeFile(join(openclawMemDir, `${date}.md`), merged, "utf-8");
-        mergedCount++;
-      }
-      // 内容が同じ → 何もしない
+    if (changedPaths.length === 0) {
+      return 0;
     }
 
-    return mergedCount;
+    await mkdir(relicMemDir, { recursive: true });
+    await mkdir(openclawMemDir, { recursive: true });
+
+    for (const [path, content] of Object.entries(merged)) {
+      const date = path.replace("memory/", "").replace(".md", "");
+      await writeFile(join(relicMemDir, `${date}.md`), content, "utf-8");
+      await writeFile(join(openclawMemDir, `${date}.md`), content, "utf-8");
+    }
+
+    return changedPaths.length;
   }
 
   /**
@@ -170,42 +160,20 @@ export class Sync {
       ? await readFile(openclawPath, "utf-8")
       : null;
 
-    if (relicContent && !openclawContent) {
-      await writeFile(openclawPath, relicContent, "utf-8");
-      return true;
-    } else if (!relicContent && openclawContent) {
-      await writeFile(relicPath, openclawContent, "utf-8");
-      return true;
-    } else if (relicContent && openclawContent && relicContent !== openclawContent) {
-      const merged = this.mergeContents(relicContent, openclawContent);
-      await writeFile(relicPath, merged, "utf-8");
-      await writeFile(openclawPath, merged, "utf-8");
+    const relicRecord = relicContent ? { [filename]: relicContent } : {};
+    const openclawRecord = openclawContent ? { [filename]: openclawContent } : {};
+    const { merged, changedPaths } = mergeMemoryRecords(relicRecord, openclawRecord);
+
+    if (changedPaths.length > 0) {
+      const mergedContent = merged[filename];
+      if (mergedContent !== undefined) {
+        await writeFile(relicPath, mergedContent, "utf-8");
+        await writeFile(openclawPath, mergedContent, "utf-8");
+      }
       return true;
     }
 
     return false;
-  }
-
-  /**
-   * 2つのテキスト内容をマージする。
-   * 重複行を除外しつつ、両方の内容を結合する。
-   */
-  private mergeContents(a: string, b: string): string {
-    const aLines = a.trimEnd();
-    const bLines = b.trimEnd();
-
-    // 完全一致チェック（ここには来ないはずだが安全策）
-    if (aLines === bLines) return a;
-
-    // b の中で a に含まれない部分を抽出して追記
-    const aSet = new Set(aLines.split("\n"));
-    const uniqueB = bLines
-      .split("\n")
-      .filter((line) => !aSet.has(line));
-
-    if (uniqueB.length === 0) return a;
-
-    return aLines + "\n\n" + uniqueB.join("\n") + "\n";
   }
 
   /**

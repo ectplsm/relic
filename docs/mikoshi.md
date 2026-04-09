@@ -137,6 +137,7 @@ Notes:
 - `sync --all` scans all local Engrams that also exist on Mikoshi
 - `archive.md` is never uploaded
 - memory overwrite also uses optimistic concurrency and can fail with `409 Conflict`
+- if `sync` fails with `409 Conflict`, re-run `relic mikoshi sync` to fetch the newer remote state and merge again
 
 ## Status Meanings
 
