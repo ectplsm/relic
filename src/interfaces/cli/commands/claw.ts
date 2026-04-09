@@ -15,7 +15,11 @@ import {
   Sync,
   SyncOpenclawDirNotFoundError,
 } from "../../../core/usecases/index.js";
-import { resolveEngramsPath, resolveClawPath } from "../../../shared/config.js";
+import {
+  resolveDefaultEngram,
+  resolveEngramsPath,
+  resolveClawPath,
+} from "../../../shared/config.js";
 import { resolveWorkspacePath } from "../../../shared/openclaw.js";
 
 export function registerClawCommand(program: Command): void {
@@ -126,7 +130,7 @@ export function registerClawCommand(program: Command): void {
   claw
     .command("extract")
     .description("Create a new Engram from a Claw agent workspace")
-    .option("-a, --agent <name>", "Agent name to extract from (default: main)")
+    .requiredOption("-a, --agent <name>", "Agent name to extract from")
     .option("--name <name>", "Engram display name (defaults to agent name)")
     .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
     .option("-f, --force", "Allow overwriting local persona files from the Claw workspace")
@@ -135,7 +139,7 @@ export function registerClawCommand(program: Command): void {
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(
       async (opts: {
-        agent?: string;
+        agent: string;
         name?: string;
         dir?: string;
         force?: boolean;
@@ -150,7 +154,7 @@ export function registerClawCommand(program: Command): void {
         const sync = new Sync(repo, engramsPath);
 
         try {
-          const agentName = opts.agent ?? "main";
+          const agentName = opts.agent.trim();
           const diff = await extract.inspectPersona(agentName, {
             name: opts.name,
             openclawDir: clawDir,
@@ -249,11 +253,13 @@ export function registerClawCommand(program: Command): void {
     .command("sync")
     .description("Bidirectional memory sync between Engrams and Claw workspaces")
     .option("-t, --target <id>", "Sync one target only by shared Engram/agent name")
+    .option("--all", "Sync all matching targets")
     .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(
       async (opts: {
         target?: string;
+        all?: boolean;
         dir?: string;
         path?: string;
       }) => {
@@ -263,6 +269,11 @@ export function registerClawCommand(program: Command): void {
         const sync = new Sync(repo, engramsPath);
 
         try {
+          if (opts.target && opts.all) {
+            console.error("Error: --target and --all cannot be used together.");
+            process.exit(1);
+          }
+
           if (opts.target) {
             const targetId = opts.target.trim();
             if (!targetId) {
@@ -300,6 +311,50 @@ export function registerClawCommand(program: Command): void {
               console.log(`  ${targetId}: merged ${details.join(", ")}`);
             } else {
               console.log(`  Already in sync (${targetId})`);
+            }
+            return;
+          }
+
+          if (!opts.all) {
+            const defaultEngram = await resolveDefaultEngram();
+            if (!defaultEngram) {
+              console.error("Error: No default Engram configured.");
+              console.error("  Set one with: relic config default-engram <id>");
+              console.error("  Or pass --target <id> or --all.");
+              process.exit(1);
+            }
+
+            const engram = await repo.get(defaultEngram);
+            if (!engram) {
+              console.error(`Error: Engram "${defaultEngram}" not found.`);
+              process.exit(1);
+            }
+
+            const workspacePath = resolveWorkspacePath(defaultEngram, clawDir);
+            if (!existsSync(workspacePath)) {
+              console.error(`Error: Claw agent "${defaultEngram}" workspace not found.`);
+              process.exit(1);
+            }
+
+            const result = await sync.syncPair({
+              engramId: defaultEngram,
+              workspacePath,
+            });
+
+            const details: string[] = [];
+            if (result.memoryFilesMerged > 0) {
+              details.push(`${result.memoryFilesMerged} memory file(s)`);
+            }
+            if (result.memoryIndexMerged) {
+              details.push("MEMORY.md");
+            }
+            if (result.userMerged) {
+              details.push("USER.md");
+            }
+            if (details.length > 0) {
+              console.log(`  ${defaultEngram}: merged ${details.join(", ")}`);
+            } else {
+              console.log(`  Already in sync (${defaultEngram})`);
             }
             return;
           }
