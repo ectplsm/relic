@@ -133,9 +133,9 @@ export class MikoshiPull {
       };
     }
 
-    // 4. 差分計算
-    const soulDiffers = local.files.soul !== remoteSoul;
-    const identityDiffers = local.files.identity !== remoteIdentity;
+    // 4. 差分計算 (末尾空白の差異は無視)
+    const soulDiffers = normalizeContent(local.files.soul) !== normalizeContent(remoteSoul);
+    const identityDiffers = normalizeContent(local.files.identity) !== normalizeContent(remoteIdentity);
 
     if (!soulDiffers && !identityDiffers) {
       return {
@@ -198,4 +198,9 @@ function extractPersona(detail: MikoshiEngramDetail): {
     if (f.fileType === "IDENTITY") identity = f.content;
   }
   return { soul, identity };
+}
+
+/** Trim trailing whitespace so minor formatting differences don't cause false diffs. */
+function normalizeContent(content: string | undefined): string {
+  return (content ?? "").trimEnd();
 }
