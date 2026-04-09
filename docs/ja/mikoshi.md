@@ -9,7 +9,7 @@ Mikoshi が保存するのは次です。
 - 平文の persona ファイル: `SOUL.md`, `IDENTITY.md`
 - 暗号化された memory ファイル: `USER.md`, `MEMORY.md`, `memory/*.md`
 
-Mikoshiba が(現時点では)保存しないもの:
+Mikoshi が(現時点では)保存しないもの:
 
 - `archive.md`
 
@@ -17,7 +17,9 @@ Mikoshiba が(現時点では)保存しないもの:
 
 - 極めてプライベートな情報を含む可能性があるため
 
-sync 契約そのものは、Relic と Mikoshi で共有している `mikoshi-sync.md` 契約書を参照してください。
+sync 契約そのものは、共有契約リポジトリ
+[`ectplsm/engram-sync-contracts`](https://github.com/ectplsm/engram-sync-contracts)
+を参照してください。
 
 ## 前提
 

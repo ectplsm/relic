@@ -7,7 +7,7 @@ For project overview, architecture, and API reference, see `README.md`.
 
 Before making cross-repo sync, privacy, or ownership decisions:
 
-- read the shared Mikoshi sync contract from the sibling `engram-sync-contracts/` directory
+- read the shared Mikoshi sync contract from the `ectplsm/engram-sync-contracts` repository
 - read the relevant local plan index under `docs-local/plans/` when working on roadmap or multi-step changes
 
 If this document conflicts with a shared contract, the shared contract wins.
@@ -39,7 +39,7 @@ If this document conflicts with a shared contract, the shared contract wins.
 
 ## Shared Contracts
 
-Cross-repo contracts live in the sibling `engram-sync-contracts/` directory.
+Cross-repo contracts live in the `ectplsm/engram-sync-contracts` repository.
 These define boundaries, invariants, and API/data contracts that both `relic` and `mikoshi` must obey.
 
 - Put cross-repo facts there, not implementation details
@@ -54,7 +54,7 @@ This directory is not tracked in git.
 - `docs-local/plans/` — active and blocked plans only
 - `docs-local/plans/archive/` — completed or superseded plans
 
-Priority order: shared contracts in `engram-sync-contracts/` > this file > local plans.
+Priority order: shared contracts in `ectplsm/engram-sync-contracts` > this file > local plans.
 If a plan conflicts with a shared contract or this file, update the plan.
 
 Plan format:

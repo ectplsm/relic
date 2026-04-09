@@ -17,7 +17,8 @@ Reason:
 
 - it may contain extremely private information
 
-For the sync contract itself, see the shared `mikoshi-sync.md` contract used between Relic and Mikoshi.
+For the sync contract itself, see the shared contract repository:
+[`ectplsm/engram-sync-contracts`](https://github.com/ectplsm/engram-sync-contracts).
 
 ## Prerequisites
 
