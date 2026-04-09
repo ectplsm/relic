@@ -74,8 +74,8 @@ What each step does:
 | Command | Direction | Description |
 |---------|-----------|-------------|
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | Push persona + auto-sync (`--no-sync` skips sync) |
-| `relic mikoshi pull -e <id>` | Mikoshi → Relic | New import or persona-only overwrite, then auto-sync that target (`--create`, `--yes`, `--no-sync`) |
-| `relic mikoshi sync` | Relic ↔ Mikoshi | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `--target` limits sync to one target) |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | New import or persona-only overwrite, then auto-sync that target (`--create`, `--yes`, `--no-sync`; Engram ID required) |
+| `relic mikoshi sync` | Relic ↔ Mikoshi | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; default = `default-engram`, `--target` = one target, `--all` = all targets) |
 
 ## Persona Commands
 
@@ -114,10 +114,18 @@ Normal operation:
 relic mikoshi sync
 ```
 
+When no argument is given, `sync` targets your current `default-engram`.
+
 One target only:
 
 ```bash
 relic mikoshi sync --target <engram-id>
+```
+
+All matching targets:
+
+```bash
+relic mikoshi sync --all
 ```
 
 Notes:
@@ -125,34 +133,10 @@ Notes:
 - memory is treated as monotonically growing data and `sync` is the default workflow
 - `sync` merges local and remote memory first, then updates whichever side is behind
 - `sync` handles `USER.md`, `MEMORY.md`, and `memory/*.md`
-- `sync` scans all local Engrams that also exist on Mikoshi unless you pass `--target`
+- `sync` uses `default-engram` unless you pass `--target` or `--all`
+- `sync --all` scans all local Engrams that also exist on Mikoshi
 - `archive.md` is never uploaded
 - memory overwrite also uses optimistic concurrency and can fail with `409 Conflict`
-
-## Advanced Memory Commands
-
-Manual sync of one target through the legacy subcommand:
-
-```bash
-relic mikoshi memory sync <engram-id>
-```
-
-Manual upload only:
-
-```bash
-relic mikoshi memory push <engram-id>
-```
-
-Manual download only:
-
-```bash
-relic mikoshi memory pull <engram-id>
-```
-
-Notes:
-
-- `relic mikoshi memory sync` remains for compatibility, but `relic mikoshi sync` is the main path now
-- `memory push` and `memory pull` are manual fallback commands
 
 ## Status Meanings
 
@@ -172,6 +156,6 @@ This split matters because Relic treats persona drift and memory drift as differ
 
 - author and edit personas locally in Relic
 - use Mikoshi as cloud storage and sync backend
-- push persona first, then encrypted memory
+- push or pull persona first, then let `relic mikoshi sync` handle memory
 - run `relic mikoshi status` before overwriting remote state
 - keep your memory passphrase somewhere safe

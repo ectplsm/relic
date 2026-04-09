@@ -75,8 +75,8 @@ relic mikoshi status rebel
 | コマンド | 方向 | 説明 |
 |---------|------|------|
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | ペルソナ push + 自動 sync（`--no-sync` で sync をスキップ） |
-| `relic mikoshi pull -e <id>` | Mikoshi → Relic | 新規取り込みまたはペルソナのみ上書き後、その対象を自動 sync（`--create`, `--yes`, `--no-sync`） |
-| `relic mikoshi sync` | Relic ↔ Mikoshi | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`--target` で単一対象指定可） |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | 新規取り込みまたはペルソナのみ上書き後、その対象を自動 sync（`--create`, `--yes`, `--no-sync`; Engram ID 必須） |
+| `relic mikoshi sync` | Relic ↔ Mikoshi | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。デフォルトは `default-engram`、`--target` は単一対象、`--all` は全対象） |
 
 ## Persona コマンド
 
@@ -115,10 +115,18 @@ relic mikoshi pull --engram <engram-id> --create
 relic mikoshi sync
 ```
 
+引数を付けない場合、`sync` は現在の `default-engram` を対象にします。
+
 特定の 1 対象だけ同期:
 
 ```bash
 relic mikoshi sync --target <engram-id>
+```
+
+全対象を同期:
+
+```bash
+relic mikoshi sync --all
 ```
 
 注意点:
@@ -126,34 +134,10 @@ relic mikoshi sync --target <engram-id>
 - memory は基本的に単調増加するデータとして扱い、通常は `sync` を使う
 - `sync` は最初にローカルと remote の memory をマージし、その後で遅れている側を更新する
 - `sync` の対象は `USER.md`, `MEMORY.md`, `memory/*.md`
-- `--target` を付けなければ、ローカルにあり、かつ Mikoshi にも存在する Engram をまとめて同期する
+- `sync` は `--target` や `--all` を付けない限り `default-engram` を対象にする
+- `sync --all` を使うと、ローカルにあり、かつ Mikoshi にも存在する Engram をまとめて同期する
 - `archive.md` はアップロードされない
 - memory overwrite も optimistic concurrency を使うので、`409 Conflict` で失敗しうる
-
-## Advanced Memory コマンド
-
-互換維持のための旧サブコマンド:
-
-```bash
-relic mikoshi memory sync <engram-id>
-```
-
-手動でアップロードだけ行う場合:
-
-```bash
-relic mikoshi memory push <engram-id>
-```
-
-手動でダウンロードだけ行う場合:
-
-```bash
-relic mikoshi memory pull <engram-id>
-```
-
-注意点:
-
-- `relic mikoshi memory sync` は互換のため残っているが、主役は `relic mikoshi sync`
-- `memory push` と `memory pull` は手動 fallback 用
 
 ## Status の見方
 
@@ -173,6 +157,6 @@ Relic は persona drift と memory drift を別問題として扱うので、こ
 
 - persona の作成と編集はローカル Relic で行う
 - Mikoshi は cloud storage / sync backend として使う
-- 先に persona を push して、その後に暗号化 memory を push する
+- 先に persona を push / pull して、その後の memory は `relic mikoshi sync` に任せる
 - remote を上書きする前に `relic mikoshi status` を見る
 - memory の passphrase は安全な場所に保管する

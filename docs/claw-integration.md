@@ -20,7 +20,7 @@ All Claw commands live under `relic claw`.
 |---------|-----------|-------------|
 | `relic claw inject -e <id>` | Relic → Claw | Push persona + auto-sync (`--yes` skips overwrite confirmation, `--no-sync` skips sync, `--merge-identity` for non-OpenClaw) |
 | `relic claw extract -a <name>` | Claw → Relic | New import or persona-only overwrite, then auto-sync that target (`--force`, `--yes`, `--no-sync`) |
-| `relic claw sync` | Relic ↔ Claw | Bidirectional merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `--target` limits sync to one target) |
+| `relic claw sync` | Relic ↔ Claw | Bidirectional merge (`memory/*.md`, `MEMORY.md`, `USER.md`; default = `default-engram`, `--target` = one target, `--all` = all targets) |
 
 ## Inject
 
@@ -66,9 +66,6 @@ After `extract`, Relic automatically runs a targeted sync for that same Engram/a
 Use `--no-sync` to skip it.
 
 ```bash
-# Extract from the default (main) agent
-relic claw extract
-
 # Extract from a named agent
 relic claw extract --agent rebel
 
@@ -94,15 +91,19 @@ relic claw extract --agent rebel --dir /path/to/.fooclaw
 Only targets where both the Engram and agent exist are synced.
 It also runs automatically after `inject` unless you pass `--no-sync`.
 
-By default, `sync` scans all matching targets.
+By default, `sync` uses the current `default-engram`.
 Use `--target <id>` to sync only one target by shared Engram/agent name.
+Use `--all` to scan all matching targets.
 
 ```bash
-# Sync all matching targets
+# Sync the default Engram target
 relic claw sync
 
 # Sync only one matching target
 relic claw sync --target rebel
+
+# Sync all matching targets
+relic claw sync --all
 
 # Override Claw directory
 relic claw sync --dir /path/to/.fooclaw
@@ -123,6 +124,7 @@ Merge rules:
 | `inject` | Persona differs from local Engram | none | Ask for confirmation before overwriting persona, then auto-sync that target |
 | `inject` | Persona differs from local Engram | `--yes` | Overwrite persona without confirmation, then auto-sync that target |
 | `inject` | any successful inject | `--no-sync` | Skip the automatic targeted sync |
+| `extract` | Agent not specified | none | Fail and require `--agent <name>` |
 | `extract` | Local Engram missing | none | Create a new Engram from workspace files, then auto-sync that target |
 | `extract` | Local Engram missing | `--force` | Same as normal new extract, then auto-sync that target |
 | `extract` | Local Engram exists | none | Fail and require `--force` |
@@ -130,8 +132,9 @@ Merge rules:
 | `extract` | Local Engram exists, persona differs | `--force` | Ask for confirmation before overwriting `SOUL.md` / `IDENTITY.md`, then auto-sync that target |
 | `extract` | Local Engram exists, persona differs | `--force --yes` | Overwrite `SOUL.md` / `IDENTITY.md` without confirmation, then auto-sync that target |
 | `extract` | any successful extract | `--no-sync` | Skip the automatic targeted sync |
-| `sync` | no target | none | Scan and sync all matching targets |
+| `sync` | no target | none | Sync the `default-engram` target |
 | `sync` | explicit target | `--target <id>` | Sync one matching target where `agentName = engramId` |
+| `sync` | all targets | `--all` | Scan and sync all matching targets |
 
 Notes:
 

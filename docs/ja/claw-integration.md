@@ -20,7 +20,7 @@ Claw コマンドはすべて `relic claw` 配下です。
 |---------|------|------|
 | `relic claw inject -e <id>` | Relic → Claw | ペルソナ注入 + 自動 sync（`--yes` で上書き確認をスキップ、`--no-sync` で sync をスキップ、非 OpenClaw は `--merge-identity`） |
 | `relic claw extract -a <name>` | Claw → Relic | 新規取り込みまたはペルソナのみ上書き後、その対象を自動 sync（`--force`, `--yes`, `--no-sync`） |
-| `relic claw sync` | Relic ↔ Claw | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`--target` で単一対象指定可） |
+| `relic claw sync` | Relic ↔ Claw | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。デフォルトは `default-engram`、`--target` は単一対象、`--all` は全対象） |
 
 ## Inject
 
@@ -65,9 +65,6 @@ relic claw inject --engram commander --yes
 スキップしたい場合は `--no-sync` を使います。
 
 ```bash
-# デフォルト（main）エージェントから取り込む
-relic claw extract
-
 # 指定エージェントから取り込む
 relic claw extract --agent rebel
 
@@ -93,15 +90,19 @@ relic claw extract --agent rebel --dir /path/to/.fooclaw
 Engram と agent の両方が存在する対象だけが同期されます。
 `inject` の後にも自動実行されます（`--no-sync` でスキップ可）。
 
-デフォルトでは、`sync` はマッチするすべての対象を走査します。
+デフォルトでは、`sync` は現在の `default-engram` を対象にします。
 特定の対象だけ同期したい場合は `--target <id>` を使います。
+全対象を走査したい場合は `--all` を使います。
 
 ```bash
-# マッチする対象をすべて同期
+# default-engram の対象を同期
 relic claw sync
 
 # 特定の1対象だけ同期
 relic claw sync --target rebel
+
+# マッチする対象をすべて同期
+relic claw sync --all
 
 # Clawディレクトリを指定
 relic claw sync --dir /path/to/.fooclaw
@@ -122,6 +123,7 @@ relic claw sync --dir /path/to/.fooclaw
 | `inject` | ペルソナがローカルEngramと差分あり | なし | ペルソナ上書き前に確認を出し、その後その対象だけ自動sync |
 | `inject` | ペルソナがローカルEngramと差分あり | `--yes` | 確認なしでペルソナを上書きし、その後その対象だけ自動sync |
 | `inject` | 成功時全般 | `--no-sync` | 自動対象 sync をスキップ |
+| `extract` | agent 未指定 | なし | エラーになり、`--agent <name>` が必要 |
 | `extract` | ローカルEngram未作成 | なし | ワークスペースの内容から新規Engramを作成し、その後その対象だけ自動sync |
 | `extract` | ローカルEngram未作成 | `--force` | 通常の新規extractと同じ。その後その対象だけ自動sync |
 | `extract` | ローカルEngram既存あり | なし | エラーになり、`--force` が必要 |
@@ -129,8 +131,9 @@ relic claw sync --dir /path/to/.fooclaw
 | `extract` | ローカルEngram既存あり・ペルソナ差分あり | `--force` | `SOUL.md` / `IDENTITY.md` の上書き前に確認を出し、その後その対象だけ自動sync |
 | `extract` | ローカルEngram既存あり・ペルソナ差分あり | `--force --yes` | 確認なしで `SOUL.md` / `IDENTITY.md` を上書きし、その後その対象だけ自動sync |
 | `extract` | 成功時全般 | `--no-sync` | 自動対象 sync をスキップ |
-| `sync` | target 指定なし | なし | マッチするすべての対象を走査して同期 |
+| `sync` | target 指定なし | なし | `default-engram` の対象だけ同期 |
 | `sync` | 特定対象 | `--target <id>` | `agentName = engramId` の1対象だけ同期 |
+| `sync` | 全対象 | `--all` | マッチするすべての対象を走査して同期 |
 
 補足:
 
