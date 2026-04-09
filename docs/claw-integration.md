@@ -6,7 +6,7 @@ Relic Engrams are natively compatible with [OpenClaw](https://github.com/opencla
 workspaces because their file structure maps 1:1 (`SOUL.md`, `IDENTITY.md`, `memory/`, etc.).
 
 For other Claw-derived frameworks (Nanobot, gitagent, etc.) that fold identity into
-`SOUL.md`, the `--merge-identity` flag merges `IDENTITY.md` into `SOUL.md` on inject.
+`SOUL.md`, the `--merge-identity` flag merges `IDENTITY.md` into `SOUL.md` on push.
 Combined with `--dir`, Relic can target any Claw-compatible workspace.
 
 Current rule: `Agent Name = Engram ID`.
@@ -18,100 +18,78 @@ All Claw commands live under `relic claw`.
 
 | Command | Direction | Description |
 |---------|-----------|-------------|
-| `relic claw inject -e <id>` | Relic → Claw | Push persona + auto-sync (`--yes` skips overwrite confirmation, `--no-sync` skips sync, `--merge-identity` for non-OpenClaw) |
-| `relic claw extract -a <name>` | Claw → Relic | First-time import from a Claw workspace (`--no-sync` skips sync) |
-| `relic claw pull -a <name>` | Claw → Relic | Update existing Engram persona from Claw workspace (`--yes`, `--no-sync`) |
+| `relic claw push -e <id>` | Relic → Claw | Push persona into a workspace (`--yes`, `--no-sync`, `--merge-identity`) |
+| `relic claw pull -e <id>` | Claw → Relic | Create or update a local Engram from a workspace (`--name` for first-time local creation, `--yes`, `--no-sync`) |
 | `relic claw sync -e <id>` | Relic ↔ Claw | Bidirectional merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = one target, `--all` = all targets) |
 
-## Inject
+## Push
 
-`inject` writes persona files (`SOUL.md`, `IDENTITY.md`) into the agent workspace,
+`push` writes persona files (`SOUL.md`, `IDENTITY.md`) into the Claw workspace,
 then syncs `USER.md` and memory files (`MEMORY.md`, `memory/*.md`).
 The sync is bidirectional and merge-based, not a blind overwrite.
 `AGENTS.md` and `HEARTBEAT.md` remain under Claw's control.
 
-If persona files already exist in the target workspace and differ from the local Relic Engram,
-`inject` asks for confirmation by default.
-Use `--yes` to skip the prompt.
-If the target persona already matches, Relic skips the persona rewrite and only runs memory sync.
+`push` handles both first-time creation and updates:
 
-> The Claw agent must already exist.
-> Inject writes persona files into an existing workspace.
-> It does not create new agents.
+- if persona files are missing in the workspace, Relic asks before creating them
+- if persona files already exist and differ, Relic asks before overwriting them
+- if the target persona already matches, Relic skips the persona rewrite and only runs memory sync
+- `--yes` skips the create/overwrite confirmation
 
 ```bash
-# Inject Engram "commander" → workspace-commander/
-relic claw inject --engram commander
+# Push Engram "commander" into workspace-commander/
+relic claw push --engram commander
 
 # Override Claw directory (or configure once with: relic config claw-path)
-relic claw inject --engram commander --dir /path/to/.fooclaw
+relic claw push --engram commander --dir /path/to/.fooclaw
 
 # Non-OpenClaw frameworks: merge IDENTITY.md into SOUL.md
-relic claw inject --engram commander --dir ~/.nanobot --merge-identity
+relic claw push --engram commander --dir ~/.nanobot --merge-identity
 
-# Skip overwrite confirmation if persona files differ
-relic claw inject --engram commander --yes
-```
-
-## Extract
-
-`extract` creates a new Engram from an existing Claw agent workspace.
-This is a first-time import only. If the Engram already exists, use `relic claw pull` instead.
-
-What `extract` writes locally:
-
-- `engram.json`, `manifest.json`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `MEMORY.md`, `memory/*.md`
-
-After `extract`, Relic automatically runs a targeted sync for that same Engram/agent target.
-Use `--no-sync` to skip it.
-
-```bash
-# Extract from a named agent
-relic claw extract --agent rebel
-
-# Set a custom display name
-relic claw extract --agent analyst --name "Data Analyst"
-
-# Skip the automatic targeted sync after extract
-relic claw extract --agent rebel --no-sync
-
-# Override Claw directory
-relic claw extract --agent rebel --dir /path/to/.fooclaw
+# Skip create/overwrite confirmation
+relic claw push --engram commander --yes
 ```
 
 ## Pull
 
-`pull` updates an existing local Engram's persona files from a Claw workspace.
-If the local Engram does not exist, use `relic claw extract` first.
+`pull` reads persona files from a Claw workspace into Relic.
 
-`pull` only overwrites `SOUL.md` and `IDENTITY.md`.
-It shows a diff and asks for confirmation before overwriting.
+`pull` handles both first-time creation and updates:
 
-After `pull`, Relic automatically runs a targeted sync for that same Engram/agent target.
+- if the local Engram does not exist, Relic asks before creating it from the workspace
+- if the local Engram exists and persona files differ, Relic shows the diff and asks before overwriting
+- if the local persona already matches, Relic reports that it is already in sync
+- `--name` sets the display name only when creating a new local Engram
+- `--yes` skips the create/overwrite confirmation
+
+After `pull`, Relic automatically runs a targeted sync for that same Engram/workspace target.
 Use `--no-sync` to skip it.
 
 ```bash
-# Pull persona updates from a Claw workspace
-relic claw pull --agent rebel
+# Pull from a matching workspace into a local Engram
+relic claw pull --engram rebel
 
-# Skip overwrite confirmation
-relic claw pull --agent rebel --yes
+# First-time local creation with a custom display name
+relic claw pull --engram analyst --name "Data Analyst"
+
+# Skip create/overwrite confirmation
+relic claw pull --engram rebel --yes
 
 # Skip the automatic targeted sync after pull
-relic claw pull --agent rebel --no-sync
+relic claw pull --engram rebel --no-sync
 
 # Override Claw directory
-relic claw pull --agent rebel --dir /path/to/.fooclaw
+relic claw pull --engram rebel --dir /path/to/.fooclaw
 ```
 
 ## Sync
 
-`sync` merges `memory/*.md`, `MEMORY.md`, and `USER.md` between matching Engram/agent targets.
-Only targets where both the Engram and agent exist are synced.
-It also runs automatically after `inject` unless you pass `--no-sync`.
+`sync` merges `memory/*.md`, `MEMORY.md`, and `USER.md` between matching Engram/workspace targets.
+Only targets where both the Engram and workspace exist are synced.
+It also runs automatically after successful `push` and `pull` unless you pass `--no-sync`.
 
 Either `--engram` or `--all` is required.
-Use `--engram <id>` to sync only one target by shared Engram/agent name.
+Use `--engram <id>` to sync only one target by shared Engram/workspace name.
 Use `--all` to scan all matching targets.
 
 ```bash
@@ -127,27 +105,25 @@ relic claw sync --dir /path/to/.fooclaw
 
 Merge rules:
 
-- Files only on one side → copied to the other
-- Same content → skipped
-- Different content → merged (deduplicated) and written to both sides
+- files only on one side → copied to the other
+- same content → skipped
+- different content → merged (deduplicated) and written to both sides
 
 ## Behavior Matrix
 
 | Command | State | Flags | Result |
 |---------|------|------|------|
-| `inject` | Workspace missing | none | Fail and ask you to create the agent first |
-| `inject` | Persona matches local Engram | none | Skip persona rewrite, then auto-sync that target |
-| `inject` | Persona differs from local Engram | none | Ask for confirmation before overwriting persona, then auto-sync that target |
-| `inject` | Persona differs from local Engram | `--yes` | Overwrite persona without confirmation, then auto-sync that target |
-| `inject` | any successful inject | `--no-sync` | Skip the automatic targeted sync |
-| `extract` | Agent not specified | none | Fail and require `--agent <name>` |
-| `extract` | Local Engram missing | none | Create a new Engram from workspace files, then auto-sync that target |
-| `extract` | Local Engram exists | none | Fail with `AlreadyExtractedError` — use `relic claw pull` instead |
-| `extract` | any successful extract | `--no-sync` | Skip the automatic targeted sync |
-| `pull` | Agent not specified | none | Fail and require `--agent <name>` |
-| `pull` | Local Engram missing | none | Fail with `ClawPullEngramNotFoundError` — use `relic claw extract` instead |
-| `pull` | No persona drift | none | Report already in sync |
-| `pull` | Persona differs | none | Show diff, ask for confirmation, then overwrite and auto-sync |
+| `push` | Workspace missing | none | Create the workspace directory if needed, then ask before creating persona files |
+| `push` | Persona files missing in workspace | none | Ask before creating persona files, then auto-sync that target |
+| `push` | Persona matches local Engram | none | Skip persona rewrite, then auto-sync that target |
+| `push` | Persona differs from local Engram | none | Ask before overwriting persona, then auto-sync that target |
+| `push` | Persona create/overwrite required | `--yes` | Create or overwrite without confirmation, then auto-sync that target |
+| `push` | any successful push | `--no-sync` | Skip the automatic targeted sync |
+| `pull` | Workspace missing | none | Fail because there is nothing to pull from |
+| `pull` | Local Engram missing | none | Ask before creating a new local Engram from workspace files, then auto-sync that target |
+| `pull` | Local Engram missing | `--yes` | Create a new local Engram without confirmation, then auto-sync that target |
+| `pull` | No persona drift | none | Report already in sync, then auto-sync that target |
+| `pull` | Persona differs | none | Show diff, ask before overwriting, then auto-sync |
 | `pull` | Persona differs | `--yes` | Overwrite without confirmation, then auto-sync |
 | `pull` | any successful pull | `--no-sync` | Skip the automatic targeted sync |
 | `sync` | no target specified | none | Fail — `--engram` or `--all` is required |
@@ -157,5 +133,4 @@ Merge rules:
 Notes:
 
 - "Persona" means `SOUL.md` and `IDENTITY.md`
-- `extract` is for first-time import only — it fails if the Engram already exists
-- `pull` only overwrites `SOUL.md` and `IDENTITY.md` — it does not touch `USER.md`, `MEMORY.md`, or `memory/*.md`
+- `pull` only overwrites `SOUL.md` and `IDENTITY.md` locally — it does not touch `USER.md`, `MEMORY.md`, or `memory/*.md`

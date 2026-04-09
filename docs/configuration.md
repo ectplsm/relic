@@ -14,7 +14,7 @@ relic config show
 relic config default-engram           # get
 relic config default-engram rebel     # set
 
-# Claw directory — used by claw inject/extract/sync when --dir is omitted
+# Claw directory — used by claw push/pull/sync when --dir is omitted
 relic config claw-path                # get
 relic config claw-path ~/.openclaw    # set
 

@@ -144,9 +144,9 @@ If you are upgrading from an older Relic version, see [docs/migration.md](docs/m
        |            MEMORY.md                 |
        |            memory/*.md               v
        |                                +-----------+
-  inject /                              |archive.md |
- extract /                              | raw logs  |
-    sync                                +-----------+
+   push /                               |archive.md |
+   pull /                               | raw logs  |
+   sync                                 +-----------+
        |                                      |
        v                     MCP recall       | user-triggered
  +-----------+              search/pending    | distillation
@@ -173,7 +173,7 @@ For shell compatibility, hook behavior, setup, approvals, prompt inclusion, and 
 
 ## Claw Integration
 
-Relic can inject, extract, and sync Engrams with OpenClaw and other Claw-based frameworks.
+Relic can push, pull, and sync Engrams with OpenClaw and other Claw-based frameworks.
 The default rule is `Agent Name = Engram ID`, and `relic claw` handles persona transfer plus memory sync.
 
 For command details, overwrite behavior, and the behavior matrix, see [docs/claw-integration.md](docs/claw-integration.md).
@@ -188,7 +188,7 @@ For LLM-assisted creation, persona authoring, template examples, and deletion ru
 
 Relic can push plaintext persona files and encrypted memory files to [Mikoshi](https://mikoshi.ectplsm.com), so you can keep Engrams in the cloud and move them across machines without turning Mikoshi into your authoring source of truth.
 
-For setup, API key configuration, persona push/download/pull, encrypted memory sync, and the recommended command flow, see [docs/mikoshi.md](docs/mikoshi.md).
+For setup, API key configuration, persona push/pull, encrypted memory sync, and the recommended command flow, see [docs/mikoshi.md](docs/mikoshi.md).
 
 ## Configuration
 

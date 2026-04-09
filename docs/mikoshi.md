@@ -54,52 +54,45 @@ That passphrase encrypts your memory bundle before upload.
 
 ## Command Flow
 
-Upload your first Engram:
+Push your first Engram:
 
 ```bash
 relic mikoshi push -e rebel
 relic mikoshi status -e rebel
 ```
 
-On another machine, import it:
+On another machine, pull it:
 
 ```bash
 relic mikoshi list
-relic mikoshi download -e rebel
+relic mikoshi pull -e rebel
 ```
 
 What each command does:
 
-- `relic mikoshi push -e <id>` uploads persona files to Mikoshi and auto-syncs memory
+- `relic mikoshi push -e <id>` creates or updates persona files on Mikoshi and auto-syncs memory
 - `relic mikoshi status -e <id>` compares local persona and memory hashes against cloud state
 - `relic mikoshi list` lists cloud Engrams visible to your API key
-- `relic mikoshi download -e <id>` downloads a remote Engram into a new local one
+- `relic mikoshi pull -e <id>` creates or updates the local Engram from Mikoshi
 
 ## Command Summary
 
 | Command | Direction | Description |
 |---------|-----------|-------------|
 | `relic mikoshi status -e <id>` | — | Show sync status between local and cloud |
-| `relic mikoshi push -e <id>` | Relic → Mikoshi | Push persona + auto-sync (`--no-sync` skips sync) |
-| `relic mikoshi download -e <id>` | Mikoshi → Relic | First-time download from Mikoshi (`--no-sync` skips sync) |
-| `relic mikoshi pull -e <id>` | Mikoshi → Relic | Update existing local persona from Mikoshi (`--yes`, `--no-sync`) |
+| `relic mikoshi push -e <id>` | Relic → Mikoshi | Create or update remote persona + auto-sync (`--yes`, `--no-sync`) |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | Create or update local persona from Mikoshi (`--yes`, `--no-sync`) |
 | `relic mikoshi sync -e <id>` | Relic ↔ Mikoshi | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = one target, `--all` = all targets) |
 
 ## Persona Commands
 
-Push local persona files:
+Push local persona files to Mikoshi:
 
 ```bash
 relic mikoshi push --engram <engram-id>
 ```
 
-Download a remote Engram from Mikoshi (first-time import):
-
-```bash
-relic mikoshi download --engram <engram-id>
-```
-
-Update existing local persona files from Mikoshi:
+Pull persona files from Mikoshi into Relic:
 
 ```bash
 relic mikoshi pull --engram <engram-id>
@@ -108,12 +101,12 @@ relic mikoshi pull --engram <engram-id>
 Notes:
 
 - persona commands handle `SOUL.md` and `IDENTITY.md`
-- successful `push`, `download`, and `pull` run memory sync automatically unless you pass `--no-sync`
-- `download` creates a new local Engram — it fails if the Engram already exists locally (use `pull` instead)
-- `pull` requires the local Engram to exist — it fails if the Engram is missing (use `download` instead)
-- `pull` shows a diff and asks for confirmation before overwriting (skip with `--yes`)
+- successful `push` and `pull` run memory sync automatically unless you pass `--no-sync`
+- `push` creates the remote Engram if it does not exist, and asks before creating or overwriting unless you pass `--yes`
+- `pull` creates the local Engram if it does not exist, and asks before creating or overwriting unless you pass `--yes`
+- `pull` shows persona drift before overwriting existing local files
 - persona drift is explicit and safety-sensitive
-- if the remote changed since your last check, Mikoshi rejects the overwrite with `409 Conflict`
+- if the remote changed since your last `push` check, Mikoshi rejects the overwrite with `409 Conflict`
 
 ## Sync
 
@@ -159,6 +152,6 @@ This split matters because Relic treats persona drift and memory drift as differ
 
 - author and edit personas locally in Relic
 - use Mikoshi as cloud storage and sync backend
-- push or pull persona first, then let `relic mikoshi sync` handle memory
+- use `push` when Relic should win, `pull` when Mikoshi should win
 - run `relic mikoshi status` before overwriting remote state
 - keep your memory passphrase somewhere safe

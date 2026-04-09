@@ -1,130 +1,124 @@
 # Mikoshi
 
-このガイドでは、Relic が [Mikoshi](https://mikoshi.ectplsm.com) を使って Engram をクラウド保存し、共有し、別マシンへ持ち運ぶ方法を扱います。
+このガイドは、Relic が [Mikoshi](https://mikoshi.ectplsm.com) を使って
+Engram をクラウドへバックアップし、共有し、別マシンへ移す流れをまとめたものです。
 
-Mikoshi は、ペルソナを作ったり育てたりする本拠地ではありません。
-ペルソナ設計とローカル archive の記録は、引き続きローカル Relic 側が持ちます。
-Mikoshi が保存するのは次です。
+Mikoshi は authoring の source of truth ではありません。
+persona の編集と archive の記録は、あくまでローカルの Relic Engram 側が持ちます。
+Mikoshi が保存するもの:
 
 - 平文の persona ファイル: `SOUL.md`, `IDENTITY.md`
 - 暗号化された memory ファイル: `USER.md`, `MEMORY.md`, `memory/*.md`
 
-Mikoshi が(現時点では)保存しないもの:
+Mikoshi が現時点で保存しないもの:
 
 - `archive.md`
 
 理由:
 
-- 極めてプライベートな情報を含む可能性があるため
+- 極端にプライベートな情報を含みうるため
 
-sync 契約そのものは、共有契約リポジトリ
+sync 契約そのものは共有契約リポジトリを参照してください:
 [`ectplsm/engram-sync-contracts`](https://github.com/ectplsm/engram-sync-contracts)
-を参照してください。
 
-## 前提
+## Prerequisites
 
-- Mikoshi にログイン済み（現在は Google ログインのみ）
-- Mikoshi の Settings から API key を発行済み
-- ローカルで Relic により Engram を作成済み
+- Mikoshi にサインイン済みであること（現時点では Google sign-in のみ）
+- Mikoshi Settings で発行した API key を持っていること
+- Relic でローカル Engram を作成済みであること
 
-`~/.relic/config.json` に `mikoshiUrl` が無ければ、Relic はデフォルトで `https://mikoshi.ectplsm.com` を使います。
-staging や local など、デフォルト以外へ向けたい時だけ `mikoshiUrl` を設定してください。
+`~/.relic/config.json` に `mikoshiUrl` が無ければ、Relic はデフォルトで
+`https://mikoshi.ectplsm.com` を使います。
+別デプロイ先を向けたい時だけ `mikoshiUrl` を設定してください。
 
-## 接続設定
+## Configure Access
 
-まず、Mikoshi の Settings で発行した API key を Relic に設定します。
+Mikoshi Settings で発行した API key を設定します:
 
 ```bash
 relic config mikoshi-api-key <key>
 ```
 
-任意: staging や local deployment を使う時だけ base URL を上書きします。
+任意: staging やローカル環境を向けたい場合は base URL を上書き:
 
 ```bash
 relic config mikoshi-url http://localhost:3000
 ```
 
-任意: memory 暗号化用の passphrase を保存して、毎回聞かれないようにします。
+任意: memory 暗号化用の passphrase を保存して毎回の入力を避ける:
 
 ```bash
 relic config mikoshi-passphrase <passphrase>
 ```
 
-この passphrase は memory bundle の暗号化に使われます。
-**失くしたら、アップロード済み memory は復元不能です。忘れないようにご注意ください。**
+この passphrase は upload 前に memory bundle を暗号化するためのものです。
+**失うと、アップロード済み memory は復元できません。どこか安全な場所に保管してください。**
 
-## コマンドフロー
+## Command Flow
 
-初回アップロード:
+最初の Engram を push:
 
 ```bash
 relic mikoshi push -e rebel
 relic mikoshi status -e rebel
 ```
 
-別マシンで取り込む:
+別マシン側では pull:
 
 ```bash
 relic mikoshi list
-relic mikoshi download -e rebel
+relic mikoshi pull -e rebel
 ```
 
-各コマンドの意味:
+各コマンドの役割:
 
-- `relic mikoshi push -e <id>` は persona ファイルを Mikoshi にアップロードし、memory も自動 sync する
-- `relic mikoshi status -e <id>` はローカルの persona / memory hash と cloud 側を比較
-- `relic mikoshi list` は API key で見える cloud Engram を一覧表示
-- `relic mikoshi download -e <id>` は remote の Engram をローカルへダウンロードして新規作成する
+- `relic mikoshi push -e <id>` は Mikoshi 側の persona を新規作成または更新し、memory sync まで自動で走らせる
+- `relic mikoshi status -e <id>` はローカルとクラウドの persona / memory hash を比較する
+- `relic mikoshi list` は API key から見えるクラウド上の Engram を一覧表示する
+- `relic mikoshi pull -e <id>` は Mikoshi からローカル Engram を新規作成または更新する
 
-## コマンド一覧
+## Command Summary
 
-| コマンド | 方向 | 説明 |
-|---------|------|------|
-| `relic mikoshi status -e <id>` | — | ローカルと cloud の同期状態を表示 |
-| `relic mikoshi push -e <id>` | Relic → Mikoshi | ペルソナ push + 自動 sync（`--no-sync` で sync をスキップ） |
-| `relic mikoshi download -e <id>` | Mikoshi → Relic | 初回ダウンロード（`--no-sync` で sync をスキップ） |
-| `relic mikoshi pull -e <id>` | Mikoshi → Relic | 既存 Engram のペルソナを更新（`--yes`, `--no-sync`） |
-| `relic mikoshi sync -e <id>` | Relic ↔ Mikoshi | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`-e` は単一対象、`--all` は全対象） |
+| Command | Direction | Description |
+|---------|-----------|-------------|
+| `relic mikoshi status -e <id>` | — | ローカルとクラウドの状態を表示 |
+| `relic mikoshi push -e <id>` | Relic → Mikoshi | remote persona を新規作成または更新し、自動 sync (`--yes`, `--no-sync`) |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | ローカル persona を新規作成または更新 (`--yes`, `--no-sync`) |
+| `relic mikoshi sync -e <id>` | Relic ↔ Mikoshi | 双方向 memory merge（`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = 単一対象、`--all` = 全対象） |
 
-## Persona コマンド
+## Persona Commands
 
-ローカルの persona ファイルを push:
+ローカル persona を Mikoshi へ push:
 
 ```bash
 relic mikoshi push --engram <engram-id>
 ```
 
-cloud 側の Engram をローカルへ初回取り込み:
-
-```bash
-relic mikoshi download --engram <engram-id>
-```
-
-既存のローカル persona ファイルを Mikoshi 側から更新:
+Mikoshi の persona を Relic へ pull:
 
 ```bash
 relic mikoshi pull --engram <engram-id>
 ```
 
-注意点:
+補足:
 
-- persona コマンドの対象は `SOUL.md` と `IDENTITY.md`
-- 成功した `push`、`download`、`pull` は、`--no-sync` を付けない限り memory sync まで自動で走る
-- `download` はローカルに新規 Engram を作成する — 既に存在する場合はエラー（`pull` を使う）
-- `pull` はローカル Engram の存在が必須 — 未作成の場合はエラー（`download` を使う）
-- `pull` は差分表示後に確認を出す（`--yes` でスキップ可）
-- persona drift は明示的で、安全性重視
-- 最後に確認した状態から remote が変わっていれば、Mikoshi は `409 Conflict` で上書きを拒否する
+- persona 系コマンドが扱うのは `SOUL.md` と `IDENTITY.md`
+- 成功した `push` と `pull` は、`--no-sync` を付けない限り memory sync まで自動で走る
+- `push` は remote Engram が無ければ新規作成し、作成前または上書き前に確認を出す。`--yes` でスキップできる
+- `pull` は local Engram が無ければ新規作成し、作成前または上書き前に確認を出す。`--yes` でスキップできる
+- `pull` は既存ローカル persona を上書きする前に drift を表示する
+- persona drift は明示的に扱う。雑な上書きはしない
+- 最後に確認してから remote が変わっていた場合、`push` は `409 Conflict` で拒否される
 
 ## Sync
 
-特定の 1 対象だけ同期:
+1件だけ:
 
 ```bash
 relic mikoshi sync --engram <engram-id>
 ```
 
-全対象を同期:
+一致する対象を全部:
 
 ```bash
 relic mikoshi sync --all
@@ -132,34 +126,34 @@ relic mikoshi sync --all
 
 `--engram` か `--all` のどちらかが必須です。
 
-注意点:
+補足:
 
-- memory は基本的に単調増加するデータとして扱い、通常は `sync` を使う
-- `sync` は最初にローカルと remote の memory をマージし、その後で遅れている側を更新する
-- `sync` の対象は `USER.md`, `MEMORY.md`, `memory/*.md`
-- `sync --all` を使うと、ローカルにあり、かつ Mikoshi にも存在する Engram をまとめて同期する
-- `archive.md` はアップロードされない
-- memory overwrite も optimistic concurrency を使うので、`409 Conflict` で失敗しうる
-- `sync` が `409 Conflict` で失敗したら、`relic mikoshi sync` を再実行して新しい remote state を取り直し、もう一度マージする
+- memory は単調増加データとして扱い、基本ワークフローは `sync`
+- `sync` は先にローカルと remote の memory をマージし、その後遅れている側を更新する
+- `sync` が扱うのは `USER.md`, `MEMORY.md`, `memory/*.md`
+- `sync --all` は Mikoshi 上にも存在するローカル Engram を走査する
+- `archive.md` は upload しない
+- memory 側の上書きも optimistic concurrency を使うので `409 Conflict` になりうる
+- `sync` が `409 Conflict` で失敗したら、`relic mikoshi sync` を再実行して新しい remote 状態を取り込んでから再マージする
 
-## Status の見方
+## Status Meanings
 
-`relic mikoshi status -e <engram-id>` は persona と memory を別々に表示します。
+`relic mikoshi status -e <engram-id>` は persona と memory を別々に報告します。
 
 主な状態:
 
 - `synced`: ローカルと remote の hash が一致
 - `local_differs`: ローカルと remote が不一致
 - `remote_only`: remote persona はあるが、ローカル比較ができない
-- `not_uploaded`: remote memory がまだ無い
-- `local_empty`: 比較対象になるローカル memory ファイルが無い
+- `not_uploaded`: remote memory がまだ存在しない
+- `local_empty`: 比較対象になるローカル memory ファイルが存在しない
 
-Relic は persona drift と memory drift を別問題として扱うので、この分離は重要です。
+Relic は persona drift と memory drift を別問題として扱うので、この分離が重要です。
 
-## 推奨運用
+## Recommended Practice
 
-- persona の作成と編集はローカル Relic で行う
+- persona の authoring と編集はローカル Relic でやる
 - Mikoshi は cloud storage / sync backend として使う
-- 先に persona を push / pull して、その後の memory は `relic mikoshi sync` に任せる
+- Relic 側を勝たせたい時は `push`、Mikoshi 側を勝たせたい時は `pull`
 - remote を上書きする前に `relic mikoshi status` を見る
-- memory の passphrase は安全な場所に保管する
+- memory passphrase は安全な場所に保管する
