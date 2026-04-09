@@ -70,7 +70,7 @@ export function registerClawCommand(program: Command): void {
               `SOUL.md and/or IDENTITY.md already exist and differ in ${diff.targetPath}. Overwrite with local Relic version? [y/N] `
             ))
           ) {
-            console.error(
+            printError(
               "Error: Persona files already exist and differ. Re-run with --yes to overwrite from local Relic Engram."
             );
             process.exit(1);
@@ -121,7 +121,7 @@ export function registerClawCommand(program: Command): void {
             err instanceof InjectClawDirNotFoundError ||
             err instanceof InjectWorkspaceNotFoundError
           ) {
-            console.error(`Error: ${err.message}`);
+            printError(`Error: ${err.message}`);
             process.exit(1);
           }
           throw err;
@@ -193,7 +193,7 @@ export function registerClawCommand(program: Command): void {
             err instanceof WorkspaceEmptyError ||
             err instanceof AlreadyExtractedError
           ) {
-            console.error(`Error: ${err.message}`);
+            printError(`Error: ${err.message}`);
             process.exit(1);
           }
           throw err;
@@ -251,7 +251,7 @@ export function registerClawCommand(program: Command): void {
               `Overwrite local Engram "${agentName}" persona with Claw workspace version? [y/N] `
             ))
           ) {
-            console.error("Aborted.");
+            printError("Aborted.");
             process.exit(1);
           }
 
@@ -287,7 +287,7 @@ export function registerClawCommand(program: Command): void {
             err instanceof ClawPullWorkspaceNotFoundError ||
             err instanceof ClawPullPersonaMissingError
           ) {
-            console.error(`Error: ${err.message}`);
+            printError(`Error: ${err.message}`);
             process.exit(1);
           }
           throw err;
@@ -317,30 +317,30 @@ export function registerClawCommand(program: Command): void {
 
         try {
           if (opts.engram && opts.all) {
-            console.error("Error: --engram and --all cannot be used together.");
+            printError("Error: --engram and --all cannot be used together.");
             process.exit(1);
           }
 
           if (!opts.engram && !opts.all) {
-            console.error("Error: Specify --engram <id> or --all.");
+            printError("Error: Specify --engram <id> or --all.");
             process.exit(1);
           }
 
           if (opts.engram) {
             const engramId = opts.engram.trim();
             if (!engramId) {
-              console.error(`Error: Invalid Engram ID "${opts.engram}".`);
+              printError(`Error: Invalid Engram ID "${opts.engram}".`);
               process.exit(1);
             }
             const engram = await repo.get(engramId);
             if (!engram) {
-              console.error(`Error: Engram "${engramId}" not found.`);
+              printError(`Error: Engram "${engramId}" not found.`);
               process.exit(1);
             }
 
             const workspacePath = resolveWorkspacePath(engramId, clawDir);
             if (!existsSync(workspacePath)) {
-              console.error(`Error: Claw agent "${engramId}" workspace not found.`);
+              printError(`Error: Claw agent "${engramId}" workspace not found.`);
               process.exit(1);
             }
 
@@ -399,7 +399,7 @@ export function registerClawCommand(program: Command): void {
           }
         } catch (err) {
           if (err instanceof SyncOpenclawDirNotFoundError) {
-            console.error(`Error: ${err.message}`);
+            printError(`Error: ${err.message}`);
             process.exit(1);
           }
           throw err;
@@ -420,4 +420,14 @@ async function confirmOverwrite(message: string): Promise<boolean> {
   } finally {
     rl.close();
   }
+}
+
+// ---------------------------------------------------------------------------
+// ANSI colors
+// ---------------------------------------------------------------------------
+
+const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
+
+function printError(msg: string): void {
+  console.error(red(msg));
 }
