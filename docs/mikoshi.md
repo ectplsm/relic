@@ -65,7 +65,7 @@ On another machine, import it:
 
 ```bash
 relic mikoshi list
-relic mikoshi clone -e rebel
+relic mikoshi download -e rebel
 ```
 
 What each command does:
@@ -73,7 +73,7 @@ What each command does:
 - `relic mikoshi push -e <id>` uploads persona files to Mikoshi and auto-syncs memory
 - `relic mikoshi status -e <id>` compares local persona and memory hashes against cloud state
 - `relic mikoshi list` lists cloud Engrams visible to your API key
-- `relic mikoshi clone -e <id>` creates a new local Engram from a remote one
+- `relic mikoshi download -e <id>` downloads a remote Engram into a new local one
 
 ## Command Summary
 
@@ -81,7 +81,7 @@ What each command does:
 |---------|-----------|-------------|
 | `relic mikoshi status -e <id>` | — | Show sync status between local and cloud |
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | Push persona + auto-sync (`--no-sync` skips sync) |
-| `relic mikoshi clone -e <id>` | Mikoshi → Relic | First-time import from Mikoshi (`--no-sync` skips sync) |
+| `relic mikoshi download -e <id>` | Mikoshi → Relic | First-time download from Mikoshi (`--no-sync` skips sync) |
 | `relic mikoshi pull -e <id>` | Mikoshi → Relic | Update existing local persona from Mikoshi (`--yes`, `--no-sync`) |
 | `relic mikoshi sync -e <id>` | Relic ↔ Mikoshi | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = one target, `--all` = all targets) |
 
@@ -96,7 +96,7 @@ relic mikoshi push --engram <engram-id>
 Clone a remote Engram from Mikoshi (first-time import):
 
 ```bash
-relic mikoshi clone --engram <engram-id>
+relic mikoshi download --engram <engram-id>
 ```
 
 Update existing local persona files from Mikoshi:
@@ -108,9 +108,9 @@ relic mikoshi pull --engram <engram-id>
 Notes:
 
 - persona commands handle `SOUL.md` and `IDENTITY.md`
-- successful `push`, `clone`, and `pull` run memory sync automatically unless you pass `--no-sync`
-- `clone` creates a new local Engram — it fails if the Engram already exists locally (use `pull` instead)
-- `pull` requires the local Engram to exist — it fails if the Engram is missing (use `clone` instead)
+- successful `push`, `download`, and `pull` run memory sync automatically unless you pass `--no-sync`
+- `download` creates a new local Engram — it fails if the Engram already exists locally (use `pull` instead)
+- `pull` requires the local Engram to exist — it fails if the Engram is missing (use `download` instead)
 - `pull` shows a diff and asks for confirmation before overwriting (skip with `--yes`)
 - persona drift is explicit and safety-sensitive
 - if the remote changed since your last check, Mikoshi rejects the overwrite with `409 Conflict`

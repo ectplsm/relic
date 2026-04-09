@@ -66,7 +66,7 @@ relic mikoshi status -e rebel
 
 ```bash
 relic mikoshi list
-relic mikoshi clone -e rebel
+relic mikoshi download -e rebel
 ```
 
 各コマンドの意味:
@@ -74,7 +74,7 @@ relic mikoshi clone -e rebel
 - `relic mikoshi push -e <id>` は persona ファイルを Mikoshi にアップロードし、memory も自動 sync する
 - `relic mikoshi status -e <id>` はローカルの persona / memory hash と cloud 側を比較
 - `relic mikoshi list` は API key で見える cloud Engram を一覧表示
-- `relic mikoshi clone -e <id>` は remote の Engram をローカルに新規作成する
+- `relic mikoshi download -e <id>` は remote の Engram をローカルへダウンロードして新規作成する
 
 ## コマンド一覧
 
@@ -82,7 +82,7 @@ relic mikoshi clone -e rebel
 |---------|------|------|
 | `relic mikoshi status -e <id>` | — | ローカルと cloud の同期状態を表示 |
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | ペルソナ push + 自動 sync（`--no-sync` で sync をスキップ） |
-| `relic mikoshi clone -e <id>` | Mikoshi → Relic | 初回取り込み（`--no-sync` で sync をスキップ） |
+| `relic mikoshi download -e <id>` | Mikoshi → Relic | 初回ダウンロード（`--no-sync` で sync をスキップ） |
 | `relic mikoshi pull -e <id>` | Mikoshi → Relic | 既存 Engram のペルソナを更新（`--yes`, `--no-sync`） |
 | `relic mikoshi sync -e <id>` | Relic ↔ Mikoshi | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`-e` は単一対象、`--all` は全対象） |
 
@@ -97,7 +97,7 @@ relic mikoshi push --engram <engram-id>
 cloud 側の Engram をローカルへ初回取り込み:
 
 ```bash
-relic mikoshi clone --engram <engram-id>
+relic mikoshi download --engram <engram-id>
 ```
 
 既存のローカル persona ファイルを Mikoshi 側から更新:
@@ -109,9 +109,9 @@ relic mikoshi pull --engram <engram-id>
 注意点:
 
 - persona コマンドの対象は `SOUL.md` と `IDENTITY.md`
-- 成功した `push`、`clone`、`pull` は、`--no-sync` を付けない限り memory sync まで自動で走る
-- `clone` はローカルに新規 Engram を作成する — 既に存在する場合はエラー（`pull` を使う）
-- `pull` はローカル Engram の存在が必須 — 未作成の場合はエラー（`clone` を使う）
+- 成功した `push`、`download`、`pull` は、`--no-sync` を付けない限り memory sync まで自動で走る
+- `download` はローカルに新規 Engram を作成する — 既に存在する場合はエラー（`pull` を使う）
+- `pull` はローカル Engram の存在が必須 — 未作成の場合はエラー（`download` を使う）
 - `pull` は差分表示後に確認を出す（`--yes` でスキップ可）
 - persona drift は明示的で、安全性重視
 - 最後に確認した状態から remote が変わっていれば、Mikoshi は `409 Conflict` で上書きを拒否する

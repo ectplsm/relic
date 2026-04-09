@@ -70,12 +70,12 @@ export {
   type MikoshiPushResult,
 } from "./mikoshi-push.js";
 export {
-  MikoshiClone,
-  MikoshiCloneAlreadyExistsError,
-  MikoshiCloneCloudNotFoundError,
-  MikoshiClonePersonaMissingError,
-  type MikoshiCloneResult,
-} from "./mikoshi-clone.js";
+  MikoshiDownload,
+  MikoshiDownloadAlreadyExistsError,
+  MikoshiDownloadCloudNotFoundError,
+  MikoshiDownloadPersonaMissingError,
+  type MikoshiDownloadResult,
+} from "./mikoshi-download.js";
 export {
   MikoshiPull,
   MikoshiPullEngramNotFoundError,
