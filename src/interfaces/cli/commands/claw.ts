@@ -12,6 +12,10 @@ import {
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
   AlreadyExtractedError,
+  ClawPull,
+  ClawPullEngramNotFoundError,
+  ClawPullWorkspaceNotFoundError,
+  ClawPullPersonaMissingError,
   Sync,
   SyncOpenclawDirNotFoundError,
 } from "../../../core/usecases/index.js";
@@ -128,12 +132,10 @@ export function registerClawCommand(program: Command): void {
   // --- claw extract ---
   claw
     .command("extract")
-    .description("Create a new Engram from a Claw agent workspace")
+    .description("Create a new Engram from a Claw agent workspace (first-time import)")
     .requiredOption("-a, --agent <name>", "Agent name to extract from")
     .option("--name <name>", "Engram display name (defaults to agent name)")
     .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
-    .option("-f, --force", "Allow overwriting local persona files from the Claw workspace")
-    .option("-y, --yes", "Skip persona overwrite confirmation")
     .option("--no-sync", "Skip automatic memory sync after extract")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(
@@ -141,8 +143,6 @@ export function registerClawCommand(program: Command): void {
         agent: string;
         name?: string;
         dir?: string;
-        force?: boolean;
-        yes?: boolean;
         sync: boolean;
         path?: string;
       }) => {
@@ -154,68 +154,22 @@ export function registerClawCommand(program: Command): void {
 
         try {
           const agentName = opts.agent.trim();
-          const diff = await extract.inspectPersona(agentName, {
+          const result = await extract.execute(agentName, {
             name: opts.name,
             openclawDir: clawDir,
           });
 
-          if (diff.existing && !opts.force) {
-            throw new AlreadyExtractedError(agentName);
-          }
-
-          const alreadyExtracted =
-            diff.existing &&
-            diff.name === "same" &&
-            diff.soul === "same" &&
-            diff.identity === "same";
-
-          if (
-            diff.existing &&
-            diff.overwriteRequired &&
-            !opts.yes &&
-            !(await confirmOverwrite(
-              `SOUL.md and/or IDENTITY.md already exist in local Engram "${agentName}" and differ from ${diff.sourcePath}. Overwrite with the Claw version? [y/N] `
-            ))
-          ) {
-            console.error(
-              "Error: Persona files already exist and differ. Re-run with --yes to overwrite from the Claw workspace."
-            );
-            process.exit(1);
-          }
-
-          if (alreadyExtracted) {
-            console.log(
-              opts.force
-                ? `  Already extracted and updated (${agentName})`
-                : `  Already extracted (${agentName})`
-            );
-          } else {
-            const result = await extract.execute(agentName, {
-              name: opts.name,
-              openclawDir: clawDir,
-              force: opts.force,
-            });
-
-            console.log(
-              `Extracted "${result.engramName}" from ${result.sourcePath}`
-            );
-            if (diff.existing) {
-              console.log(`  Files overwritten: SOUL.md, IDENTITY.md`);
-              if (diff.name === "different") {
-                console.log(`  Metadata updated: engram.json (name)`);
-              }
-              console.log(`  Saved as Engram: ${result.engramId}`);
-            } else {
-              console.log(`  Files extracted: ${result.filesRead.join(", ")}`);
-              console.log(`  Saved as Engram: ${result.engramId}`);
-            }
-          }
+          console.log(
+            `Extracted "${result.engramName}" from ${result.sourcePath}`
+          );
+          console.log(`  Files extracted: ${result.filesRead.join(", ")}`);
+          console.log(`  Saved as Engram: ${result.engramId}`);
 
           if (!opts.sync) return;
 
           const syncResult = await sync.syncPair({
             engramId: agentName,
-            workspacePath: diff.sourcePath,
+            workspacePath: result.sourcePath,
           });
 
           const details: string[] = [];
@@ -238,6 +192,100 @@ export function registerClawCommand(program: Command): void {
             err instanceof WorkspaceNotFoundError ||
             err instanceof WorkspaceEmptyError ||
             err instanceof AlreadyExtractedError
+          ) {
+            console.error(`Error: ${err.message}`);
+            process.exit(1);
+          }
+          throw err;
+        }
+      }
+    );
+
+  // --- claw pull ---
+  claw
+    .command("pull")
+    .description("Update local Engram persona from a Claw agent workspace")
+    .requiredOption("-a, --agent <name>", "Agent name to pull from")
+    .option("--dir <dir>", "Override Claw directory path (default: ~/.openclaw)")
+    .option("-y, --yes", "Skip persona overwrite confirmation")
+    .option("--no-sync", "Skip automatic memory sync after pull")
+    .option("-p, --path <dir>", "Override engrams directory path")
+    .action(
+      async (opts: {
+        agent: string;
+        dir?: string;
+        yes?: boolean;
+        sync: boolean;
+        path?: string;
+      }) => {
+        const engramsPath = await resolveEngramsPath(opts.path);
+        const clawDir = await resolveClawPath(opts.dir);
+        const repo = new LocalEngramRepository(engramsPath);
+        const pull = new ClawPull(repo);
+        const sync = new Sync(repo, engramsPath);
+
+        try {
+          const agentName = opts.agent.trim();
+          const { result, apply } = await pull.check(agentName, {
+            openclawDir: clawDir,
+          });
+
+          if (result.outcome === "already_synced") {
+            console.log(`  Already in sync (${agentName})`);
+            return;
+          }
+
+          // Show diff summary
+          const diff = result.diff!;
+          if (diff.soulDiff === "different") {
+            console.log("  SOUL.md: differs");
+          }
+          if (diff.identityDiff === "different") {
+            console.log("  IDENTITY.md: differs");
+          }
+
+          // Confirm overwrite
+          if (
+            !opts.yes &&
+            !(await confirmOverwrite(
+              `Overwrite local Engram "${agentName}" persona with Claw workspace version? [y/N] `
+            ))
+          ) {
+            console.error("Aborted.");
+            process.exit(1);
+          }
+
+          await apply!();
+          console.log(`Pulled "${result.engramName}" from ${diff.sourcePath}`);
+
+          if (!opts.sync) return;
+
+          const workspacePath = resolveWorkspacePath(agentName, clawDir);
+          const syncResult = await sync.syncPair({
+            engramId: agentName,
+            workspacePath,
+          });
+
+          const details: string[] = [];
+          if (syncResult.memoryFilesMerged > 0) {
+            details.push(`${syncResult.memoryFilesMerged} memory file(s)`);
+          }
+          if (syncResult.memoryIndexMerged) {
+            details.push("MEMORY.md");
+          }
+          if (syncResult.userMerged) {
+            details.push("USER.md");
+          }
+          if (details.length > 0) {
+            console.log(`  Synced: ${details.join(", ")}`);
+          } else {
+            console.log(`  Already in sync`);
+          }
+        } catch (err) {
+          if (
+            err instanceof ClawPullEngramNotFoundError ||
+            err instanceof ClawPullWorkspaceNotFoundError ||
+            err instanceof ClawPullPersonaMissingError
           ) {
             console.error(`Error: ${err.message}`);
             process.exit(1);

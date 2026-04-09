@@ -75,7 +75,8 @@ What each step does:
 |---------|-----------|-------------|
 | `relic mikoshi status -e <id>` | — | Show sync status between local and cloud |
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | Push persona + auto-sync (`--no-sync` skips sync) |
-| `relic mikoshi pull -e <id>` | Mikoshi → Relic | New import or persona-only overwrite (`--force` to overwrite existing, `--yes`, `--no-sync`) |
+| `relic mikoshi clone -e <id>` | Mikoshi → Relic | First-time import from Mikoshi (`--no-sync` skips sync) |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | Update existing local persona from Mikoshi (`--yes`, `--no-sync`) |
 | `relic mikoshi sync -e <id>` | Relic ↔ Mikoshi | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = one target, `--all` = all targets) |
 
 ## Persona Commands
@@ -86,25 +87,25 @@ Push local persona files:
 relic mikoshi push --engram <engram-id>
 ```
 
-Pull a remote Engram from Mikoshi (creates a new local Engram if it does not exist):
+Clone a remote Engram from Mikoshi (first-time import):
+
+```bash
+relic mikoshi clone --engram <engram-id>
+```
+
+Update existing local persona files from Mikoshi:
 
 ```bash
 relic mikoshi pull --engram <engram-id>
 ```
 
-Overwrite existing local persona files from Mikoshi:
-
-```bash
-relic mikoshi pull --engram <engram-id> --force
-```
-
 Notes:
 
-- persona sync handles `SOUL.md` and `IDENTITY.md`
-- successful `push` and `pull` run memory sync automatically unless you pass `--no-sync`
-- if the local Engram does not exist, `pull` creates it from remote persona data
-- if the local Engram already exists, `pull` fails unless you pass `--force`
-- `--force` shows a diff and asks for confirmation before overwriting (skip with `--yes`)
+- persona commands handle `SOUL.md` and `IDENTITY.md`
+- successful `push`, `clone`, and `pull` run memory sync automatically unless you pass `--no-sync`
+- `clone` creates a new local Engram — it fails if the Engram already exists locally (use `pull` instead)
+- `pull` requires the local Engram to exist — it fails if the Engram is missing (use `clone` instead)
+- `pull` shows a diff and asks for confirmation before overwriting (skip with `--yes`)
 - persona drift is explicit and safety-sensitive
 - if the remote changed since your last check, Mikoshi rejects the overwrite with `409 Conflict`
 

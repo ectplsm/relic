@@ -88,7 +88,6 @@ export class Extract {
     options?: {
       name?: string;
       openclawDir?: string;
-      force?: boolean;
     }
   ): Promise<ExtractResult> {
     const sourcePath = resolveWorkspacePath(agentName, options?.openclawDir);
@@ -98,7 +97,7 @@ export class Extract {
     }
 
     const existing = await this.repository.get(agentName);
-    if (existing && !options?.force) {
+    if (existing) {
       throw new AlreadyExtractedError(agentName);
     }
 
@@ -109,31 +108,17 @@ export class Extract {
     }
 
     const now = new Date().toISOString();
-    const engram: Engram = existing && options?.force
-      ? {
-          meta: {
-            ...existing.meta,
-            name: options?.name ?? existing.meta.name,
-            updatedAt: now,
-          },
-          // Force extract only replaces persona files from Claw.
-          files: {
-            ...existing.files,
-            soul: files.soul ?? existing.files.soul,
-            identity: files.identity ?? existing.files.identity,
-          },
-        }
-      : {
-          meta: {
-            id: agentName,
-            name: options?.name ?? agentName,
-            description: `Extracted from OpenClaw workspace (${agentName})`,
-            createdAt: now,
-            updatedAt: now,
-            tags: ["extracted", "openclaw"],
-          },
-          files,
-        };
+    const engram: Engram = {
+      meta: {
+        id: agentName,
+        name: options?.name ?? agentName,
+        description: `Extracted from OpenClaw workspace (${agentName})`,
+        createdAt: now,
+        updatedAt: now,
+        tags: ["extracted", "openclaw"],
+      },
+      files,
+    };
 
     await this.repository.save(engram);
 
@@ -210,7 +195,7 @@ export class WorkspaceEmptyError extends Error {
 export class AlreadyExtractedError extends Error {
   constructor(id: string) {
     super(
-      `Engram "${id}" already exists. Re-run with "--force" option to overwrite local persona files from the Claw workspace.`
+      `Engram "${id}" already exists. Use "relic claw pull" to update it.`
     );
     this.name = "AlreadyExtractedError";
   }

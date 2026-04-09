@@ -13,8 +13,14 @@ import {
   MikoshiPushPersonaHashError,
 } from "../../../core/usecases/mikoshi-push.js";
 import {
+  MikoshiClone,
+  MikoshiCloneAlreadyExistsError,
+  MikoshiCloneCloudNotFoundError,
+  MikoshiClonePersonaMissingError,
+} from "../../../core/usecases/mikoshi-clone.js";
+import {
   MikoshiPull,
-  MikoshiPullAlreadyExistsError,
+  MikoshiPullEngramNotFoundError,
   MikoshiPullCloudNotFoundError,
   MikoshiPullPersonaMissingError,
 } from "../../../core/usecases/mikoshi-pull.js";
@@ -230,18 +236,76 @@ export function registerMikoshiCommand(program: Command): void {
       await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
     });
 
+  // relic mikoshi clone -e <id>
+  mikoshi
+    .command("clone")
+    .description("Clone a remote Engram from Mikoshi to local (first-time import)")
+    .requiredOption("-e, --engram <id>", "Engram ID to clone")
+    .option("--no-sync", "Skip automatic memory sync after clone")
+    .option("-p, --path <dir>", "Override engrams directory path")
+    .action(async (opts: {
+      engram: string;
+      sync: boolean;
+      path?: string;
+    }) => {
+      await ensureInitialized();
+
+      const engramId = opts.engram.trim();
+
+      const apiKey = await resolveMikoshiApiKey();
+      if (!apiKey) {
+        printError("Error: Mikoshi API key is not configured.");
+        console.error("  Set one with: relic config mikoshi-api-key <key>");
+        process.exit(1);
+      }
+
+      const engramsPath = await resolveEngramsPath(opts.path);
+      const mikoshiUrl = await resolveMikoshiUrl();
+      const repo = new LocalEngramRepository(engramsPath);
+      const client = new MikoshiApiClient(mikoshiUrl, apiKey);
+      const usecase = new MikoshiClone(repo, client);
+
+      const spinner = startSpinner("Cloning from Mikoshi...");
+      try {
+        const result = await usecase.execute(engramId);
+        spinner.stop(`✅ Created local Engram "${result.engramName}" from Mikoshi.`);
+      } catch (err) {
+        spinner.stop();
+        if (err instanceof MikoshiCloneAlreadyExistsError) {
+          printError(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiCloneCloudNotFoundError) {
+          printError(`Error: Engram "${engramId}" not found on Mikoshi.`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiClonePersonaMissingError) {
+          printError(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiApiError) {
+          handleMikoshiApiError(err);
+        }
+        throw err;
+      }
+
+      if (!opts.sync) return;
+
+      const passphrase = await resolvePassphraseForSync();
+      const syncUsecase = new MikoshiMemorySync(repo, client);
+      await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
+    });
+
   // relic mikoshi pull -e <id>
   mikoshi
     .command("pull")
-    .description("Pull remote persona files from Mikoshi to local Engram")
+    .description("Update local persona files from Mikoshi (existing Engram required)")
     .requiredOption("-e, --engram <id>", "Engram ID to pull")
-    .option("-f, --force", "Allow overwriting local persona files from Mikoshi")
     .option("-y, --yes", "Skip persona overwrite confirmation")
     .option("--no-sync", "Skip automatic memory sync after pull")
     .option("-p, --path <dir>", "Override engrams directory path")
     .action(async (opts: {
       engram: string;
-      force?: boolean;
       yes?: boolean;
       sync: boolean;
       path?: string;
@@ -265,9 +329,7 @@ export function registerMikoshiCommand(program: Command): void {
 
       const spinner = startSpinner("Checking remote persona...");
       try {
-        const { result, apply } = await usecase.check(engramId, {
-          force: opts.force,
-        });
+        const { result, apply } = await usecase.check(engramId);
 
         if (result.outcome === "already_synced") {
           spinner.stop(`✅ "${result.engramName}" is already synced.`);
@@ -279,22 +341,9 @@ export function registerMikoshiCommand(program: Command): void {
           return;
         }
 
-        // 新規作成 (ローカル未作成)
-        if (!result.diff || (result.diff.soulDiffers && result.diff.identityDiffers && !opts.force)) {
-          spinner.update("Creating local Engram from Mikoshi...");
-          await apply!();
-          spinner.stop(`✅ Created local Engram "${result.engramName}" from Mikoshi.`);
-          if (opts.sync) {
-            const passphrase = await resolvePassphraseForSync();
-            const syncUsecase = new MikoshiMemorySync(repo, client);
-            await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
-          }
-          return;
-        }
-
-        // 差分表示 (--force で既存上書き)
+        // 差分表示
         spinner.stop();
-        const diff = result.diff;
+        const diff = result.diff!;
         console.log(`  Engram: ${result.engramName} (${result.engramId})`);
         console.log(`  Cloud:  ${result.cloudEngramId}`);
         console.log();
@@ -321,7 +370,7 @@ export function registerMikoshiCommand(program: Command): void {
         }
       } catch (err) {
         spinner.stop();
-        if (err instanceof MikoshiPullAlreadyExistsError) {
+        if (err instanceof MikoshiPullEngramNotFoundError) {
           printError(`Error: ${err.message}`);
           process.exit(1);
         }

@@ -5,7 +5,7 @@ import type { MikoshiClient, MikoshiEngramDetail } from "../ports/mikoshi.js";
 // Types
 // ---------------------------------------------------------------------------
 
-export type MikoshiPullOutcome = "pulled" | "already_synced" | "skipped";
+export type MikoshiPullOutcome = "pulled" | "already_synced";
 
 export interface MikoshiPullDiff {
   soulDiffers: boolean;
@@ -26,16 +26,9 @@ export interface MikoshiPullResult {
 // Errors
 // ---------------------------------------------------------------------------
 
-export class MikoshiPullAlreadyExistsError extends Error {
-  constructor(public readonly engramId: string) {
-    super(`Engram "${engramId}" already exists locally. Re-run with "--force" to overwrite persona files.`);
-    this.name = "MikoshiPullAlreadyExistsError";
-  }
-}
-
 export class MikoshiPullEngramNotFoundError extends Error {
   constructor(public readonly engramId: string) {
-    super(`Engram "${engramId}" not found locally`);
+    super(`Engram "${engramId}" not found locally. Use "relic mikoshi clone" to import it first.`);
     this.name = "MikoshiPullEngramNotFoundError";
   }
 }
@@ -67,24 +60,25 @@ export class MikoshiPull {
   /**
    * Phase 1: fetch + diff。上書きはまだしない。
    *
-   * - ローカル未作成 → apply で新規作成
-   * - ローカル既存 + force なし → AlreadyExistsError
-   * - ローカル既存 + force + 差分なし → already_synced
-   * - ローカル既存 + force + 差分あり → apply で上書き
+   * - ローカル未作成 → EngramNotFoundError
+   * - ローカル既存 + 差分なし → already_synced
+   * - ローカル既存 + 差分あり → apply で上書き
    */
-  async check(engramId: string, options?: {
-    force?: boolean;
-  }): Promise<{
+  async check(engramId: string): Promise<{
     result: MikoshiPullResult;
     apply?: () => Promise<void>;
   }> {
-    const force = options?.force === true;
+    // 1. ローカル Engram 必須
+    const local = await this.localRepo.get(engramId);
+    if (!local) {
+      throw new MikoshiPullEngramNotFoundError(engramId);
+    }
 
-    // 1. クラウド検索
+    // 2. クラウド検索
     const cloudEngram = await this.mikoshi.getEngramBySourceId(engramId);
     if (!cloudEngram) throw new MikoshiPullCloudNotFoundError(engramId);
 
-    // 2. Detail 取得 (persona content 込み)
+    // 3. Detail 取得 (persona content 込み)
     const detail = await this.mikoshi.getEngram(cloudEngram.id);
     const { soul: remoteSoul, identity: remoteIdentity } = extractPersona(detail);
 
@@ -92,54 +86,7 @@ export class MikoshiPull {
       throw new MikoshiPullPersonaMissingError(cloudEngram.id);
     }
 
-    // 3. ローカル Engram
-    const local = await this.localRepo.get(engramId);
-    if (!local) {
-      // ローカル未作成 → デフォルトで新規作成
-      const apply = async () => {
-        const existing = await this.localRepo.get(engramId);
-        if (existing) return;
-
-        const now = new Date().toISOString();
-        await this.localRepo.save({
-          meta: {
-            id: engramId,
-            name: detail.name,
-            description: detail.description ?? undefined,
-            tags: detail.tags,
-            createdAt: now,
-            updatedAt: now,
-          },
-          files: {
-            soul: remoteSoul,
-            identity: remoteIdentity,
-          },
-        });
-      };
-
-      return {
-        result: {
-          outcome: "pulled",
-          engramId,
-          engramName: detail.name,
-          cloudEngramId: cloudEngram.id,
-          diff: {
-            soulDiffers: true,
-            identityDiffers: true,
-            remoteSoul,
-            remoteIdentity,
-          },
-        },
-        apply,
-      };
-    }
-
-    // 4. ローカル既存 + force なし → エラー
-    if (!force) {
-      throw new MikoshiPullAlreadyExistsError(engramId);
-    }
-
-    // 5. 差分計算 (末尾空白の差異は無視)
+    // 4. 差分計算 (末尾空白の差異は無視)
     const soulDiffers = normalizeContent(local.files.soul) !== normalizeContent(remoteSoul);
     const identityDiffers = normalizeContent(local.files.identity) !== normalizeContent(remoteIdentity);
 
@@ -161,7 +108,7 @@ export class MikoshiPull {
       remoteIdentity,
     };
 
-    // 6. apply クロージャ
+    // 5. apply クロージャ
     const apply = async () => {
       const fresh = await this.localRepo.get(engramId);
       if (!fresh) throw new MikoshiPullEngramNotFoundError(engramId);

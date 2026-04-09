@@ -19,7 +19,8 @@ All Claw commands live under `relic claw`.
 | Command | Direction | Description |
 |---------|-----------|-------------|
 | `relic claw inject -e <id>` | Relic → Claw | Push persona + auto-sync (`--yes` skips overwrite confirmation, `--no-sync` skips sync, `--merge-identity` for non-OpenClaw) |
-| `relic claw extract -a <name>` | Claw → Relic | New import or persona-only overwrite, then auto-sync that target (`--force`, `--yes`, `--no-sync`) |
+| `relic claw extract -a <name>` | Claw → Relic | First-time import from a Claw workspace (`--no-sync` skips sync) |
+| `relic claw pull -a <name>` | Claw → Relic | Update existing Engram persona from Claw workspace (`--yes`, `--no-sync`) |
 | `relic claw sync -e <id>` | Relic ↔ Claw | Bidirectional merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = one target, `--all` = all targets) |
 
 ## Inject
@@ -55,12 +56,11 @@ relic claw inject --engram commander --yes
 ## Extract
 
 `extract` creates a new Engram from an existing Claw agent workspace.
+This is a first-time import only. If the Engram already exists, use `relic claw pull` instead.
 
 What `extract` writes locally:
 
-- New extract: `engram.json`, `manifest.json`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `MEMORY.md`, `memory/*.md`
-- `extract --force`: only `SOUL.md` and `IDENTITY.md`
-- `extract --force --name`: `SOUL.md`, `IDENTITY.md`, and `engram.json.name`
+- `engram.json`, `manifest.json`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `MEMORY.md`, `memory/*.md`
 
 After `extract`, Relic automatically runs a targeted sync for that same Engram/agent target.
 Use `--no-sync` to skip it.
@@ -72,17 +72,36 @@ relic claw extract --agent rebel
 # Set a custom display name
 relic claw extract --agent analyst --name "Data Analyst"
 
-# Overwrite local persona files from the Claw workspace
-relic claw extract --agent rebel --force
-
-# Skip overwrite confirmation
-relic claw extract --agent rebel --force --yes
-
 # Skip the automatic targeted sync after extract
 relic claw extract --agent rebel --no-sync
 
 # Override Claw directory
 relic claw extract --agent rebel --dir /path/to/.fooclaw
+```
+
+## Pull
+
+`pull` updates an existing local Engram's persona files from a Claw workspace.
+If the local Engram does not exist, use `relic claw extract` first.
+
+`pull` only overwrites `SOUL.md` and `IDENTITY.md`.
+It shows a diff and asks for confirmation before overwriting.
+
+After `pull`, Relic automatically runs a targeted sync for that same Engram/agent target.
+Use `--no-sync` to skip it.
+
+```bash
+# Pull persona updates from a Claw workspace
+relic claw pull --agent rebel
+
+# Skip overwrite confirmation
+relic claw pull --agent rebel --yes
+
+# Skip the automatic targeted sync after pull
+relic claw pull --agent rebel --no-sync
+
+# Override Claw directory
+relic claw pull --agent rebel --dir /path/to/.fooclaw
 ```
 
 ## Sync
@@ -123,12 +142,14 @@ Merge rules:
 | `inject` | any successful inject | `--no-sync` | Skip the automatic targeted sync |
 | `extract` | Agent not specified | none | Fail and require `--agent <name>` |
 | `extract` | Local Engram missing | none | Create a new Engram from workspace files, then auto-sync that target |
-| `extract` | Local Engram missing | `--force` | Same as normal new extract, then auto-sync that target |
-| `extract` | Local Engram exists | none | Fail and require `--force` |
-| `extract` | Local Engram exists, no persona drift | `--force` | Skip persona overwrite, then auto-sync that target |
-| `extract` | Local Engram exists, persona differs | `--force` | Ask for confirmation before overwriting `SOUL.md` / `IDENTITY.md`, then auto-sync that target |
-| `extract` | Local Engram exists, persona differs | `--force --yes` | Overwrite `SOUL.md` / `IDENTITY.md` without confirmation, then auto-sync that target |
+| `extract` | Local Engram exists | none | Fail with `AlreadyExtractedError` — use `relic claw pull` instead |
 | `extract` | any successful extract | `--no-sync` | Skip the automatic targeted sync |
+| `pull` | Agent not specified | none | Fail and require `--agent <name>` |
+| `pull` | Local Engram missing | none | Fail with `ClawPullEngramNotFoundError` — use `relic claw extract` instead |
+| `pull` | No persona drift | none | Report already in sync |
+| `pull` | Persona differs | none | Show diff, ask for confirmation, then overwrite and auto-sync |
+| `pull` | Persona differs | `--yes` | Overwrite without confirmation, then auto-sync |
+| `pull` | any successful pull | `--no-sync` | Skip the automatic targeted sync |
 | `sync` | no target specified | none | Fail — `--engram` or `--all` is required |
 | `sync` | explicit target | `--engram <id>` | Sync one matching target where `agentName = engramId` |
 | `sync` | all targets | `--all` | Scan and sync all matching targets |
@@ -136,6 +157,5 @@ Merge rules:
 Notes:
 
 - "Persona" means `SOUL.md` and `IDENTITY.md`
-- `extract --force` only overwrites `SOUL.md` and `IDENTITY.md`
-- `extract --force` does not overwrite `USER.md`, `MEMORY.md`, or `memory/*.md`
-- If `--name` is provided together with `extract --force`, Relic also updates `engram.json.name`
+- `extract` is for first-time import only — it fails if the Engram already exists
+- `pull` only overwrites `SOUL.md` and `IDENTITY.md` — it does not touch `USER.md`, `MEMORY.md`, or `memory/*.md`
