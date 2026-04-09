@@ -231,32 +231,31 @@ export function registerClawCommand(program: Command): void {
           });
 
           if (result.outcome === "already_synced") {
-            console.log(`  Already in sync (${agentName})`);
-            return;
-          }
+            console.log(`  Persona already in sync (${agentName})`);
+          } else {
+            // Show diff summary
+            const diff = result.diff!;
+            if (diff.soulDiff === "different") {
+              console.log("  SOUL.md: differs");
+            }
+            if (diff.identityDiff === "different") {
+              console.log("  IDENTITY.md: differs");
+            }
 
-          // Show diff summary
-          const diff = result.diff!;
-          if (diff.soulDiff === "different") {
-            console.log("  SOUL.md: differs");
-          }
-          if (diff.identityDiff === "different") {
-            console.log("  IDENTITY.md: differs");
-          }
+            // Confirm overwrite
+            if (
+              !opts.yes &&
+              !(await confirmOverwrite(
+                `Overwrite local Engram "${agentName}" persona with Claw workspace version? [y/N] `
+              ))
+            ) {
+              printError("Aborted.");
+              process.exit(1);
+            }
 
-          // Confirm overwrite
-          if (
-            !opts.yes &&
-            !(await confirmOverwrite(
-              `Overwrite local Engram "${agentName}" persona with Claw workspace version? [y/N] `
-            ))
-          ) {
-            printError("Aborted.");
-            process.exit(1);
+            await apply!();
+            console.log(`Pulled "${result.engramName}" from ${result.diff!.sourcePath}`);
           }
-
-          await apply!();
-          console.log(`Pulled "${result.engramName}" from ${diff.sourcePath}`);
 
           if (!opts.sync) return;
 
