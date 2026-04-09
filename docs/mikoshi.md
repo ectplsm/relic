@@ -93,7 +93,7 @@ Push local persona files:
 relic mikoshi push --engram <engram-id>
 ```
 
-Clone a remote Engram from Mikoshi (first-time import):
+Download a remote Engram from Mikoshi (first-time import):
 
 ```bash
 relic mikoshi download --engram <engram-id>
