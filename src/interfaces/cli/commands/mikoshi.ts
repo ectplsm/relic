@@ -202,7 +202,7 @@ export function registerMikoshiCommand(program: Command): void {
             console.log(`  Hash: ${result.newPersonaHash}`);
             break;
           case "already_synced":
-            spinner.stop(`✅ "${result.engramName}" is already synced.`);
+            spinner.stop(`✅ Persona already in sync (${result.engramName})`);
             break;
           case "conflict":
             spinner.stop();
@@ -334,7 +334,7 @@ export function registerMikoshiCommand(program: Command): void {
         const { result, apply } = await usecase.check(engramId);
 
         if (result.outcome === "already_synced") {
-          spinner.stop(`✅ "${result.engramName}" is already synced.`);
+          spinner.stop(`✅ Persona already in sync (${result.engramName})`);
           if (opts.sync) {
             const passphrase = await resolvePassphraseForSync();
             const syncUsecase = new MikoshiMemorySync(repo, client);
@@ -602,14 +602,14 @@ async function runSingleMikoshiSync(
 
   switch (result.outcome) {
     case "already_synced":
-      spinner.stop(`${prefix}Already in sync (${engramId})`);
+      spinner.stop(`${prefix}✅ Memory already in sync (${engramId})`);
       return;
     case "synced": {
       const details = summarizeMergedMemory(result.mergedPaths ?? []);
       if (details.length > 0) {
-        spinner.stop(`${prefix}${engramId}: merged ${details.join(", ")}`);
+        spinner.stop(`${prefix}✅ Memory synced: ${details.join(", ")}`);
       } else {
-        spinner.stop(`${prefix}Memory synced (${engramId})`);
+        spinner.stop(`${prefix}✅ Memory synced (${engramId})`);
       }
       return;
     }

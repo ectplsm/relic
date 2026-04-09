@@ -111,9 +111,9 @@ export function registerClawCommand(program: Command): void {
             details.push("USER.md");
           }
           if (details.length > 0) {
-            console.log(`  Synced: ${details.join(", ")}`);
+            console.log(`✅ Memory synced: ${details.join(", ")}`);
           } else {
-            console.log(`  ✅ Already in sync`);
+            console.log(`✅ Memory already in sync`);
           }
         } catch (err) {
           if (
@@ -183,9 +183,9 @@ export function registerClawCommand(program: Command): void {
             details.push("USER.md");
           }
           if (details.length > 0) {
-            console.log(`  Synced: ${details.join(", ")}`);
+            console.log(`✅ Memory synced: ${details.join(", ")}`);
           } else {
-            console.log(`  ✅ Already in sync`);
+            console.log(`✅ Memory already in sync`);
           }
         } catch (err) {
           if (
@@ -276,9 +276,9 @@ export function registerClawCommand(program: Command): void {
             details.push("USER.md");
           }
           if (details.length > 0) {
-            console.log(`  Synced: ${details.join(", ")}`);
+            console.log(`✅ Memory synced: ${details.join(", ")}`);
           } else {
-            console.log(`  ✅ Already in sync`);
+            console.log(`✅ Memory already in sync`);
           }
         } catch (err) {
           if (
@@ -359,9 +359,9 @@ export function registerClawCommand(program: Command): void {
               details.push("USER.md");
             }
             if (details.length > 0) {
-              console.log(`  ${engramId}: merged ${details.join(", ")}`);
+              console.log(`✅ ${engramId}: merged ${details.join(", ")}`);
             } else {
-              console.log(`  ✅ Already in sync (${engramId})`);
+              console.log(`✅ Already in sync (${engramId})`);
             }
             return;
           }
@@ -385,9 +385,9 @@ export function registerClawCommand(program: Command): void {
               details.push("USER.md");
             }
             if (details.length > 0) {
-              console.log(`  ${s.engramId}: merged ${details.join(", ")}`);
+              console.log(`✅ ${s.engramId}: merged ${details.join(", ")}`);
             } else {
-              console.log(`  ✅ Already in sync (${s.engramId})`);
+              console.log(`✅ Already in sync (${s.engramId})`);
             }
           }
 
