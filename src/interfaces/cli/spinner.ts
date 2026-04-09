@@ -19,15 +19,15 @@ export function startSpinner(message: string): Spinner {
   let currentMessage = message;
 
   if (!isTTY) {
-    process.stdout.write(`  ${message}\n`);
+    process.stdout.write(`${message}\n`);
     return {
       update(msg: string) {
         currentMessage = msg;
-        process.stdout.write(`  ${msg}\n`);
+        process.stdout.write(`${msg}\n`);
       },
       stop(finalMessage?: string) {
         if (finalMessage) {
-          process.stdout.write(`  ${finalMessage}\n`);
+          process.stdout.write(`${finalMessage}\n`);
         }
       },
     };
@@ -37,7 +37,7 @@ export function startSpinner(message: string): Spinner {
 
   const render = () => {
     const frame = FRAMES[frameIndex % FRAMES.length];
-    process.stdout.write(`\r  ${frame} ${currentMessage}`);
+    process.stdout.write(`\r${frame} ${currentMessage}`);
     frameIndex++;
   };
 
@@ -53,7 +53,7 @@ export function startSpinner(message: string): Spinner {
       // Clear the spinner line
       process.stdout.write("\r\x1b[2K");
       if (finalMessage) {
-        process.stdout.write(`  ${finalMessage}\n`);
+        process.stdout.write(`${finalMessage}\n`);
       }
     },
   };
