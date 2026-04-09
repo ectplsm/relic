@@ -198,11 +198,14 @@ export function registerMikoshiCommand(program: Command): void {
       const repo = new LocalEngramRepository(engramsPath);
       const client = new MikoshiApiClient(mikoshiUrl, apiKey);
       const usecase = new MikoshiPush(repo, client);
+      let checkSpinner: ReturnType<typeof startSpinner> | undefined;
+      let applySpinner: ReturnType<typeof startSpinner> | undefined;
 
       try {
-        const spinner = startSpinner("Checking remote persona...");
+        checkSpinner = startSpinner("Checking remote persona...");
         const { result, apply } = await usecase.check(engramId);
-        spinner.stop();
+        checkSpinner.stop();
+        checkSpinner = undefined;
 
         if (result.outcome === "already_synced") {
           printLine(`✅ Persona already in sync (${result.engramName})`);
@@ -223,17 +226,21 @@ export function registerMikoshiCommand(program: Command): void {
             return;
           }
 
-          const applySpinner = startSpinner("Pushing persona to Mikoshi...");
+          applySpinner = startSpinner("Pushing persona to Mikoshi...");
           const applied = await apply!();
           if (applied.action === "created") {
             applySpinner.stop(`✅ Created "${result.engramName}" on Mikoshi.`);
+            applySpinner = undefined;
             printLine(`Cloud ID: ${applied.cloudEngramId}`);
           } else {
             applySpinner.stop(`✅ Persona updated for "${result.engramName}".`);
+            applySpinner = undefined;
             printLine(`Hash: ${applied.newPersonaHash}`);
           }
         }
       } catch (err) {
+        checkSpinner?.stop();
+        applySpinner?.stop();
         if (err instanceof MikoshiPushEngramNotFoundError) {
           printError(`Error: ${err.message}`);
           process.exit(1);
@@ -295,6 +302,8 @@ export function registerMikoshiCommand(program: Command): void {
       const client = new MikoshiApiClient(mikoshiUrl, apiKey);
       const download = new MikoshiDownload(repo, client);
       const usecase = new MikoshiPull(repo, client);
+      let checkSpinner: ReturnType<typeof startSpinner> | undefined;
+      let applySpinner: ReturnType<typeof startSpinner> | undefined;
 
       try {
         const local = await repo.get(engramId);
@@ -308,9 +317,10 @@ export function registerMikoshiCommand(program: Command): void {
             return;
           }
 
-          const spinner = startSpinner("Pulling persona from Mikoshi...");
+          applySpinner = startSpinner("Pulling persona from Mikoshi...");
           const result = await download.execute(engramId);
-          spinner.stop(`✅ Pulled "${result.engramName}" from Mikoshi.`);
+          applySpinner.stop(`✅ Pulled "${result.engramName}" from Mikoshi.`);
+          applySpinner = undefined;
 
           if (opts.sync) {
             const passphrase = await resolvePassphraseForSync();
@@ -320,9 +330,10 @@ export function registerMikoshiCommand(program: Command): void {
           return;
         }
 
-        const spinner = startSpinner("Checking remote persona...");
+        checkSpinner = startSpinner("Checking remote persona...");
         const { result, apply } = await usecase.check(engramId);
-        spinner.stop();
+        checkSpinner.stop();
+        checkSpinner = undefined;
 
         if (result.outcome === "already_synced") {
           printLine(`✅ Persona already in sync (${result.engramName})`);
@@ -351,15 +362,18 @@ export function registerMikoshiCommand(program: Command): void {
           }
         }
 
-        const applySpinner = startSpinner("Pulling persona from Mikoshi...");
+        applySpinner = startSpinner("Pulling persona from Mikoshi...");
         await apply!();
         applySpinner.stop(`✅ Local persona updated from Mikoshi.`);
+        applySpinner = undefined;
         if (opts.sync) {
           const passphrase = await resolvePassphraseForSync();
           const syncUsecase = new MikoshiMemorySync(repo, client);
           await runSingleMikoshiSync(syncUsecase, engramId, passphrase);
         }
       } catch (err) {
+        checkSpinner?.stop();
+        applySpinner?.stop();
         if (err instanceof MikoshiPullEngramNotFoundError) {
           printError(`Error: ${err.message}`);
           process.exit(1);
@@ -598,33 +612,44 @@ async function runSingleMikoshiSync(
 ): Promise<void> {
   const prefix = options?.prefix ?? "";
   const spinner = startSpinner(`Syncing memory (${engramId})...`);
-  const result = await usecase.execute(engramId, passphrase);
+  let stopped = false;
 
-  switch (result.outcome) {
-    case "already_synced":
-      spinner.stop(`${prefix}✅ Memory already in sync (${engramId})`);
-      return;
-    case "synced": {
-      const details = summarizeMergedMemory(result.mergedPaths ?? []);
-      if (details.length > 0) {
-        spinner.stop(`${prefix}✅ Memory synced: ${details.join(", ")} (${engramId})`);
-      } else {
-        spinner.stop(`${prefix}✅ Memory synced (${engramId})`);
+  try {
+    const result = await usecase.execute(engramId, passphrase);
+
+    switch (result.outcome) {
+      case "already_synced":
+        spinner.stop(`${prefix}✅ Memory already in sync (${engramId})`);
+        stopped = true;
+        return;
+      case "synced": {
+        const details = summarizeMergedMemory(result.mergedPaths ?? []);
+        if (details.length > 0) {
+          spinner.stop(`${prefix}✅ Memory synced: ${details.join(", ")} (${engramId})`);
+        } else {
+          spinner.stop(`${prefix}✅ Memory synced (${engramId})`);
+        }
+        stopped = true;
+        return;
       }
-      return;
-    }
-    case "conflict":
+      case "conflict":
+        spinner.stop();
+        stopped = true;
+        printErrorLine(`⚠ Memory sync conflict for "${result.engramName}".`);
+        printErrorLine("The remote memory changed during sync.");
+        if (result.conflictRemoteHash) {
+          printErrorDetail(`Remote hash:    ${result.conflictRemoteHash}`);
+        }
+        if (result.conflictRemoteVersion) {
+          printErrorDetail(`Remote version: ${result.conflictRemoteVersion}`);
+        }
+        printErrorLine("Re-run 'relic mikoshi sync' to merge again.");
+        process.exit(1);
+      }
+  } finally {
+    if (!stopped) {
       spinner.stop();
-      printErrorLine(`⚠ Memory sync conflict for "${result.engramName}".`);
-      printErrorLine("The remote memory changed during sync.");
-      if (result.conflictRemoteHash) {
-        printErrorDetail(`Remote hash:    ${result.conflictRemoteHash}`);
-      }
-      if (result.conflictRemoteVersion) {
-        printErrorDetail(`Remote version: ${result.conflictRemoteVersion}`);
-      }
-      printErrorLine("Re-run 'relic mikoshi sync' to merge again.");
-      process.exit(1);
+    }
   }
 }
 
