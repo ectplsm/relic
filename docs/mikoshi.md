@@ -85,9 +85,17 @@ Pull remote persona files into the local Engram:
 relic mikoshi pull <engram-id>
 ```
 
+Create a new local Engram from Mikoshi if it does not exist yet:
+
+```bash
+relic mikoshi pull <engram-id> --create
+```
+
 Notes:
 
 - persona sync handles `SOUL.md` and `IDENTITY.md`
+- `--create` creates a new local Engram from remote persona data when the local Engram does not exist yet
+- `--create` uses remote `name`, `description`, and `tags`, but keeps memory sync as a separate step
 - persona drift is explicit and safety-sensitive
 - if the remote changed since your last check, Mikoshi rejects the overwrite with `409 Conflict`
 

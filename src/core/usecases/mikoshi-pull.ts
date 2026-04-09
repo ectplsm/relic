@@ -33,6 +33,13 @@ export class MikoshiPullEngramNotFoundError extends Error {
   }
 }
 
+export class MikoshiPullCreateFlagRequiredError extends Error {
+  constructor(public readonly engramId: string) {
+    super(`Engram "${engramId}" not found locally. Re-run with "--create" to create it from Mikoshi.`);
+    this.name = "MikoshiPullCreateFlagRequiredError";
+  }
+}
+
 export class MikoshiPullCloudNotFoundError extends Error {
   constructor(public readonly sourceEngramId: string) {
     super(`Engram "${sourceEngramId}" not found on Mikoshi`);
@@ -61,24 +68,69 @@ export class MikoshiPull {
    * Phase 1: fetch + diff。上書きはまだしない。
    * 差分がなければ already_synced を返す。
    */
-  async check(engramId: string): Promise<{
+  async check(engramId: string, options: {
+    allowCreate?: boolean;
+  }): Promise<{
     result: MikoshiPullResult;
     apply?: () => Promise<void>;
   }> {
-    // 1. ローカル Engram
-    const local = await this.localRepo.get(engramId);
-    if (!local) throw new MikoshiPullEngramNotFoundError(engramId);
+    const allowCreate = options.allowCreate === true;
 
-    // 2. クラウド検索
+    // 1. クラウド検索
     const cloudEngram = await this.mikoshi.getEngramBySourceId(engramId);
     if (!cloudEngram) throw new MikoshiPullCloudNotFoundError(engramId);
 
-    // 3. Detail 取得 (persona content 込み)
+    // 2. Detail 取得 (persona content 込み)
     const detail = await this.mikoshi.getEngram(cloudEngram.id);
     const { soul: remoteSoul, identity: remoteIdentity } = extractPersona(detail);
 
     if (!remoteSoul || !remoteIdentity) {
       throw new MikoshiPullPersonaMissingError(cloudEngram.id);
+    }
+
+    // 3. ローカル Engram
+    const local = await this.localRepo.get(engramId);
+    if (!local) {
+      if (!allowCreate) {
+        throw new MikoshiPullCreateFlagRequiredError(engramId);
+      }
+
+      const apply = async () => {
+        const existing = await this.localRepo.get(engramId);
+        if (existing) return;
+
+        const now = new Date().toISOString();
+        await this.localRepo.save({
+          meta: {
+            id: engramId,
+            name: detail.name,
+            description: detail.description ?? undefined,
+            tags: detail.tags,
+            createdAt: now,
+            updatedAt: now,
+          },
+          files: {
+            soul: remoteSoul,
+            identity: remoteIdentity,
+          },
+        });
+      };
+
+      return {
+        result: {
+          outcome: "pulled",
+          engramId,
+          engramName: detail.name,
+          cloudEngramId: cloudEngram.id,
+          diff: {
+            soulDiffers: true,
+            identityDiffers: true,
+            remoteSoul,
+            remoteIdentity,
+          },
+        },
+        apply,
+      };
     }
 
     // 4. 差分計算

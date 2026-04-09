@@ -86,9 +86,17 @@ cloud 側の persona ファイルをローカル Engram へ pull:
 relic mikoshi pull <engram-id>
 ```
 
+ローカル Engram がまだ無い場合は、Mikoshi から新規作成しながら pull:
+
+```bash
+relic mikoshi pull <engram-id> --create
+```
+
 注意点:
 
 - persona sync の対象は `SOUL.md` と `IDENTITY.md`
+- `--create` を付けると、ローカル Engram 未作成時に remote の persona 情報から新規作成する
+- `--create` で使うのは remote の `name` / `description` / `tags` までで、memory は別途同期する
 - persona drift は明示的で、安全性重視
 - 最後に確認した状態から remote が変わっていれば、Mikoshi は `409 Conflict` で上書きを拒否する
 

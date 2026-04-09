@@ -13,7 +13,7 @@ import {
 } from "../../../core/usecases/mikoshi-push.js";
 import {
   MikoshiPull,
-  MikoshiPullEngramNotFoundError,
+  MikoshiPullCreateFlagRequiredError,
   MikoshiPullCloudNotFoundError,
   MikoshiPullPersonaMissingError,
 } from "../../../core/usecases/mikoshi-pull.js";
@@ -238,8 +238,13 @@ export function registerMikoshiCommand(program: Command): void {
     .command("pull [engram-id]")
     .description("Pull remote persona files from Mikoshi to local Engram")
     .option("-p, --path <dir>", "Override engrams directory path")
+    .option("-c, --create", "Create the local Engram if it does not exist")
     .option("-y, --yes", "Skip overwrite confirmation")
-    .action(async (engramIdArg: string | undefined, opts: { path?: string; yes?: boolean }) => {
+    .action(async (engramIdArg: string | undefined, opts: {
+      path?: string;
+      create?: boolean;
+      yes?: boolean;
+    }) => {
       await ensureInitialized();
 
       const engramId = engramIdArg ?? await resolveDefaultEngram();
@@ -263,10 +268,19 @@ export function registerMikoshiCommand(program: Command): void {
       const usecase = new MikoshiPull(repo, client);
 
       try {
-        const { result, apply } = await usecase.check(engramId);
+        const { result, apply } = await usecase.check(engramId, {
+          allowCreate: opts.create,
+        });
 
         if (result.outcome === "already_synced") {
           console.log(`\n  ✅ "${result.engramName}" is already synced.\n`);
+          return;
+        }
+
+        const localBefore = await repo.get(engramId);
+        if (!localBefore) {
+          await apply!();
+          console.log(`\n  ✅ Created local Engram "${result.engramName}" from Mikoshi.\n`);
           return;
         }
 
@@ -291,7 +305,7 @@ export function registerMikoshiCommand(program: Command): void {
         await apply!();
         console.log(`  ✅ Local persona updated from Mikoshi.\n`);
       } catch (err) {
-        if (err instanceof MikoshiPullEngramNotFoundError) {
+        if (err instanceof MikoshiPullCreateFlagRequiredError) {
           printError(`Error: ${err.message}`);
           process.exit(1);
         }

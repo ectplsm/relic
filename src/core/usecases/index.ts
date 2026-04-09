@@ -64,6 +64,7 @@ export {
 export {
   MikoshiPull,
   MikoshiPullEngramNotFoundError,
+  MikoshiPullCreateFlagRequiredError,
   MikoshiPullCloudNotFoundError,
   MikoshiPullPersonaMissingError,
   type MikoshiPullResult,
