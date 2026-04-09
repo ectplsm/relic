@@ -77,7 +77,7 @@ export function registerClawCommand(program: Command): void {
           }
 
           if (alreadyInjected) {
-            console.log(`  Already injected (${diff.targetPath})`);
+            console.log(`✅ Already injected (${diff.targetPath})`);
           } else {
             const result = await inject.execute(opts.engram, {
               openclawDir: clawDir,
@@ -85,7 +85,7 @@ export function registerClawCommand(program: Command): void {
             });
 
             console.log(
-              `Injected "${result.engramName}" into ${result.targetPath}`
+              `✅ Injected "${result.engramName}" into ${result.targetPath}`
             );
             console.log(`  Files written: ${result.filesWritten.join(", ")}`);
           }
@@ -113,7 +113,7 @@ export function registerClawCommand(program: Command): void {
           if (details.length > 0) {
             console.log(`  Synced: ${details.join(", ")}`);
           } else {
-            console.log(`  Already in sync`);
+            console.log(`  ✅ Already in sync`);
           }
         } catch (err) {
           if (
@@ -160,7 +160,7 @@ export function registerClawCommand(program: Command): void {
           });
 
           console.log(
-            `Extracted "${result.engramName}" from ${result.sourcePath}`
+            `✅ Extracted "${result.engramName}" from ${result.sourcePath}`
           );
           console.log(`  Files extracted: ${result.filesRead.join(", ")}`);
           console.log(`  Saved as Engram: ${result.engramId}`);
@@ -185,7 +185,7 @@ export function registerClawCommand(program: Command): void {
           if (details.length > 0) {
             console.log(`  Synced: ${details.join(", ")}`);
           } else {
-            console.log(`  Already in sync`);
+            console.log(`  ✅ Already in sync`);
           }
         } catch (err) {
           if (
@@ -231,7 +231,7 @@ export function registerClawCommand(program: Command): void {
           });
 
           if (result.outcome === "already_synced") {
-            console.log(`  Persona already in sync (${agentName})`);
+            console.log(`✅ Persona already in sync (${agentName})`);
           } else {
             // Show diff summary
             const diff = result.diff!;
@@ -254,7 +254,7 @@ export function registerClawCommand(program: Command): void {
             }
 
             await apply!();
-            console.log(`Pulled "${result.engramName}" from ${result.diff!.sourcePath}`);
+            console.log(`✅ Pulled "${result.engramName}" from ${result.diff!.sourcePath}`);
           }
 
           if (!opts.sync) return;
@@ -278,7 +278,7 @@ export function registerClawCommand(program: Command): void {
           if (details.length > 0) {
             console.log(`  Synced: ${details.join(", ")}`);
           } else {
-            console.log(`  Already in sync`);
+            console.log(`  ✅ Already in sync`);
           }
         } catch (err) {
           if (
@@ -361,7 +361,7 @@ export function registerClawCommand(program: Command): void {
             if (details.length > 0) {
               console.log(`  ${engramId}: merged ${details.join(", ")}`);
             } else {
-              console.log(`  Already in sync (${engramId})`);
+              console.log(`  ✅ Already in sync (${engramId})`);
             }
             return;
           }
@@ -387,7 +387,7 @@ export function registerClawCommand(program: Command): void {
             if (details.length > 0) {
               console.log(`  ${s.engramId}: merged ${details.join(", ")}`);
             } else {
-              console.log(`  Already in sync (${s.engramId})`);
+              console.log(`  ✅ Already in sync (${s.engramId})`);
             }
           }
 
