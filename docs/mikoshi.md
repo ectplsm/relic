@@ -81,7 +81,7 @@ What each command does:
 |---------|-----------|-------------|
 | `relic mikoshi status -e <id>` | — | Show sync status between local and cloud |
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | Create or update remote persona + auto-sync (`--yes`, `--no-sync`) |
-| `relic mikoshi pull -e <id>` | Mikoshi → Relic | Create or update local persona from Mikoshi (`--yes`, `--no-sync`) |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | Create or update local persona + auto-sync (`--yes`, `--no-sync`) |
 | `relic mikoshi sync -e <id>` | Relic ↔ Mikoshi | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = one target, `--all` = all targets) |
 
 ## Persona Commands

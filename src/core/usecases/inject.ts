@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { EngramFiles } from "../entities/engram.js";
 import { INJECT_FILE_MAP, resolveWorkspacePath } from "../../shared/openclaw.js";
@@ -77,8 +77,6 @@ export class Inject {
   ): Promise<InjectResult> {
     const { engram, targetPath } = await this.loadInjectTarget(engramId, options);
 
-    await mkdir(targetPath, { recursive: true });
-
     const filesWritten = await this.writeFiles(
       targetPath,
       engram.files,
@@ -110,6 +108,9 @@ export class Inject {
     }
 
     const targetPath = resolveWorkspacePath(engramId, options?.openclawDir);
+    if (!existsSync(targetPath)) {
+      throw new InjectWorkspaceNotFoundError(engramId);
+    }
     return { engram, targetPath };
   }
 

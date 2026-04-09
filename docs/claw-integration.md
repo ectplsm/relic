@@ -18,9 +18,9 @@ All Claw commands live under `relic claw`.
 
 | Command | Direction | Description |
 |---------|-----------|-------------|
-| `relic claw push -e <id>` | Relic → Claw | Push persona into a workspace (`--yes`, `--no-sync`, `--merge-identity`) |
-| `relic claw pull -e <id>` | Claw → Relic | Create or update a local Engram from a workspace (`--name` for first-time local creation, `--yes`, `--no-sync`) |
-| `relic claw sync -e <id>` | Relic ↔ Claw | Bidirectional merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = one target, `--all` = all targets) |
+| `relic claw push -e <id>` | Relic → Claw | Create or update persona files in an existing workspace + auto-sync (`--yes`, `--no-sync`, `--merge-identity`) |
+| `relic claw pull -e <id>` | Claw → Relic | Create or update local persona files + auto-sync (`--name`, `--yes`, `--no-sync`) |
+| `relic claw sync -e <id>` | Relic ↔ Claw | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = one target, `--all` = all targets) |
 
 ## Push
 
@@ -29,7 +29,10 @@ then syncs `USER.md` and memory files (`MEMORY.md`, `memory/*.md`).
 The sync is bidirectional and merge-based, not a blind overwrite.
 `AGENTS.md` and `HEARTBEAT.md` remain under Claw's control.
 
-`push` handles both first-time creation and updates:
+The workspace itself must already exist.
+If it does not, create the agent first with `openclaw agents add <id>`.
+
+`push` handles both first-time persona creation and later updates inside that existing workspace:
 
 - if persona files are missing in the workspace, Relic asks before creating them
 - if persona files already exist and differ, Relic asks before overwriting them
@@ -113,7 +116,7 @@ Merge rules:
 
 | Command | State | Flags | Result |
 |---------|------|------|------|
-| `push` | Workspace missing | none | Create the workspace directory if needed, then ask before creating persona files |
+| `push` | Workspace missing | none | Fail and ask you to run `openclaw agents add <id>` first |
 | `push` | Persona files missing in workspace | none | Ask before creating persona files, then auto-sync that target |
 | `push` | Persona matches local Engram | none | Skip persona rewrite, then auto-sync that target |
 | `push` | Persona differs from local Engram | none | Ask before overwriting persona, then auto-sync that target |

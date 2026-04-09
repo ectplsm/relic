@@ -7,6 +7,7 @@ import {
   Inject,
   InjectEngramNotFoundError,
   InjectClawDirNotFoundError,
+  InjectWorkspaceNotFoundError,
   Extract,
   WorkspaceNotFoundError,
   WorkspaceEmptyError,
@@ -129,7 +130,8 @@ export function registerClawCommand(program: Command): void {
         } catch (err) {
           if (
             err instanceof InjectEngramNotFoundError ||
-            err instanceof InjectClawDirNotFoundError
+            err instanceof InjectClawDirNotFoundError ||
+            err instanceof InjectWorkspaceNotFoundError
           ) {
             printError(`Error: ${err.message}`);
             process.exit(1);

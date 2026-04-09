@@ -19,9 +19,9 @@ Claw 系コマンドはすべて `relic claw` 配下にあります。
 
 | Command | Direction | Description |
 |---------|-----------|-------------|
-| `relic claw push -e <id>` | Relic → Claw | workspace に persona を反映（`--yes`, `--no-sync`, `--merge-identity`） |
-| `relic claw pull -e <id>` | Claw → Relic | workspace からローカル Engram を新規作成または更新（初回作成時は `--name`、ほか `--yes`, `--no-sync`） |
-| `relic claw sync -e <id>` | Relic ↔ Claw | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = 単一対象、`--all` = 全対象） |
+| `relic claw push -e <id>` | Relic → Claw | 既存 workspace 内の persona files を新規作成または更新し、自動 sync（`--yes`, `--no-sync`, `--merge-identity`） |
+| `relic claw pull -e <id>` | Claw → Relic | ローカルの persona files を新規作成または更新し、自動 sync（`--name`, `--yes`, `--no-sync`） |
+| `relic claw sync -e <id>` | Relic ↔ Claw | 双方向 memory merge（`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = 単一対象、`--all` = 全対象） |
 
 ## Push
 
@@ -30,7 +30,10 @@ Claw 系コマンドはすべて `relic claw` 配下にあります。
 sync は双方向・マージ方式で、片側を盲目的に上書きするものではありません。
 `AGENTS.md` と `HEARTBEAT.md` は Claw 側の責務のままです。
 
-`push` は初回作成と更新の両方を扱います。
+workspace 自体は先に存在している必要があります。
+無ければ `openclaw agents add <id>` を先に実行してください。
+
+`push` は、その既存 workspace の中で persona を初回作成または更新します。
 
 - workspace 側に persona ファイルが無ければ、作成前に確認を出します
 - persona ファイルがあり差分があれば、上書き前に確認を出します
@@ -114,7 +117,7 @@ relic claw sync --dir /path/to/.fooclaw
 
 | Command | State | Flags | Result |
 |---------|------|------|------|
-| `push` | workspace 未作成 | なし | 必要なら workspace directory を作り、その上で persona 作成前に確認を出す |
+| `push` | workspace 未作成 | なし | エラー。先に `openclaw agents add <id>` を実行するよう案内 |
 | `push` | workspace に persona ファイルなし | なし | persona 作成前に確認を出し、その後その対象だけ自動 sync |
 | `push` | persona がローカル Engram と同一 | なし | persona 再書き込みをスキップし、その対象だけ自動 sync |
 | `push` | persona がローカル Engram と差分あり | なし | persona 上書き前に確認を出し、その後その対象だけ自動 sync |

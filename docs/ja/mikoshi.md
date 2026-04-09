@@ -83,7 +83,7 @@ relic mikoshi pull -e rebel
 |---------|-----------|-------------|
 | `relic mikoshi status -e <id>` | — | ローカルとクラウドの状態を表示 |
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | remote persona を新規作成または更新し、自動 sync (`--yes`, `--no-sync`) |
-| `relic mikoshi pull -e <id>` | Mikoshi → Relic | ローカル persona を新規作成または更新 (`--yes`, `--no-sync`) |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | local persona を新規作成または更新し、自動 sync (`--yes`, `--no-sync`) |
 | `relic mikoshi sync -e <id>` | Relic ↔ Mikoshi | 双方向 memory merge（`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = 単一対象、`--all` = 全対象） |
 
 ## Persona Commands
