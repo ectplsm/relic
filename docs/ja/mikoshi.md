@@ -55,20 +55,26 @@ relic config mikoshi-passphrase <passphrase>
 
 ## コマンドフロー
 
-初回確認でおすすめの順番:
+初回アップロード:
 
 ```bash
-relic mikoshi list
-relic mikoshi status -e rebel
 relic mikoshi push -e rebel
 relic mikoshi status -e rebel
 ```
 
+別マシンで取り込む:
+
+```bash
+relic mikoshi list
+relic mikoshi clone -e rebel
+```
+
 各コマンドの意味:
 
-- `relic mikoshi list` は API key で見える cloud Engram を一覧表示
+- `relic mikoshi push -e <id>` は persona ファイルを Mikoshi にアップロードし、memory も自動 sync する
 - `relic mikoshi status -e <id>` はローカルの persona / memory hash と cloud 側を比較
-- `relic mikoshi push -e <id>` は平文の persona ファイルを Mikoshi に作成または更新し、その後 memory も自動 sync する
+- `relic mikoshi list` は API key で見える cloud Engram を一覧表示
+- `relic mikoshi clone -e <id>` は remote の Engram をローカルに新規作成する
 
 ## コマンド一覧
 

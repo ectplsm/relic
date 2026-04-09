@@ -54,20 +54,26 @@ Lose it, and your uploaded memory is unrecoverable.
 
 ## Command Flow
 
-Recommended first-run flow:
+Upload your first Engram:
 
 ```bash
-relic mikoshi list
-relic mikoshi status -e rebel
 relic mikoshi push -e rebel
 relic mikoshi status -e rebel
 ```
 
-What each step does:
+On another machine, import it:
 
-- `relic mikoshi list` lists cloud Engrams visible to your API key
+```bash
+relic mikoshi list
+relic mikoshi clone -e rebel
+```
+
+What each command does:
+
+- `relic mikoshi push -e <id>` uploads persona files to Mikoshi and auto-syncs memory
 - `relic mikoshi status -e <id>` compares local persona and memory hashes against cloud state
-- `relic mikoshi push -e <id>` creates or updates plaintext persona files on Mikoshi, then auto-syncs memory
+- `relic mikoshi list` lists cloud Engrams visible to your API key
+- `relic mikoshi clone -e <id>` creates a new local Engram from a remote one
 
 ## Command Summary
 
