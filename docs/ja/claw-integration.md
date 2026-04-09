@@ -20,7 +20,7 @@ Claw コマンドはすべて `relic claw` 配下です。
 |---------|------|------|
 | `relic claw inject -e <id>` | Relic → Claw | ペルソナ注入 + 自動 sync（`--yes` で上書き確認をスキップ、`--no-sync` で sync をスキップ、非 OpenClaw は `--merge-identity`） |
 | `relic claw extract -a <name>` | Claw → Relic | 新規取り込みまたはペルソナのみ上書き後、その対象を自動 sync（`--force`, `--yes`, `--no-sync`） |
-| `relic claw sync --engram <id>` | Relic ↔ Claw | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`--engram` は単一対象、`--all` は全対象） |
+| `relic claw sync -e <id>` | Relic ↔ Claw | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`-e` は単一対象、`--all` は全対象） |
 
 ## Inject
 

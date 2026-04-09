@@ -77,7 +77,7 @@ relic mikoshi status -e rebel
 | `relic mikoshi status -e <id>` | — | ローカルと cloud の同期状態を表示 |
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | ペルソナ push + 自動 sync（`--no-sync` で sync をスキップ） |
 | `relic mikoshi pull -e <id>` | Mikoshi → Relic | 新規取り込みまたはペルソナのみ上書き後、その対象を自動 sync（`--create`, `--yes`, `--no-sync`） |
-| `relic mikoshi sync --engram <id>` | Relic ↔ Mikoshi | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`--engram` は単一対象、`--all` は全対象） |
+| `relic mikoshi sync -e <id>` | Relic ↔ Mikoshi | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`-e` は単一対象、`--all` は全対象） |
 
 ## Persona コマンド
 
