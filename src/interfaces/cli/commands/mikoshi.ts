@@ -235,7 +235,7 @@ export function registerMikoshiCommand(program: Command): void {
 
       const passphrase = await resolvePassphraseForSync();
       const syncUsecase = new MikoshiMemorySync(repo, client);
-      await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
+      await runSingleMikoshiSync(syncUsecase, engramId, passphrase);
     });
 
   // relic mikoshi clone -e <id>
@@ -295,7 +295,7 @@ export function registerMikoshiCommand(program: Command): void {
 
       const passphrase = await resolvePassphraseForSync();
       const syncUsecase = new MikoshiMemorySync(repo, client);
-      await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
+      await runSingleMikoshiSync(syncUsecase, engramId, passphrase);
     });
 
   // relic mikoshi pull -e <id>
@@ -338,7 +338,7 @@ export function registerMikoshiCommand(program: Command): void {
           if (opts.sync) {
             const passphrase = await resolvePassphraseForSync();
             const syncUsecase = new MikoshiMemorySync(repo, client);
-            await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
+            await runSingleMikoshiSync(syncUsecase, engramId, passphrase);
           }
           return;
         }
@@ -368,7 +368,7 @@ export function registerMikoshiCommand(program: Command): void {
         if (opts.sync) {
           const passphrase = await resolvePassphraseForSync();
           const syncUsecase = new MikoshiMemorySync(repo, client);
-          await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
+          await runSingleMikoshiSync(syncUsecase, engramId, passphrase);
         }
       } catch (err) {
         spinner.stop();
@@ -557,7 +557,7 @@ const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
 async function resolvePassphraseForSync(): Promise<string> {
   const saved = await resolveMikoshiPassphrase();
   if (saved) {
-    console.log(dim("  Using saved passphrase from config."));
+    console.log(dim("Using saved passphrase from config."));
     return saved;
   }
 
@@ -596,7 +596,7 @@ async function runSingleMikoshiSync(
   passphrase: string,
   options?: { prefix?: string },
 ): Promise<void> {
-  const prefix = options?.prefix ?? "  ";
+  const prefix = options?.prefix ?? "";
   const spinner = startSpinner(`Syncing memory (${engramId})...`);
   const result = await usecase.execute(engramId, passphrase);
 
