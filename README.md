@@ -19,8 +19,8 @@ Relic manages AI **Engrams** (memory + personality) and injects them across codi
 - [Shell Integration and Memory](#shell-integration-and-memory)
 - [Claw Integration](#claw-integration)
 - [Engram Management](#engram-management)
+- [Cloud Storage and Sharing](#cloud-storage-and-sharing)
 - [Configuration](#configuration)
-- [TODO](#todo)
 
 ## Requirements
 
@@ -184,18 +184,18 @@ For Engram creation, the smoothest path is to use your LLM with the `relic_engra
 
 For LLM-assisted creation, persona authoring, template examples, and deletion rules, see [docs/engram-guide.md](docs/engram-guide.md).
 
+## Cloud Storage and Sharing
+
+Relic can push plaintext persona files and encrypted memory files to [Mikoshi](https://mikoshi.ectplsm.com), so you can keep Engrams in the cloud and move them across machines without turning Mikoshi into your authoring source of truth.
+
+For setup, API key configuration, persona push/pull, encrypted memory sync, and the recommended command flow, see [docs/mikoshi.md](docs/mikoshi.md).
+
 ## Configuration
 
 Relic stores its runtime defaults in `~/.relic/config.json`.
 Use `relic config` to manage the default Engram, Claw path, memory window, and distillation batch size.
 
 For command examples and precedence rules, see [docs/configuration.md](docs/configuration.md).
-
-## TODO
-
-- [ ] Mikoshi cloud backend (`mikoshi.ectplsm.com`)
-- [ ] `relic mikoshi login` — authenticate with Mikoshi (OAuth Device Flow)
-- [ ] `relic mikoshi upload` / `relic mikoshi download` / `relic mikoshi sync` — sync Engrams with Mikoshi
 
 ## License
 
