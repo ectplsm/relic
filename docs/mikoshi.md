@@ -2,7 +2,7 @@
 
 This guide covers how Relic stores Engrams in [Mikoshi](https://mikoshi.ectplsm.com) for cloud backup, sharing, and cross-machine transfer.
 
-Mikoshi is not the authoring source of truth.
+Personas are authored locally in Relic, not in Mikoshi.
 Local Relic Engrams still own persona authoring and local archive logging.
 Mikoshi stores:
 

@@ -3,8 +3,8 @@
 このガイドは、Relic が [Mikoshi](https://mikoshi.ectplsm.com) を使って
 Engram をクラウドへバックアップし、共有し、別マシンへ移す流れをまとめたものです。
 
-Mikoshi は authoring の source of truth ではありません。
-persona の編集と archive の記録は、あくまでローカルの Relic Engram 側が持ちます。
+persona の作成と編集は Mikoshi ではなく、ローカルの Relic で行います。
+archive の記録も、あくまでローカルの Relic Engram 側が持ちます。
 Mikoshi が保存するもの:
 
 - 平文の persona ファイル: `SOUL.md`, `IDENTITY.md`
