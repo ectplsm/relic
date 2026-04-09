@@ -76,7 +76,7 @@ relic mikoshi status -e rebel
 |---------|------|------|
 | `relic mikoshi status -e <id>` | — | ローカルと cloud の同期状態を表示 |
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | ペルソナ push + 自動 sync（`--no-sync` で sync をスキップ） |
-| `relic mikoshi pull -e <id>` | Mikoshi → Relic | 新規取り込みまたはペルソナのみ上書き後、その対象を自動 sync（`--create`, `--yes`, `--no-sync`） |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | 新規取り込みまたはペルソナのみ上書き（既存時は `--force` が必要、`--yes`, `--no-sync`） |
 | `relic mikoshi sync -e <id>` | Relic ↔ Mikoshi | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`-e` は単一対象、`--all` は全対象） |
 
 ## Persona コマンド
@@ -87,24 +87,25 @@ relic mikoshi status -e rebel
 relic mikoshi push --engram <engram-id>
 ```
 
-cloud 側の persona ファイルをローカル Engram へ pull:
+cloud 側の Engram をローカルへ pull（ローカル未作成時は自動で新規作成）:
 
 ```bash
 relic mikoshi pull --engram <engram-id>
 ```
 
-ローカル Engram がまだ無い場合は、Mikoshi から新規作成しながら pull:
+既存のローカル persona ファイルを Mikoshi 側で上書き:
 
 ```bash
-relic mikoshi pull --engram <engram-id> --create
+relic mikoshi pull --engram <engram-id> --force
 ```
 
 注意点:
 
 - persona sync の対象は `SOUL.md` と `IDENTITY.md`
 - 成功した `push` と `pull` は、`--no-sync` を付けない限り memory sync まで自動で走る
-- `--create` を付けると、ローカル Engram 未作成時に remote の persona 情報から新規作成する
-- `--create` で使うのは remote の `name` / `description` / `tags` までで、その後 memory は auto-sync に任せる
+- ローカル Engram が未作成なら、remote の persona 情報から新規作成する
+- ローカル Engram が既存なら、`--force` を付けないとエラーになる
+- `--force` は差分表示後に確認を出す（`--yes` でスキップ可）
 - persona drift は明示的で、安全性重視
 - 最後に確認した状態から remote が変わっていれば、Mikoshi は `409 Conflict` で上書きを拒否する
 

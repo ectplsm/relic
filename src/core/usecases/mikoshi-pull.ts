@@ -26,17 +26,17 @@ export interface MikoshiPullResult {
 // Errors
 // ---------------------------------------------------------------------------
 
+export class MikoshiPullAlreadyExistsError extends Error {
+  constructor(public readonly engramId: string) {
+    super(`Engram "${engramId}" already exists locally. Re-run with "--force" to overwrite persona files.`);
+    this.name = "MikoshiPullAlreadyExistsError";
+  }
+}
+
 export class MikoshiPullEngramNotFoundError extends Error {
   constructor(public readonly engramId: string) {
     super(`Engram "${engramId}" not found locally`);
     this.name = "MikoshiPullEngramNotFoundError";
-  }
-}
-
-export class MikoshiPullCreateFlagRequiredError extends Error {
-  constructor(public readonly engramId: string) {
-    super(`Engram "${engramId}" not found locally. Re-run with "--create" to create it from Mikoshi.`);
-    this.name = "MikoshiPullCreateFlagRequiredError";
   }
 }
 
@@ -66,15 +66,19 @@ export class MikoshiPull {
 
   /**
    * Phase 1: fetch + diff。上書きはまだしない。
-   * 差分がなければ already_synced を返す。
+   *
+   * - ローカル未作成 → apply で新規作成
+   * - ローカル既存 + force なし → AlreadyExistsError
+   * - ローカル既存 + force + 差分なし → already_synced
+   * - ローカル既存 + force + 差分あり → apply で上書き
    */
-  async check(engramId: string, options: {
-    allowCreate?: boolean;
+  async check(engramId: string, options?: {
+    force?: boolean;
   }): Promise<{
     result: MikoshiPullResult;
     apply?: () => Promise<void>;
   }> {
-    const allowCreate = options.allowCreate === true;
+    const force = options?.force === true;
 
     // 1. クラウド検索
     const cloudEngram = await this.mikoshi.getEngramBySourceId(engramId);
@@ -91,10 +95,7 @@ export class MikoshiPull {
     // 3. ローカル Engram
     const local = await this.localRepo.get(engramId);
     if (!local) {
-      if (!allowCreate) {
-        throw new MikoshiPullCreateFlagRequiredError(engramId);
-      }
-
+      // ローカル未作成 → デフォルトで新規作成
       const apply = async () => {
         const existing = await this.localRepo.get(engramId);
         if (existing) return;
@@ -133,7 +134,12 @@ export class MikoshiPull {
       };
     }
 
-    // 4. 差分計算 (末尾空白の差異は無視)
+    // 4. ローカル既存 + force なし → エラー
+    if (!force) {
+      throw new MikoshiPullAlreadyExistsError(engramId);
+    }
+
+    // 5. 差分計算 (末尾空白の差異は無視)
     const soulDiffers = normalizeContent(local.files.soul) !== normalizeContent(remoteSoul);
     const identityDiffers = normalizeContent(local.files.identity) !== normalizeContent(remoteIdentity);
 
@@ -155,7 +161,7 @@ export class MikoshiPull {
       remoteIdentity,
     };
 
-    // 5. apply クロージャ
+    // 6. apply クロージャ
     const apply = async () => {
       const fresh = await this.localRepo.get(engramId);
       if (!fresh) throw new MikoshiPullEngramNotFoundError(engramId);

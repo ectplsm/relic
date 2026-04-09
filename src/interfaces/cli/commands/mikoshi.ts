@@ -14,7 +14,7 @@ import {
 } from "../../../core/usecases/mikoshi-push.js";
 import {
   MikoshiPull,
-  MikoshiPullCreateFlagRequiredError,
+  MikoshiPullAlreadyExistsError,
   MikoshiPullCloudNotFoundError,
   MikoshiPullPersonaMissingError,
 } from "../../../core/usecases/mikoshi-pull.js";
@@ -230,21 +230,21 @@ export function registerMikoshiCommand(program: Command): void {
       await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
     });
 
-  // relic mikoshi pull [engram-id]
+  // relic mikoshi pull -e <id>
   mikoshi
     .command("pull")
     .description("Pull remote persona files from Mikoshi to local Engram")
     .requiredOption("-e, --engram <id>", "Engram ID to pull")
-    .option("-p, --path <dir>", "Override engrams directory path")
-    .option("-c, --create", "Create the local Engram if it does not exist")
-    .option("-y, --yes", "Skip overwrite confirmation")
+    .option("-f, --force", "Allow overwriting local persona files from Mikoshi")
+    .option("-y, --yes", "Skip persona overwrite confirmation")
     .option("--no-sync", "Skip automatic memory sync after pull")
+    .option("-p, --path <dir>", "Override engrams directory path")
     .action(async (opts: {
       engram: string;
-      path?: string;
-      create?: boolean;
+      force?: boolean;
       yes?: boolean;
       sync: boolean;
+      path?: string;
     }) => {
       await ensureInitialized();
 
@@ -266,7 +266,7 @@ export function registerMikoshiCommand(program: Command): void {
       const spinner = startSpinner("Checking remote persona...");
       try {
         const { result, apply } = await usecase.check(engramId, {
-          allowCreate: opts.create,
+          force: opts.force,
         });
 
         if (result.outcome === "already_synced") {
@@ -279,8 +279,8 @@ export function registerMikoshiCommand(program: Command): void {
           return;
         }
 
-        const localBefore = await repo.get(engramId);
-        if (!localBefore) {
+        // 新規作成 (ローカル未作成)
+        if (!result.diff || (result.diff.soulDiffers && result.diff.identityDiffers && !opts.force)) {
           spinner.update("Creating local Engram from Mikoshi...");
           await apply!();
           spinner.stop(`✅ Created local Engram "${result.engramName}" from Mikoshi.`);
@@ -292,9 +292,9 @@ export function registerMikoshiCommand(program: Command): void {
           return;
         }
 
-        // 差分表示
+        // 差分表示 (--force で既存上書き)
         spinner.stop();
-        const diff = result.diff!;
+        const diff = result.diff;
         console.log(`  Engram: ${result.engramName} (${result.engramId})`);
         console.log(`  Cloud:  ${result.cloudEngramId}`);
         console.log();
@@ -321,7 +321,7 @@ export function registerMikoshiCommand(program: Command): void {
         }
       } catch (err) {
         spinner.stop();
-        if (err instanceof MikoshiPullCreateFlagRequiredError) {
+        if (err instanceof MikoshiPullAlreadyExistsError) {
           printError(`Error: ${err.message}`);
           process.exit(1);
         }

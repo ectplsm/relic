@@ -75,7 +75,7 @@ What each step does:
 |---------|-----------|-------------|
 | `relic mikoshi status -e <id>` | — | Show sync status between local and cloud |
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | Push persona + auto-sync (`--no-sync` skips sync) |
-| `relic mikoshi pull -e <id>` | Mikoshi → Relic | New import or persona-only overwrite, then auto-sync that target (`--create`, `--yes`, `--no-sync`) |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | New import or persona-only overwrite (`--force` to overwrite existing, `--yes`, `--no-sync`) |
 | `relic mikoshi sync -e <id>` | Relic ↔ Mikoshi | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = one target, `--all` = all targets) |
 
 ## Persona Commands
@@ -86,24 +86,25 @@ Push local persona files:
 relic mikoshi push --engram <engram-id>
 ```
 
-Pull remote persona files into the local Engram:
+Pull a remote Engram from Mikoshi (creates a new local Engram if it does not exist):
 
 ```bash
 relic mikoshi pull --engram <engram-id>
 ```
 
-Create a new local Engram from Mikoshi if it does not exist yet:
+Overwrite existing local persona files from Mikoshi:
 
 ```bash
-relic mikoshi pull --engram <engram-id> --create
+relic mikoshi pull --engram <engram-id> --force
 ```
 
 Notes:
 
 - persona sync handles `SOUL.md` and `IDENTITY.md`
 - successful `push` and `pull` run memory sync automatically unless you pass `--no-sync`
-- `--create` creates a new local Engram from remote persona data when the local Engram does not exist yet
-- `--create` uses remote `name`, `description`, and `tags`, but keeps memory sync as a separate step
+- if the local Engram does not exist, `pull` creates it from remote persona data
+- if the local Engram already exists, `pull` fails unless you pass `--force`
+- `--force` shows a diff and asks for confirmation before overwriting (skip with `--yes`)
 - persona drift is explicit and safety-sensitive
 - if the remote changed since your last check, Mikoshi rejects the overwrite with `409 Conflict`
 
