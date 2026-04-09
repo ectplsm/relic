@@ -4,6 +4,7 @@ import type { Command } from "commander";
 import { loadConfig, ensureInitialized } from "../../../shared/config.js";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import { DEFAULT_SOUL, DEFAULT_IDENTITY } from "../../../shared/templates.js";
+import { printBlank, printDetail, printLine } from "../output.js";
 import {
   CreateEngram,
   EngramAlreadyExistsError,
@@ -28,7 +29,7 @@ async function askRequired(
   while (true) {
     const answer = await ask(rl, question);
     if (answer) return answer;
-    console.log(errorMsg);
+    printLine(errorMsg);
   }
 }
 
@@ -43,15 +44,15 @@ async function askValidId(
     const id = await askRequired(
       rl,
       "Engram ID (e.g. my-agent): ",
-      "  ID is required. Use lowercase letters, numbers, and hyphens."
+      "ID is required. Use lowercase letters, numbers, and hyphens."
     );
     if (!ENGRAM_ID_PATTERN.test(id)) {
-      console.log("  Invalid ID. Use lowercase letters, numbers, and hyphens (e.g. my-agent).");
+      printLine("Invalid ID. Use lowercase letters, numbers, and hyphens (e.g. my-agent).");
       continue;
     }
     const existing = await repo.get(id);
     if (existing) {
-      console.log(`  Engram "${id}" already exists. Choose a different ID.`);
+      printLine(`Engram "${id}" already exists. Choose a different ID.`);
       continue;
     }
     return id;
@@ -127,7 +128,7 @@ export function registerCreateCommand(program: Command): void {
             name = await askRequired(
               rl,
               "Name: ",
-              "  Name is required."
+              "Name is required."
             );
           }
 
@@ -159,17 +160,17 @@ export function registerCreateCommand(program: Command): void {
 
         const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
         const engramDir = `${config.engramsPath}/${result.engram.meta.id}`;
-        console.log();
-        console.log(green(`Created Engram "${result.engram.meta.name}" (${result.engram.meta.id})`));
-        console.log(`  → ${engramDir}/`);
-        console.log();
-        console.log("Files:");
-        console.log("  engram.json    — metadata (name, description, tags)");
-        console.log("  manifest.json  — system metadata (id, timestamps)");
-        console.log("  SOUL.md        — core principles and behavior");
-        console.log("  IDENTITY.md    — persona identity (fill in during first conversation)");
-        console.log();
-        console.log(`Customize SOUL.md and IDENTITY.md, then run: relic claude ${result.engram.meta.id}`);
+        printBlank();
+        printLine(green(`Created Engram "${result.engram.meta.name}" (${result.engram.meta.id})`));
+        printDetail(`→ ${engramDir}/`);
+        printBlank();
+        printLine("Files:");
+        printDetail("engram.json    — metadata (name, description, tags)");
+        printDetail("manifest.json  — system metadata (id, timestamps)");
+        printDetail("SOUL.md        — core principles and behavior");
+        printDetail("IDENTITY.md    — persona identity (fill in during first conversation)");
+        printBlank();
+        printLine(`Customize SOUL.md and IDENTITY.md, then run: relic claude ${result.engram.meta.id}`);
       } catch (err) {
         if (err instanceof InvalidEngramIdError || err instanceof EngramAlreadyExistsError) {
           console.error(`Error: ${err.message}`);

@@ -5,7 +5,7 @@ import type { MikoshiClient, MikoshiEngramDetail } from "../ports/mikoshi.js";
 // Types
 // ---------------------------------------------------------------------------
 
-export type MikoshiPullOutcome = "pulled" | "already_synced" | "skipped";
+export type MikoshiPullOutcome = "pulled" | "already_synced";
 
 export interface MikoshiPullDiff {
   soulDiffers: boolean;
@@ -28,7 +28,7 @@ export interface MikoshiPullResult {
 
 export class MikoshiPullEngramNotFoundError extends Error {
   constructor(public readonly engramId: string) {
-    super(`Engram "${engramId}" not found locally`);
+    super(`Engram "${engramId}" not found locally. Use "relic mikoshi pull" to create or update it.`);
     this.name = "MikoshiPullEngramNotFoundError";
   }
 }
@@ -59,15 +59,20 @@ export class MikoshiPull {
 
   /**
    * Phase 1: fetch + diff。上書きはまだしない。
-   * 差分がなければ already_synced を返す。
+   *
+   * - ローカル未作成 → EngramNotFoundError
+   * - ローカル既存 + 差分なし → already_synced
+   * - ローカル既存 + 差分あり → apply で上書き
    */
   async check(engramId: string): Promise<{
     result: MikoshiPullResult;
     apply?: () => Promise<void>;
   }> {
-    // 1. ローカル Engram
+    // 1. ローカル Engram 必須
     const local = await this.localRepo.get(engramId);
-    if (!local) throw new MikoshiPullEngramNotFoundError(engramId);
+    if (!local) {
+      throw new MikoshiPullEngramNotFoundError(engramId);
+    }
 
     // 2. クラウド検索
     const cloudEngram = await this.mikoshi.getEngramBySourceId(engramId);
@@ -81,9 +86,9 @@ export class MikoshiPull {
       throw new MikoshiPullPersonaMissingError(cloudEngram.id);
     }
 
-    // 4. 差分計算
-    const soulDiffers = local.files.soul !== remoteSoul;
-    const identityDiffers = local.files.identity !== remoteIdentity;
+    // 4. 差分計算 (末尾空白の差異は無視)
+    const soulDiffers = normalizeContent(local.files.soul) !== normalizeContent(remoteSoul);
+    const identityDiffers = normalizeContent(local.files.identity) !== normalizeContent(remoteIdentity);
 
     if (!soulDiffers && !identityDiffers) {
       return {
@@ -146,4 +151,9 @@ function extractPersona(detail: MikoshiEngramDetail): {
     if (f.fileType === "IDENTITY") identity = f.content;
   }
   return { soul, identity };
+}
+
+/** Trim trailing whitespace so minor formatting differences don't cause false diffs. */
+function normalizeContent(content: string | undefined): string {
+  return (content ?? "").trimEnd();
 }

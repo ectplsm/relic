@@ -14,7 +14,7 @@ relic config show
 relic config default-engram           # 取得
 relic config default-engram rebel     # 設定
 
-# Clawディレクトリ — claw inject/extract/sync の --dir 省略時に使用
+# Clawディレクトリ — claw push/pull/sync の --dir 省略時に使用
 relic config claw-path                # 取得
 relic config claw-path ~/.openclaw    # 設定
 

@@ -1,140 +1,140 @@
-# Claw 連携
+# Claw Integration
 
-このガイドでは、`relic claw` のワークフローを扱います。
+このガイドは `relic claw` の使い方をまとめたものです。
 
-Relic の Engram は [OpenClaw](https://github.com/openclaw/openclaw) のワークスペースとネイティブ互換です。
-ファイル構造が 1:1 で対応します（`SOUL.md`, `IDENTITY.md`, `memory/` など）。
+Relic Engram は [OpenClaw](https://github.com/openclaw/openclaw) の
+workspace 構造と 1:1 で対応しています（`SOUL.md`, `IDENTITY.md`, `memory/` など）。
 
-Nanobot や gitagent のように、IDENTITY を `SOUL.md` に統合する Claw 派生フレームワークでは、
-`--merge-identity` を使うと inject 時に `IDENTITY.md` を `SOUL.md` に統合できます。
-`--dir` と組み合わせれば、任意の Claw 互換ワークスペースを対象にできます。
+Nanobot や gitagent のように `IDENTITY.md` を独立で持たず、`SOUL.md` にまとめる
+Claw 系フレームワークでは、`--merge-identity` を使うと push 時に
+`IDENTITY.md` を `SOUL.md` に統合できます。`--dir` と組み合わせれば、
+任意の Claw 互換 workspace を対象にできます。
 
-現在の基本ルールは `Agent Name = Engram ID` です。
-Relic は両者を同じ名前として扱います。
+現在のルールは `Agent Name = Engram ID` です。
+Relic はこの 2 つを同じ名前として扱います。
 
-Claw コマンドはすべて `relic claw` 配下です。
+Claw 系コマンドはすべて `relic claw` 配下にあります。
 
-## コマンド一覧
+## Command Summary
 
-| コマンド | 方向 | 説明 |
-|---------|------|------|
-| `relic claw inject -e <id>` | Relic → Claw | ペルソナ注入 + 自動 sync（`--yes` で上書き確認をスキップ、`--no-sync` で sync をスキップ、非 OpenClaw は `--merge-identity`） |
-| `relic claw extract -a <name>` | Claw → Relic | 新規取り込みまたはペルソナのみ上書き後、その対象を自動 sync（`--force`, `--yes`, `--no-sync`） |
-| `relic claw sync` | Relic ↔ Claw | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`--target` で単一対象指定可） |
+| Command | Direction | Description |
+|---------|-----------|-------------|
+| `relic claw push -e <id>` | Relic → Claw | 既存 workspace 内の persona files を新規作成または更新し、自動 sync（`--yes`, `--no-sync`, `--merge-identity`） |
+| `relic claw pull -e <id>` | Claw → Relic | ローカルの persona files を新規作成または更新し、自動 sync（`--name`, `--yes`, `--no-sync`） |
+| `relic claw sync -e <id>` | Relic ↔ Claw | 双方向 memory merge（`memory/*.md`, `MEMORY.md`, `USER.md`; `-e` = 単一対象、`--all` = 全対象） |
 
-## Inject
+## Push
 
-`inject` はペルソナファイル（`SOUL.md`, `IDENTITY.md`）をエージェントのワークスペースに書き込み、
-その後 `USER.md` と記憶ファイル（`MEMORY.md`, `memory/*.md`）を同期します。
-同期は上書きではなく双方向マージです。
-`AGENTS.md` と `HEARTBEAT.md` は Claw 側の管理に委ねます。
+`push` は persona ファイル（`SOUL.md`, `IDENTITY.md`）を Claw workspace に書き込み、
+そのあと `USER.md` と memory ファイル（`MEMORY.md`, `memory/*.md`）を sync します。
+sync は双方向・マージ方式で、片側を盲目的に上書きするものではありません。
+`AGENTS.md` と `HEARTBEAT.md` は Claw 側の責務のままです。
 
-対象ワークスペースに既存のペルソナファイルがあり、ローカルの Relic Engram と差分がある場合、
-`inject` はデフォルトで確認を出します。
-`--yes` を使うと確認をスキップできます。
-すでに同一内容なら、ペルソナ再書き込みは行わず memory sync だけを実行します。
+workspace 自体は先に存在している必要があります。
+無ければ `openclaw agents add <id>` を先に実行してください。
 
-> Claw エージェントは事前に存在している必要があります。
-> inject は既存ワークスペースに書き込むだけで、新しいエージェントは作成しません。
+`push` は、その既存 workspace の中で persona を初回作成または更新します。
+
+- workspace 側に persona ファイルが無ければ、作成前に確認を出します
+- persona ファイルがあり差分があれば、上書き前に確認を出します
+- すでに一致していれば、persona の再書き込みはせず memory sync だけ走ります
+- `--yes` を付けると作成確認・上書き確認をスキップします
 
 ```bash
-# Engram "commander" を注入 → workspace-commander/
-relic claw inject --engram commander
+# Engram "commander" を workspace-commander/ へ push
+relic claw push --engram commander
 
-# Clawディレクトリを指定（または relic config claw-path で一度だけ設定）
-relic claw inject --engram commander --dir /path/to/.fooclaw
+# Claw directory を上書き（または relic config claw-path で設定）
+relic claw push --engram commander --dir /path/to/.fooclaw
 
-# 非OpenClaw系: IDENTITY.mdをSOUL.mdに統合してinject
-relic claw inject --engram commander --dir ~/.nanobot --merge-identity
+# 非 OpenClaw 系では IDENTITY.md を SOUL.md に統合
+relic claw push --engram commander --dir ~/.nanobot --merge-identity
 
-# ペルソナ差分があっても確認をスキップ
-relic claw inject --engram commander --yes
+# 作成確認・上書き確認をスキップ
+relic claw push --engram commander --yes
 ```
 
-## Extract
+## Pull
 
-`extract` は既存の Claw エージェントワークスペースから新しい Engram を作成します。
+`pull` は Claw workspace の persona ファイルを Relic 側へ取り込みます。
 
-`extract` がローカルに書き込むもの:
+`pull` も初回作成と更新の両方を扱います。
 
-- 新規 extract: `engram.json`, `manifest.json`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `MEMORY.md`, `memory/*.md`
-- `extract --force`: `SOUL.md` と `IDENTITY.md` のみ
-- `extract --force --name`: `SOUL.md`, `IDENTITY.md`, `engram.json.name`
+- ローカル Engram が無ければ、workspace から新規作成する前に確認を出します
+- ローカル Engram があり差分があれば、差分を表示してから上書き確認を出します
+- すでに一致していれば、同期済みとして表示します
+- `--name` はローカル Engram を新規作成する時だけ表示名に使います
+- `--yes` を付けると作成確認・上書き確認をスキップします
 
-`extract` の後には、同じ Engram / agent を対象にした sync を自動実行します。
-スキップしたい場合は `--no-sync` を使います。
+`pull` の成功後は、同じ Engram / workspace 対象に対して限定 sync を自動実行します。
+`--no-sync` を付けるとスキップできます。
 
 ```bash
-# デフォルト（main）エージェントから取り込む
-relic claw extract
+# 対応する workspace からローカル Engram へ pull
+relic claw pull --engram rebel
 
-# 指定エージェントから取り込む
-relic claw extract --agent rebel
+# 初回ローカル作成時に表示名を付ける
+relic claw pull --engram analyst --name "Data Analyst"
 
-# 表示名を指定
-relic claw extract --agent analyst --name "Data Analyst"
+# 作成確認・上書き確認をスキップ
+relic claw pull --engram rebel --yes
 
-# Clawワークスペース側のペルソナでローカルを上書き
-relic claw extract --agent rebel --force
+# pull 後の対象限定 sync をスキップ
+relic claw pull --engram rebel --no-sync
 
-# 上書き確認をスキップ
-relic claw extract --agent rebel --force --yes
-
-# extract 後の対象限定 sync をスキップ
-relic claw extract --agent rebel --no-sync
-
-# Clawディレクトリを指定
-relic claw extract --agent rebel --dir /path/to/.fooclaw
+# Claw directory を上書き
+relic claw pull --engram rebel --dir /path/to/.fooclaw
 ```
 
 ## Sync
 
-`sync` は対応する Engram / agent 間で `memory/*.md`、`MEMORY.md`、`USER.md` をマージします。
-Engram と agent の両方が存在する対象だけが同期されます。
-`inject` の後にも自動実行されます（`--no-sync` でスキップ可）。
+`sync` は一致する Engram / workspace 対象の `memory/*.md`, `MEMORY.md`, `USER.md` を
+双方向にマージします。Engram と workspace の両方が存在する対象だけが同期されます。
+成功した `push` / `pull` の後にも、`--no-sync` を付けない限り自動で走ります。
 
-デフォルトでは、`sync` はマッチするすべての対象を走査します。
-特定の対象だけ同期したい場合は `--target <id>` を使います。
+`--engram` か `--all` のどちらかが必須です。
+`--engram <id>` は同名の Engram / workspace 1件だけ、
+`--all` は一致する対象を全部走査して同期します。
 
 ```bash
-# マッチする対象をすべて同期
-relic claw sync
+# 1件だけ sync
+relic claw sync --engram rebel
 
-# 特定の1対象だけ同期
-relic claw sync --target rebel
+# 一致する対象を全部 sync
+relic claw sync --all
 
-# Clawディレクトリを指定
+# Claw directory を上書き
 relic claw sync --dir /path/to/.fooclaw
 ```
 
 マージルール:
 
-- 片方にだけある → もう片方にコピー
+- 片側にしかないファイル → 反対側へコピー
 - 内容が同じ → スキップ
-- 内容が異なる → マージ（重複除外）して両方に書き戻し
+- 内容が違う → 重複除去してマージし、両側へ書き戻す
 
-## 挙動マトリクス
+## Behavior Matrix
 
-| コマンド | 状態 | オプション | 結果 |
+| Command | State | Flags | Result |
 |---------|------|------|------|
-| `inject` | ワークスペース未作成 | なし | エラーになり、先にエージェント作成が必要 |
-| `inject` | ペルソナがローカルEngramと同一 | なし | ペルソナ再書き込みをスキップし、その対象だけ自動sync |
-| `inject` | ペルソナがローカルEngramと差分あり | なし | ペルソナ上書き前に確認を出し、その後その対象だけ自動sync |
-| `inject` | ペルソナがローカルEngramと差分あり | `--yes` | 確認なしでペルソナを上書きし、その後その対象だけ自動sync |
-| `inject` | 成功時全般 | `--no-sync` | 自動対象 sync をスキップ |
-| `extract` | ローカルEngram未作成 | なし | ワークスペースの内容から新規Engramを作成し、その後その対象だけ自動sync |
-| `extract` | ローカルEngram未作成 | `--force` | 通常の新規extractと同じ。その後その対象だけ自動sync |
-| `extract` | ローカルEngram既存あり | なし | エラーになり、`--force` が必要 |
-| `extract` | ローカルEngram既存あり・ペルソナ差分なし | `--force` | ペルソナ上書きをスキップし、その後その対象だけ自動sync |
-| `extract` | ローカルEngram既存あり・ペルソナ差分あり | `--force` | `SOUL.md` / `IDENTITY.md` の上書き前に確認を出し、その後その対象だけ自動sync |
-| `extract` | ローカルEngram既存あり・ペルソナ差分あり | `--force --yes` | 確認なしで `SOUL.md` / `IDENTITY.md` を上書きし、その後その対象だけ自動sync |
-| `extract` | 成功時全般 | `--no-sync` | 自動対象 sync をスキップ |
-| `sync` | target 指定なし | なし | マッチするすべての対象を走査して同期 |
-| `sync` | 特定対象 | `--target <id>` | `agentName = engramId` の1対象だけ同期 |
+| `push` | workspace 未作成 | なし | エラー。先に `openclaw agents add <id>` を実行するよう案内 |
+| `push` | workspace に persona ファイルなし | なし | persona 作成前に確認を出し、その後その対象だけ自動 sync |
+| `push` | persona がローカル Engram と同一 | なし | persona 再書き込みをスキップし、その対象だけ自動 sync |
+| `push` | persona がローカル Engram と差分あり | なし | persona 上書き前に確認を出し、その後その対象だけ自動 sync |
+| `push` | persona 作成または上書きが必要 | `--yes` | 確認なしで作成または上書きし、その後その対象だけ自動 sync |
+| `push` | 成功時全般 | `--no-sync` | 自動対象 sync をスキップ |
+| `pull` | workspace 未作成 | なし | pull 元が無いのでエラー |
+| `pull` | ローカル Engram 未作成 | なし | workspace から新規 Engram を作る前に確認を出し、その後その対象だけ自動 sync |
+| `pull` | ローカル Engram 未作成 | `--yes` | 確認なしで新規 Engram を作成し、その後その対象だけ自動 sync |
+| `pull` | persona 差分なし | なし | 同期済みと表示し、その後その対象だけ自動 sync |
+| `pull` | persona 差分あり | なし | 差分を表示し、上書き前に確認を出してから自動 sync |
+| `pull` | persona 差分あり | `--yes` | 確認なしで上書きし、その後自動 sync |
+| `pull` | 成功時全般 | `--no-sync` | 自動対象 sync をスキップ |
+| `sync` | target 未指定 | なし | エラー — `--engram` か `--all` が必要 |
+| `sync` | 明示 target | `--engram <id>` | `agentName = engramId` の 1対象だけ sync |
+| `sync` | 全対象 | `--all` | 一致する全対象を走査して sync |
 
 補足:
 
-- ペルソナとは `SOUL.md` と `IDENTITY.md` の総称です
-- `extract --force` で上書きされるのは `SOUL.md` と `IDENTITY.md` のみです
-- `extract --force` でも `USER.md`、`MEMORY.md`、`memory/*.md` は上書きしません
-- `extract --force` と `--name` を併用した場合は、`engram.json.name` も更新されます
+- ここでいう "persona" は `SOUL.md` と `IDENTITY.md` のこと
+- `pull` がローカルで上書きするのは `SOUL.md` と `IDENTITY.md` だけで、`USER.md`, `MEMORY.md`, `memory/*.md` には触りません

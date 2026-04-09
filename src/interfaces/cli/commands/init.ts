@@ -4,6 +4,7 @@ import { Init } from "../../../core/usecases/init.js";
 import { setDefaultEngram, loadConfig } from "../../../shared/config.js";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import { printRelicBanner } from "../banner.js";
+import { printBlank, printDetail, printLine } from "../output.js";
 
 function ask(question: string): Promise<string> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -25,10 +26,10 @@ export function registerInitCommand(program: Command): void {
 
       if (result.created) {
         printRelicBanner();
-        console.log("Initialized RELIC:");
-        console.log(`  Config:  ${result.configPath}`);
-        console.log(`  Engrams: ${result.engramsPath}`);
-        console.log();
+        printLine("Initialized RELIC:");
+        printDetail(`Config:  ${result.configPath}`);
+        printDetail(`Engrams: ${result.engramsPath}`);
+        printBlank();
 
         // 利用可能なEngramを表示してデフォルト選択を促す
         const cfg = await loadConfig();
@@ -36,12 +37,12 @@ export function registerInitCommand(program: Command): void {
         const engrams = await repo.list();
 
         if (engrams.length > 0) {
-          console.log("Available Engrams:");
-          console.log(`  ${"ID".padEnd(12)} Name`);
+          printLine("Available Engrams:");
+          printDetail(`${"ID".padEnd(12)} Name`);
           for (const e of engrams) {
-            console.log(`  ${e.id.padEnd(12)} ${e.name}`);
+            printDetail(`${e.id.padEnd(12)} ${e.name}`);
           }
-          console.log();
+          printBlank();
 
           const rebel = engrams.find((e) => e.id === "rebel");
           const prompt = rebel
@@ -65,8 +66,8 @@ export function registerInitCommand(program: Command): void {
           }
         }
       } else {
-        console.log("Already initialized.");
-        console.log(`  Config:  ${result.configPath}`);
+        printLine("Already initialized.");
+        printDetail(`Config:  ${result.configPath}`);
       }
     });
 }

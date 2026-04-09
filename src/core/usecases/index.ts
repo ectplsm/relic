@@ -33,6 +33,14 @@ export {
   type MemoryWriteResult,
 } from "./memory-write.js";
 export {
+  ClawPull,
+  ClawPullEngramNotFoundError,
+  ClawPullWorkspaceNotFoundError,
+  ClawPullPersonaMissingError,
+  type ClawPullResult,
+  type ClawPullDiff,
+} from "./claw-pull.js";
+export {
   Sync,
   SyncOpenclawDirNotFoundError,
   type SyncTarget,
@@ -59,8 +67,17 @@ export {
   MikoshiPush,
   MikoshiPushEngramNotFoundError,
   MikoshiPushPersonaHashError,
+  MikoshiPushPersonaConflictError,
   type MikoshiPushResult,
+  type MikoshiPushApplyResult,
 } from "./mikoshi-push.js";
+export {
+  MikoshiDownload,
+  MikoshiDownloadAlreadyExistsError,
+  MikoshiDownloadCloudNotFoundError,
+  MikoshiDownloadPersonaMissingError,
+  type MikoshiDownloadResult,
+} from "./mikoshi-download.js";
 export {
   MikoshiPull,
   MikoshiPullEngramNotFoundError,
@@ -84,3 +101,10 @@ export {
   type MikoshiMemoryPullResult,
   type MikoshiMemoryPullDiff,
 } from "./mikoshi-memory-pull.js";
+export {
+  MikoshiMemorySync,
+  MikoshiMemorySyncEngramNotFoundError,
+  MikoshiMemorySyncCloudNotFoundError,
+  MikoshiMemorySyncDecryptError,
+  type MikoshiMemorySyncResult,
+} from "./mikoshi-memory-sync.js";

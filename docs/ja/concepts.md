@@ -24,9 +24,9 @@
        |            MEMORY.md                 |
        |            memory/*.md               v
        |                                +-----------+
-  inject /                              |archive.md |
- extract /                              | raw logs  |
-    sync                                +-----------+
+   push /                               |archive.md |
+   pull /                               | raw logs  |
+   sync                                 +-----------+
        |                                      |
        v                     MCP recall       | user-triggered
  +-----------+              search/pending    | distillation

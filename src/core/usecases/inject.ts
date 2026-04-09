@@ -11,6 +11,7 @@ export interface InjectPersonaDiffResult {
   engramId: string;
   engramName: string;
   targetPath: string;
+  targetExists: boolean;
   soul: InjectPersonaFileDiff;
   identity: InjectPersonaFileDiff;
   overwriteRequired: boolean;
@@ -42,6 +43,7 @@ export class Inject {
   ): Promise<InjectPersonaDiffResult> {
     const { engram, targetPath } = await this.loadInjectTarget(engramId, options);
     const mergeIdentity = options?.mergeIdentity ?? false;
+    const targetExists = existsSync(targetPath);
 
     const soul = await this.compareTargetFile(
       join(targetPath, INJECT_FILE_MAP.soul!),
@@ -59,6 +61,7 @@ export class Inject {
       engramId: engram.meta.id,
       engramName: engram.meta.name,
       targetPath,
+      targetExists,
       soul,
       identity,
       overwriteRequired: soul === "different" || identity === "different",
@@ -105,11 +108,9 @@ export class Inject {
     }
 
     const targetPath = resolveWorkspacePath(engramId, options?.openclawDir);
-
     if (!existsSync(targetPath)) {
       throw new InjectWorkspaceNotFoundError(engramId);
     }
-
     return { engram, targetPath };
   }
 

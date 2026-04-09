@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import { ListEngrams } from "../../../core/usecases/index.js";
+import { printBlank, printDetail, printLine } from "../output.js";
 import { resolveEngramsPath } from "../../../shared/config.js";
 
 export function registerListCommand(program: Command): void {
@@ -15,20 +16,21 @@ export function registerListCommand(program: Command): void {
       const engrams = await listEngrams.execute();
 
       if (engrams.length === 0) {
-        console.log("No Engrams found.");
-        console.log(`  Path: ${engramsPath}`);
+        printLine("No Engrams found.");
+        printDetail(`Path: ${engramsPath}`);
         return;
       }
 
-      console.log(`Engrams (${engrams.length}):\n`);
+      printLine(`Engrams (${engrams.length}):`);
+      printBlank();
       for (const e of engrams) {
         const tags = e.tags?.length ? ` [${e.tags.join(", ")}]` : "";
-        console.log(`  ${e.id}`);
-        console.log(`    ${e.name}${tags}`);
+        printLine(e.id);
+        printDetail(`${e.name}${tags}`);
         if (e.description) {
-          console.log(`    ${e.description}`);
+          printDetail(e.description);
         }
-        console.log();
+        printBlank();
       }
     });
 }

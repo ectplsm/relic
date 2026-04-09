@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import { RefreshSamples } from "../../../core/usecases/index.js";
+import { printDetail, printLine } from "../output.js";
 import { resolveEngramsPath, TEMPLATES_DIR } from "../../../shared/config.js";
 
 export function registerRefreshSamplesCommand(program: Command): void {
@@ -18,31 +19,31 @@ export function registerRefreshSamplesCommand(program: Command): void {
       );
 
       if (result.refreshed.length > 0) {
-        console.log(`Refreshed: ${result.refreshed.length}`);
-        console.log(`  IDs: ${result.refreshed.join(", ")}`);
+        printLine(`Refreshed: ${result.refreshed.length}`);
+        printDetail(`IDs: ${result.refreshed.join(", ")}`);
       }
 
       if (result.seeded.length > 0) {
-        console.log(`Seeded: ${result.seeded.length}`);
-        console.log(`  IDs: ${result.seeded.join(", ")}`);
+        printLine(`Seeded: ${result.seeded.length}`);
+        printDetail(`IDs: ${result.seeded.join(", ")}`);
       }
 
       if (result.migratedMemory.length > 0) {
-        console.log(`Memory migrated:`);
+        printLine("Memory migrated:");
         for (const m of result.migratedMemory) {
-          console.log(`  ${m.from} → ${m.to}`);
+          printDetail(`${m.from} → ${m.to}`);
         }
       }
 
       if (result.skipped.length > 0) {
-        console.log(`Skipped: ${result.skipped.length}`);
+        printLine(`Skipped: ${result.skipped.length}`);
         for (const skipped of result.skipped) {
-          console.log(`  ${skipped.id}: ${skipped.reason}`);
+          printDetail(`${skipped.id}: ${skipped.reason}`);
         }
       }
 
       if (result.refreshed.length === 0 && result.seeded.length === 0 && result.skipped.length === 0) {
-        console.log("No sample templates found.");
+        printLine("No sample templates found.");
       }
     });
 }
