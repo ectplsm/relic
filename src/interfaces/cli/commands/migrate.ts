@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import { MigrateEngrams } from "../../../core/usecases/index.js";
+import { printDetail, printLine } from "../output.js";
 import { resolveEngramsPath } from "../../../shared/config.js";
 
 export function registerMigrateCommand(program: Command): void {
@@ -18,19 +19,19 @@ export function registerMigrateCommand(program: Command): void {
       const migrateEngrams = new MigrateEngrams(repo, engramsPath);
       const result = await migrateEngrams.execute();
 
-      console.log(`Scanned Engrams: ${result.migrated.length + result.alreadyUpToDate.length + result.skipped.length}`);
-      console.log(`  Migrated: ${result.migrated.length}`);
-      console.log(`  Already up to date: ${result.alreadyUpToDate.length}`);
-      console.log(`  Skipped: ${result.skipped.length}`);
+      printLine(`Scanned Engrams: ${result.migrated.length + result.alreadyUpToDate.length + result.skipped.length}`);
+      printDetail(`Migrated: ${result.migrated.length}`);
+      printDetail(`Already up to date: ${result.alreadyUpToDate.length}`);
+      printDetail(`Skipped: ${result.skipped.length}`);
 
       if (result.migrated.length > 0) {
-        console.log(`  Migrated IDs: ${result.migrated.join(", ")}`);
+        printDetail(`Migrated IDs: ${result.migrated.join(", ")}`);
       }
       if (result.alreadyUpToDate.length > 0) {
-        console.log(`  Up-to-date IDs: ${result.alreadyUpToDate.join(", ")}`);
+        printDetail(`Up-to-date IDs: ${result.alreadyUpToDate.join(", ")}`);
       }
       for (const skipped of result.skipped) {
-        console.log(`  Skipped ${skipped.id}: ${skipped.reason}`);
+        printDetail(`Skipped ${skipped.id}: ${skipped.reason}`);
       }
     });
 }

@@ -23,6 +23,7 @@ import {
   resolveEngramsPath,
   resolveClawPath,
 } from "../../../shared/config.js";
+import { printDetail, printLine } from "../output.js";
 import { resolveWorkspacePath } from "../../../shared/openclaw.js";
 
 export function registerClawCommand(program: Command): void {
@@ -87,7 +88,7 @@ export function registerClawCommand(program: Command): void {
             console.log(
               `✅ Injected "${result.engramName}" into ${result.targetPath}`
             );
-            console.log(`  Files written: ${result.filesWritten.join(", ")}`);
+            printDetail(`Files written: ${result.filesWritten.join(", ")}`);
           }
 
           if (!opts.sync) return;
@@ -162,8 +163,8 @@ export function registerClawCommand(program: Command): void {
           console.log(
             `✅ Extracted "${result.engramName}" from ${result.sourcePath}`
           );
-          console.log(`  Files extracted: ${result.filesRead.join(", ")}`);
-          console.log(`  Saved as Engram: ${result.engramId}`);
+          printDetail(`Files extracted: ${result.filesRead.join(", ")}`);
+          printDetail(`Saved as Engram: ${result.engramId}`);
 
           if (!opts.sync) return;
 
@@ -236,10 +237,10 @@ export function registerClawCommand(program: Command): void {
             // Show diff summary
             const diff = result.diff!;
             if (diff.soulDiff === "different") {
-              console.log("  SOUL.md: differs");
+              printDetail("SOUL.md: differs");
             }
             if (diff.identityDiff === "different") {
-              console.log("  IDENTITY.md: differs");
+              printDetail("IDENTITY.md: differs");
             }
 
             // Confirm overwrite
@@ -369,7 +370,7 @@ export function registerClawCommand(program: Command): void {
           const result = await sync.execute(clawDir);
 
           if (result.synced.length === 0 && result.skipped.length === 0) {
-            console.log("No Claw workspaces found.");
+            printLine("No Claw workspaces found.");
             return;
           }
 
@@ -393,7 +394,7 @@ export function registerClawCommand(program: Command): void {
 
           if (result.skipped.length > 0) {
             console.log(
-              `  Skipped (no matching Engram): ${result.skipped.join(", ")}`
+              `Skipped (no matching Engram): ${result.skipped.join(", ")}`
             );
           }
         } catch (err) {
