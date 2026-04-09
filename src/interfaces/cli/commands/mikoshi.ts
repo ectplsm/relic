@@ -493,12 +493,12 @@ export function registerMikoshiCommand(program: Command): void {
 
 function handleMikoshiApiError(err: MikoshiApiError): never {
   if (err.isUnauthorized) {
-    console.error(red("Error: Mikoshi API key is invalid or expired."));
-    console.error("  Update with: relic config mikoshi-api-key <key>");
+    printError("Error: Mikoshi API key is invalid or expired.");
+    printError("  Update with: relic config mikoshi-api-key <key>");
   } else if (err.isRateLimited) {
-    console.error(red("Error: Mikoshi rate limit exceeded. Try again later."));
+    printError("Error: Mikoshi rate limit exceeded. Try again later.");
   } else {
-    console.error(red(`Error: Mikoshi API returned ${err.status}: ${err.message}`));
+    printError(`Error: Mikoshi API returned ${err.status}: ${err.message}`);
   }
   process.exit(1);
 }
