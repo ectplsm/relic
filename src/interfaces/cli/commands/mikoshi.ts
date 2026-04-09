@@ -29,7 +29,6 @@ import { createInterface } from "node:readline";
 import {
   ensureInitialized,
   resolveEngramsPath,
-  resolveDefaultEngram,
   resolveMikoshiUrl,
   resolveMikoshiApiKey,
   resolveMikoshiPassphrase,
@@ -80,21 +79,16 @@ export function registerMikoshiCommand(program: Command): void {
       }
     });
 
-  // relic mikoshi status [engram-id]
+  // relic mikoshi status -e <id>
   mikoshi
-    .command("status [engram-id]")
+    .command("status")
     .description("Show sync status between local Engram and Mikoshi cloud")
+    .requiredOption("-e, --engram <id>", "Engram ID to check")
     .option("-p, --path <dir>", "Override engrams directory path")
-    .action(async (engramIdArg: string | undefined, opts: { path?: string }) => {
+    .action(async (opts: { engram: string; path?: string }) => {
       await ensureInitialized();
 
-      // Engram ID 解決
-      const engramId = engramIdArg ?? await resolveDefaultEngram();
-      if (!engramId) {
-        printError("Error: No engram-id specified and no default Engram configured.");
-        console.error("  Set one with: relic config default-engram <id>");
-        process.exit(1);
-      }
+      const engramId = opts.engram.trim();
 
       // API key 必須チェック
       const apiKey = await resolveMikoshiApiKey();
@@ -234,15 +228,15 @@ export function registerMikoshiCommand(program: Command): void {
 
   // relic mikoshi pull [engram-id]
   mikoshi
-    .command("pull [engram-id]")
+    .command("pull")
     .description("Pull remote persona files from Mikoshi to local Engram")
-    .option("-e, --engram <id>", "Engram ID to pull")
+    .requiredOption("-e, --engram <id>", "Engram ID to pull")
     .option("-p, --path <dir>", "Override engrams directory path")
     .option("-c, --create", "Create the local Engram if it does not exist")
     .option("-y, --yes", "Skip overwrite confirmation")
     .option("--no-sync", "Skip automatic memory sync after pull")
-    .action(async (engramIdArg: string | undefined, opts: {
-      engram?: string;
+    .action(async (opts: {
+      engram: string;
       path?: string;
       create?: boolean;
       yes?: boolean;
@@ -250,12 +244,7 @@ export function registerMikoshiCommand(program: Command): void {
     }) => {
       await ensureInitialized();
 
-      const engramId = resolveRequiredCommandEngramId(engramIdArg, opts.engram, {
-        commandLabel: "relic mikoshi pull",
-      });
-      if (!engramId) {
-        process.exit(1);
-      }
+      const engramId = opts.engram.trim();
 
       const apiKey = await resolveMikoshiApiKey();
       if (!apiKey) {
@@ -545,32 +534,6 @@ async function resolvePassphraseForSync(): Promise<string> {
   }
 
   return passphrase;
-}
-
-function resolveRequiredCommandEngramId(
-  positionalEngramId: string | undefined,
-  optionEngramId: string | undefined,
-  options: {
-    commandLabel: string;
-  },
-): string | undefined {
-  const positional = positionalEngramId?.trim();
-  const option = optionEngramId?.trim();
-
-  if (positional && option && positional !== option) {
-    printError(`Error: Conflicting Engram IDs: "${positional}" and "${option}".`);
-    process.exit(1);
-  }
-
-  const resolved = positional ?? option;
-  if (!resolved) {
-    printError(`Error: ${options.commandLabel} requires an Engram ID.`);
-    console.error(`  Pass one with: ${options.commandLabel} <engram-id>`);
-    console.error(`  Or use: ${options.commandLabel} --engram <id>`);
-    return undefined;
-  }
-
-  return resolved;
 }
 
 async function runSingleMikoshiSync(
