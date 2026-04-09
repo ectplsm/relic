@@ -59,24 +59,25 @@ relic config mikoshi-passphrase <passphrase>
 
 ```bash
 relic mikoshi list
-relic mikoshi status rebel
-relic mikoshi push --engram rebel
-relic mikoshi status rebel
+relic mikoshi status -e rebel
+relic mikoshi push -e rebel
+relic mikoshi status -e rebel
 ```
 
 各コマンドの意味:
 
 - `relic mikoshi list` は API key で見える cloud Engram を一覧表示
-- `relic mikoshi status <id>` はローカルの persona / memory hash と cloud 側を比較
-- `relic mikoshi push <id>` は平文の persona ファイルを Mikoshi に作成または更新し、その後 memory も自動 sync する
+- `relic mikoshi status -e <id>` はローカルの persona / memory hash と cloud 側を比較
+- `relic mikoshi push -e <id>` は平文の persona ファイルを Mikoshi に作成または更新し、その後 memory も自動 sync する
 
 ## コマンド一覧
 
 | コマンド | 方向 | 説明 |
 |---------|------|------|
+| `relic mikoshi status -e <id>` | — | ローカルと cloud の同期状態を表示 |
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | ペルソナ push + 自動 sync（`--no-sync` で sync をスキップ） |
-| `relic mikoshi pull -e <id>` | Mikoshi → Relic | 新規取り込みまたはペルソナのみ上書き後、その対象を自動 sync（`--create`, `--yes`, `--no-sync`; Engram ID 必須） |
-| `relic mikoshi sync` | Relic ↔ Mikoshi | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。デフォルトは `default-engram`、`--target` は単一対象、`--all` は全対象） |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | 新規取り込みまたはペルソナのみ上書き後、その対象を自動 sync（`--create`, `--yes`, `--no-sync`） |
+| `relic mikoshi sync --target <id>` | Relic ↔ Mikoshi | 双方向マージ（`memory/*.md`, `MEMORY.md`, `USER.md`。`--target` は単一対象、`--all` は全対象） |
 
 ## Persona コマンド
 
@@ -109,14 +110,6 @@ relic mikoshi pull --engram <engram-id> --create
 
 ## Sync
 
-通常運用:
-
-```bash
-relic mikoshi sync
-```
-
-引数を付けない場合、`sync` は現在の `default-engram` を対象にします。
-
 特定の 1 対象だけ同期:
 
 ```bash
@@ -129,12 +122,13 @@ relic mikoshi sync --target <engram-id>
 relic mikoshi sync --all
 ```
 
+`--target` か `--all` のどちらかが必須です。
+
 注意点:
 
 - memory は基本的に単調増加するデータとして扱い、通常は `sync` を使う
 - `sync` は最初にローカルと remote の memory をマージし、その後で遅れている側を更新する
 - `sync` の対象は `USER.md`, `MEMORY.md`, `memory/*.md`
-- `sync` は `--target` や `--all` を付けない限り `default-engram` を対象にする
 - `sync --all` を使うと、ローカルにあり、かつ Mikoshi にも存在する Engram をまとめて同期する
 - `archive.md` はアップロードされない
 - memory overwrite も optimistic concurrency を使うので、`409 Conflict` で失敗しうる
@@ -142,7 +136,7 @@ relic mikoshi sync --all
 
 ## Status の見方
 
-`relic mikoshi status <engram-id>` は persona と memory を別々に表示します。
+`relic mikoshi status -e <engram-id>` は persona と memory を別々に表示します。
 
 主な状態:
 

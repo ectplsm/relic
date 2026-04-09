@@ -58,24 +58,25 @@ Recommended first-run flow:
 
 ```bash
 relic mikoshi list
-relic mikoshi status rebel
-relic mikoshi push --engram rebel
-relic mikoshi status rebel
+relic mikoshi status -e rebel
+relic mikoshi push -e rebel
+relic mikoshi status -e rebel
 ```
 
 What each step does:
 
 - `relic mikoshi list` lists cloud Engrams visible to your API key
-- `relic mikoshi status <id>` compares local persona and memory hashes against cloud state
-- `relic mikoshi push <id>` creates or updates plaintext persona files on Mikoshi, then auto-syncs memory
+- `relic mikoshi status -e <id>` compares local persona and memory hashes against cloud state
+- `relic mikoshi push -e <id>` creates or updates plaintext persona files on Mikoshi, then auto-syncs memory
 
 ## Command Summary
 
 | Command | Direction | Description |
 |---------|-----------|-------------|
+| `relic mikoshi status -e <id>` | — | Show sync status between local and cloud |
 | `relic mikoshi push -e <id>` | Relic → Mikoshi | Push persona + auto-sync (`--no-sync` skips sync) |
-| `relic mikoshi pull -e <id>` | Mikoshi → Relic | New import or persona-only overwrite, then auto-sync that target (`--create`, `--yes`, `--no-sync`; Engram ID required) |
-| `relic mikoshi sync` | Relic ↔ Mikoshi | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; default = `default-engram`, `--target` = one target, `--all` = all targets) |
+| `relic mikoshi pull -e <id>` | Mikoshi → Relic | New import or persona-only overwrite, then auto-sync that target (`--create`, `--yes`, `--no-sync`) |
+| `relic mikoshi sync --target <id>` | Relic ↔ Mikoshi | Bidirectional memory merge (`memory/*.md`, `MEMORY.md`, `USER.md`; `--target` = one target, `--all` = all targets) |
 
 ## Persona Commands
 
@@ -108,15 +109,7 @@ Notes:
 
 ## Sync
 
-Normal operation:
-
-```bash
-relic mikoshi sync
-```
-
-When no argument is given, `sync` targets your current `default-engram`.
-
-One target only:
+One target:
 
 ```bash
 relic mikoshi sync --target <engram-id>
@@ -128,12 +121,13 @@ All matching targets:
 relic mikoshi sync --all
 ```
 
+Either `--target` or `--all` is required.
+
 Notes:
 
 - memory is treated as monotonically growing data and `sync` is the default workflow
 - `sync` merges local and remote memory first, then updates whichever side is behind
 - `sync` handles `USER.md`, `MEMORY.md`, and `memory/*.md`
-- `sync` uses `default-engram` unless you pass `--target` or `--all`
 - `sync --all` scans all local Engrams that also exist on Mikoshi
 - `archive.md` is never uploaded
 - memory overwrite also uses optimistic concurrency and can fail with `409 Conflict`
@@ -141,7 +135,7 @@ Notes:
 
 ## Status Meanings
 
-`relic mikoshi status <engram-id>` reports persona and memory separately.
+`relic mikoshi status -e <engram-id>` reports persona and memory separately.
 
 Possible states include:
 
