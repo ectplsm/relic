@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import { MikoshiApiClient } from "../../../adapters/mikoshi/client.js";
+import { startSpinner } from "../spinner.js";
 import {
   MikoshiStatus,
   MikoshiStatusEngramNotFoundError,
@@ -179,23 +180,25 @@ export function registerMikoshiCommand(program: Command): void {
       const client = new MikoshiApiClient(mikoshiUrl, apiKey);
       const usecase = new MikoshiPush(repo, client);
 
+      const spinner = startSpinner("Pushing persona to Mikoshi...");
       try {
         const result = await usecase.execute(engramId);
 
         switch (result.outcome) {
           case "created":
-            console.log(`\n  ✅ Created "${result.engramName}" on Mikoshi.`);
-            console.log(`  Cloud ID: ${result.cloudEngramId}\n`);
+            spinner.stop(`✅ Created "${result.engramName}" on Mikoshi.`);
+            console.log(`  Cloud ID: ${result.cloudEngramId}`);
             break;
           case "updated":
-            console.log(`\n  ✅ Persona updated for "${result.engramName}".`);
-            console.log(`  Hash: ${result.newPersonaHash}\n`);
+            spinner.stop(`✅ Persona updated for "${result.engramName}".`);
+            console.log(`  Hash: ${result.newPersonaHash}`);
             break;
           case "already_synced":
-            console.log(`\n  ✅ "${result.engramName}" is already synced.\n`);
+            spinner.stop(`✅ "${result.engramName}" is already synced.`);
             break;
           case "conflict":
-            console.error(`\n  ⚠️  Persona conflict for "${result.engramName}".`);
+            spinner.stop();
+            console.error(`  ⚠️  Persona conflict for "${result.engramName}".`);
             console.error("  The remote persona was updated since you last checked.");
             if (result.conflictRemoteHash) {
               console.error(`  Remote hash: ${result.conflictRemoteHash}`);
@@ -205,6 +208,7 @@ export function registerMikoshiCommand(program: Command): void {
             break;
         }
       } catch (err) {
+        spinner.stop();
         if (err instanceof MikoshiPushEngramNotFoundError) {
           printError(`Error: ${err.message}`);
           process.exit(1);
@@ -259,40 +263,39 @@ export function registerMikoshiCommand(program: Command): void {
       const client = new MikoshiApiClient(mikoshiUrl, apiKey);
       const usecase = new MikoshiPull(repo, client);
 
+      const spinner = startSpinner("Checking remote persona...");
       try {
         const { result, apply } = await usecase.check(engramId, {
           allowCreate: opts.create,
         });
 
         if (result.outcome === "already_synced") {
-          console.log(`\n  ✅ "${result.engramName}" is already synced.`);
+          spinner.stop(`✅ "${result.engramName}" is already synced.`);
           if (opts.sync) {
             const passphrase = await resolvePassphraseForSync();
             const syncUsecase = new MikoshiMemorySync(repo, client);
             await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
-          } else {
-            console.log();
           }
           return;
         }
 
         const localBefore = await repo.get(engramId);
         if (!localBefore) {
+          spinner.update("Creating local Engram from Mikoshi...");
           await apply!();
-          console.log(`\n  ✅ Created local Engram "${result.engramName}" from Mikoshi.`);
+          spinner.stop(`✅ Created local Engram "${result.engramName}" from Mikoshi.`);
           if (opts.sync) {
             const passphrase = await resolvePassphraseForSync();
             const syncUsecase = new MikoshiMemorySync(repo, client);
             await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
-          } else {
-            console.log();
           }
           return;
         }
 
         // 差分表示
+        spinner.stop();
         const diff = result.diff!;
-        console.log(`\n  Engram: ${result.engramName} (${result.engramId})`);
+        console.log(`  Engram: ${result.engramName} (${result.engramId})`);
         console.log(`  Cloud:  ${result.cloudEngramId}`);
         console.log();
         if (diff.soulDiffers) console.log("  SOUL.md     — differs");
@@ -308,16 +311,16 @@ export function registerMikoshiCommand(program: Command): void {
           }
         }
 
+        const applySpinner = startSpinner("Pulling persona from Mikoshi...");
         await apply!();
-        console.log(`  ✅ Local persona updated from Mikoshi.`);
+        applySpinner.stop(`✅ Local persona updated from Mikoshi.`);
         if (opts.sync) {
           const passphrase = await resolvePassphraseForSync();
           const syncUsecase = new MikoshiMemorySync(repo, client);
           await runSingleMikoshiSync(syncUsecase, engramId, passphrase, { prefix: "  " });
-        } else {
-          console.log();
         }
       } catch (err) {
+        spinner.stop();
         if (err instanceof MikoshiPullCreateFlagRequiredError) {
           printError(`Error: ${err.message}`);
           process.exit(1);
@@ -543,29 +546,25 @@ async function runSingleMikoshiSync(
   options?: { prefix?: string },
 ): Promise<void> {
   const prefix = options?.prefix ?? "  ";
+  const spinner = startSpinner(`Syncing memory (${engramId})...`);
   const result = await usecase.execute(engramId, passphrase);
 
   switch (result.outcome) {
     case "already_synced":
-      console.log(`${prefix}Already in sync (${engramId})`);
-      if (!options?.prefix) {
-        console.log();
-      }
+      spinner.stop(`${prefix}Already in sync (${engramId})`);
       return;
     case "synced": {
       const details = summarizeMergedMemory(result.mergedPaths ?? []);
       if (details.length > 0) {
-        console.log(`${prefix}${engramId}: merged ${details.join(", ")}`);
+        spinner.stop(`${prefix}${engramId}: merged ${details.join(", ")}`);
       } else {
-        console.log(`${prefix}Memory synced (${engramId})`);
-      }
-      if (!options?.prefix) {
-        console.log();
+        spinner.stop(`${prefix}Memory synced (${engramId})`);
       }
       return;
     }
     case "conflict":
-      console.error(`\n  ⚠️  Memory sync conflict for "${result.engramName}".`);
+      spinner.stop();
+      console.error(`  ⚠️  Memory sync conflict for "${result.engramName}".`);
       console.error("  The remote memory changed during sync.");
       if (result.conflictRemoteHash) {
         console.error(`  Remote hash:    ${result.conflictRemoteHash}`);
