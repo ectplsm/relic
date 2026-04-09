@@ -112,7 +112,9 @@ export function registerMikoshiCommand(program: Command): void {
       const usecase = new MikoshiStatus(repo, client);
 
       try {
+        const spinner = startSpinner("Checking status…");
         const result = await usecase.execute(engramId);
+        spinner.stop();
 
         console.log(`\n  Engram: ${result.engramName} (${result.engramId})`);
         console.log(`  Cloud:  ${result.cloudEngramId}`);
