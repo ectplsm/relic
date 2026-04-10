@@ -20,18 +20,23 @@ Reason:
 For the sync contract itself, see the shared contract repository:
 [`ectplsm/engram-sync-contracts`](https://github.com/ectplsm/engram-sync-contracts).
 
-## Prerequisites
+## Before You Start
 
 - signed in to Mikoshi (currently Google sign-in only)
-- an API key already issued from Mikoshi Settings
 - a local Engram already created with Relic
 
 If `mikoshiUrl` is not set in `~/.relic/config.json`, Relic uses `https://mikoshi.ectplsm.com` by default.
 Only set `mikoshiUrl` when you need to point at a non-default deployment.
 
-## Configure Access
+## Create and Configure an API Key
 
-Set the API key you issued from Mikoshi Settings:
+Create an API key in Mikoshi Settings, then save it into Relic:
+
+1. Open [Mikoshi Settings](https://mikoshi.ectplsm.com/settings).
+2. Sign in if needed.
+3. Go to the API key section.
+4. Create a new API key and copy the generated value.
+5. Save it into Relic:
 
 ```bash
 relic config mikoshi-api-key <key>

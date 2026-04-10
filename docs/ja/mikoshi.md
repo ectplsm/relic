@@ -21,19 +21,24 @@ Mikoshi が現時点で保存しないもの:
 sync 契約そのものは共有契約リポジトリを参照してください:
 [`ectplsm/engram-sync-contracts`](https://github.com/ectplsm/engram-sync-contracts)
 
-## Prerequisites
+## 事前準備
 
 - Mikoshi にサインイン済みであること（現時点では Google sign-in のみ）
-- Mikoshi Settings で発行した API key を持っていること
 - Relic でローカル Engram を作成済みであること
 
 `~/.relic/config.json` に `mikoshiUrl` が無ければ、Relic はデフォルトで
 `https://mikoshi.ectplsm.com` を使います。
 別デプロイ先を向けたい時だけ `mikoshiUrl` を設定してください。
 
-## Configure Access
+## API key の作成と設定
 
-Mikoshi Settings で発行した API key を設定します:
+Mikoshi Settings で API key を作成し、Relic に設定します:
+
+1. [Mikoshi Settings](https://mikoshi.ectplsm.com/settings) を開く
+2. 必要ならサインインする
+3. API key セクションへ移動する
+4. 新しい API key を作成し、発行された値をコピーする
+5. Relic に保存する
 
 ```bash
 relic config mikoshi-api-key <key>
