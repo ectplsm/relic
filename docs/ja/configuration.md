@@ -25,6 +25,18 @@ relic config memory-window 5          # 設定
 # 蒸留バッチ件数 — 一度に蒸留する archive エントリ数
 relic config distillation-batch-size      # 取得（デフォルト: 30）
 relic config distillation-batch-size 50   # 設定
+
+# Mikoshi API key — Mikoshi 利用に必須
+relic config mikoshi-api-key                  # 取得
+relic config mikoshi-api-key <key>            # 設定
+
+# Mikoshi passphrase — 任意だが推奨な memory 暗号化設定
+relic config mikoshi-passphrase               # 取得
+relic config mikoshi-passphrase <passphrase>  # 設定
+
+# Mikoshi URL — staging / ローカル開発向け
+relic config mikoshi-url                      # 取得
+relic config mikoshi-url http://localhost:3000 # 設定
 ```
 
 ## `config.json` の例
@@ -35,9 +47,19 @@ relic config distillation-batch-size 50   # 設定
   "defaultEngram": "rebel",
   "clawPath": "/home/user/.openclaw",
   "memoryWindowSize": 2,
-  "distillationBatchSize": 30
+  "distillationBatchSize": 30,
+  "mikoshiApiKey": "<your-api-key>",
+  "mikoshiPassphrase": "<your-passphrase>",
+  "mikoshiUrl": "https://mikoshi.ectplsm.com"
 }
 ```
+
+## Mikoshi に関する補足
+
+- `mikoshiApiKey` は Mikoshi コマンドを使うのに必須です。
+- `mikoshiPassphrase` は任意ですが、毎回入力したくないなら設定を推奨します。
+- memory データは upload 前にローカルで暗号化され、Mikoshi が保持するのは暗号化済み payload のみです。
+- `mikoshiUrl` は通常変更不要で、staging やローカル開発時だけ上書きします。
 
 ## 優先順位
 

@@ -25,6 +25,18 @@ relic config memory-window 5          # set
 # Distillation batch size — number of archive entries distilled at once
 relic config distillation-batch-size      # get (default: 30)
 relic config distillation-batch-size 50   # set
+
+# Mikoshi API key — required for Mikoshi access
+relic config mikoshi-api-key                  # get
+relic config mikoshi-api-key <key>            # set
+
+# Mikoshi passphrase — optional, but recommended, for memory encryption
+relic config mikoshi-passphrase               # get
+relic config mikoshi-passphrase <passphrase>  # set
+
+# Mikoshi URL — developer use only, for staging or local deployments
+relic config mikoshi-url                      # get
+relic config mikoshi-url http://localhost:3000 # set
 ```
 
 ## `config.json` Example
@@ -35,9 +47,19 @@ relic config distillation-batch-size 50   # set
   "defaultEngram": "rebel",
   "clawPath": "/home/user/.openclaw",
   "memoryWindowSize": 2,
-  "distillationBatchSize": 30
+  "distillationBatchSize": 30,
+  "mikoshiApiKey": "<your-api-key>",
+  "mikoshiPassphrase": "<your-passphrase>",
+  "mikoshiUrl": "https://mikoshi.ectplsm.com"
 }
 ```
+
+## Mikoshi Notes
+
+- `mikoshiApiKey` is required to use Mikoshi commands.
+- `mikoshiPassphrase` is optional, but recommended if you do not want to enter it every time.
+- Memory data is encrypted locally before upload. Mikoshi stores only the encrypted payload, not the plaintext.
+- `mikoshiUrl` usually does not need to be changed unless you are targeting staging or local development.
 
 ## Precedence
 
