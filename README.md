@@ -184,9 +184,9 @@ For Engram creation, the smoothest path is to use your LLM with the `relic_engra
 
 For LLM-assisted creation, persona authoring, template examples, and deletion rules, see [docs/engram-guide.md](docs/engram-guide.md).
 
-## Cloud Storage and Sharing
+## Cloud Storage and Sharing (Mikoshi)
 
-Relic can push plaintext persona files and encrypted memory files to [Mikoshi](https://mikoshi.ectplsm.com), so you can keep Engrams in the cloud and move them across machines without turning Mikoshi into your authoring source of truth.
+Relic can push plaintext persona files and (end-to-end) encrypted memory files to [Mikoshi](https://mikoshi.ectplsm.com), so you can keep Engrams in the cloud and move them across machines without turning Mikoshi into your authoring source of truth.
 
 For setup, API key configuration, persona push/pull, encrypted memory sync, and the recommended command flow, see [docs/mikoshi.md](docs/mikoshi.md).
 

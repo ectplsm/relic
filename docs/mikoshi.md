@@ -9,6 +9,8 @@ Mikoshi stores:
 - plaintext persona files: `SOUL.md`, `IDENTITY.md`
 - encrypted memory files: `USER.md`, `MEMORY.md`, `memory/*.md`
 
+Memory data is end-to-end encrypted before upload. Mikoshi stores only the encrypted payload, not the plaintext.
+
 Mikoshi does not currently store:
 
 - `archive.md`
@@ -48,14 +50,15 @@ Optional, but recommended: store a passphrase for memory encryption so you are n
 relic config mikoshi-passphrase <passphrase>
 ```
 
+This passphrase encrypts your memory bundle locally before upload.
+Mikoshi never receives the plaintext memory contents.
+**Lose it, and your uploaded memory is unrecoverable.** Keep it somewhere safe.
+
 Developer use only: override the base URL for a staging or local deployment:
 
 ```bash
 relic config mikoshi-url http://localhost:3000
 ```
-
-That passphrase encrypts your memory bundle before upload.
-**Lose it, and your uploaded memory is unrecoverable. Keep it somewhere safe.**
 
 ## Command Flow
 

@@ -10,6 +10,8 @@ Mikoshi が保存するもの:
 - 平文の persona ファイル: `SOUL.md`, `IDENTITY.md`
 - 暗号化された memory ファイル: `USER.md`, `MEMORY.md`, `memory/*.md`
 
+memory データは upload 前に End-to-End で暗号化されます。Mikoshi が保持するのは暗号化済み payload のみで、平文は保持しません。
+
 Mikoshi が現時点で保存しないもの:
 
 - `archive.md`
@@ -50,14 +52,15 @@ relic config mikoshi-api-key <key>
 relic config mikoshi-passphrase <passphrase>
 ```
 
+この passphrase は upload 前にローカルで memory bundle を暗号化するためのものです。
+Mikoshi に平文の memory 内容が渡ることはありません。
+**失うと、アップロード済み memory は復元できません。** どこか安全な場所に保管してください。
+
 開発者向け: staging やローカル環境を向けたい場合は base URL を上書き:
 
 ```bash
 relic config mikoshi-url http://localhost:3000
 ```
-
-この passphrase は upload 前に memory bundle を暗号化するためのものです。
-**失うと、アップロード済み memory は復元できません。どこか安全な場所に保管してください。**
 
 ## Command Flow
 
