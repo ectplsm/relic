@@ -42,16 +42,16 @@ Create an API key in Mikoshi Settings, then save it into Relic:
 relic config mikoshi-api-key <key>
 ```
 
-Optional: override the base URL for a staging or local deployment:
-
-```bash
-relic config mikoshi-url http://localhost:3000
-```
-
-Optional: store a passphrase for memory encryption so you are not prompted every time:
+Optional, but recommended: store a passphrase for memory encryption so you are not prompted every time:
 
 ```bash
 relic config mikoshi-passphrase <passphrase>
+```
+
+Developer use only: override the base URL for a staging or local deployment:
+
+```bash
+relic config mikoshi-url http://localhost:3000
 ```
 
 That passphrase encrypts your memory bundle before upload.

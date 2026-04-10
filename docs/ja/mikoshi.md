@@ -44,16 +44,16 @@ Mikoshi Settings で API key を作成し、Relic に設定します:
 relic config mikoshi-api-key <key>
 ```
 
-任意: staging やローカル環境を向けたい場合は base URL を上書き:
-
-```bash
-relic config mikoshi-url http://localhost:3000
-```
-
-任意: memory 暗号化用の passphrase を保存して毎回の入力を避ける:
+任意だが推奨: memory 暗号化用の passphrase を保存して毎回の入力を避ける:
 
 ```bash
 relic config mikoshi-passphrase <passphrase>
+```
+
+開発者向け: staging やローカル環境を向けたい場合は base URL を上書き:
+
+```bash
+relic config mikoshi-url http://localhost:3000
 ```
 
 この passphrase は upload 前に memory bundle を暗号化するためのものです。
