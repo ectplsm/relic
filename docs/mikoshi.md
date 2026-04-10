@@ -35,7 +35,7 @@ Create an API key in Mikoshi Settings, then save it into Relic:
 1. Open [Mikoshi Settings](https://mikoshi.ectplsm.com/settings).
 2. Sign in if needed.
 3. Go to the API key section.
-4. Create a new API key and copy the generated value.
+4. Create a new API key and copy the generated value. **Important: this value is shown only once.**
 5. Save it into Relic:
 
 ```bash

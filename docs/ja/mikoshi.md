@@ -37,7 +37,7 @@ Mikoshi Settings で API key を作成し、Relic に設定します:
 1. [Mikoshi Settings](https://mikoshi.ectplsm.com/settings) を開く
 2. 必要ならサインインする
 3. API key セクションへ移動する
-4. 新しい API key を作成し、発行された値をコピーする
+4. 新しい API key を作成し、発行された値をコピーする。**重要: 一度しか表示されないので注意。**
 5. Relic に保存する
 
 ```bash
