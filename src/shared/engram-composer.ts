@@ -10,7 +10,7 @@ export interface ComposeOptions {
   currentDate?: string;
   /** システムプロンプトに含める直近メモリエントリ数（デフォルト: 2） */
   memoryWindowSize?: number;
-  /** 一度の記憶蒸留で扱う archive エントリ数（デフォルト: 30） */
+  /** 一度の記憶蒸留で扱う archive エントリ数（デフォルト: 100） */
   distillationBatchSize?: number;
 }
 
@@ -82,7 +82,7 @@ function composeRelicSection(
   currentDate?: string,
 ): string {
   const today = currentDate ?? new Date().toISOString().split("T")[0];
-  const batchSize = distillationBatchSize ?? 30;
+  const batchSize = distillationBatchSize ?? 100;
 
   return `# Relic System
 
@@ -105,16 +105,20 @@ To recall past context, use \`relic_archive_search\` to search your archive by k
 
 When the user asks you to organize or distill memories:
 1. Call \`relic_archive_pending\` **once** to get un-distilled session entries (up to ${batchSize})
-2. Review and distill them into:
-   - **content**: key facts, decisions, and insights for \`memory/YYYY-MM-DD.md\`
+2. Review the archive entry dates and group the distilled memory by the **actual archive entry date**, not the distillation date
+3. Distill them into:
+   - **writes**: one item per date, each with \`date\` and \`content\`, for \`memory/YYYY-MM-DD.md\`
+   - **expected_dates**: every archive date present in the pending batch
+   - **skipped_dates**: dates that had pending entries but produced no durable memory worth saving
    - **long_term** (optional): only the most important, enduring facts for \`MEMORY.md\` (e.g. project architecture decisions, key constraints, hard rules)
    - **user_profile** (optional): full updated user profile for \`USER.md\` (preferences, tendencies, work style — about the human, not the project)
-3. Call \`relic_memory_write\` with \`content\`, \`count\`, and optionally \`long_term\` and/or \`user_profile\`
-4. If \`remaining > 0\`, inform the user how many entries are still pending — do NOT fetch more automatically
+4. Call \`relic_memory_write\` with \`writes\`, \`expected_dates\`, \`skipped_dates\`, \`count\`, and optionally \`long_term\` and/or \`user_profile\`
+5. If \`remaining > 0\`, inform the user how many entries are still pending — do NOT fetch more automatically
 
 **Important:**
 - Write distilled memories in the **same language the user is using** in the current conversation
 - Do NOT loop or repeat the distillation process — one round per user request
+- Every archive date in the pending batch must appear in exactly one of \`writes.date\` or \`skipped_dates\`
 - \`long_term\` should be highly selective — only facts that matter across all future sessions (objective facts and rules)
 - \`user_profile\` is a complete replacement, not an append — write the full profile each time you update it (user tendencies, preferences, work style)
 - Distilled memories are loaded into your prompt on future sessions`;

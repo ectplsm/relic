@@ -9,10 +9,12 @@ import {
 } from "../../core/usecases/archive-search.js";
 import {
   ArchivePending,
+  ArchiveCursorCorruptedError,
   ArchivePendingEngramNotFoundError,
 } from "../../core/usecases/archive-pending.js";
 import {
   ArchiveCursorUpdate,
+  ArchiveCursorAdvanceOverflowError,
 } from "../../core/usecases/archive-cursor-update.js";
 import {
   MemoryWrite,
@@ -32,6 +34,85 @@ import {
   resolveDistillationBatchSize,
   resolveEngramsPath,
 } from "../../shared/config.js";
+
+type DailyWriteInput = {
+  date: string;
+  content: string;
+};
+
+async function appendLongTermAndUserProfile(
+  engramsPath: string,
+  id: string,
+  long_term?: string,
+  user_profile?: string
+): Promise<{ longTermWritten: boolean; userProfileWritten: boolean }> {
+  let longTermWritten = false;
+  if (long_term) {
+    const memoryMdPath = join(engramsPath, id, "MEMORY.md");
+    if (existsSync(memoryMdPath)) {
+      const existing = await readFile(memoryMdPath, "utf-8");
+      const separator = existing.endsWith("\n") ? "\n" : "\n\n";
+      await writeFile(memoryMdPath, existing + separator + long_term + "\n", "utf-8");
+    } else {
+      await writeFile(memoryMdPath, long_term + "\n", "utf-8");
+    }
+    longTermWritten = true;
+  }
+
+  let userProfileWritten = false;
+  if (user_profile) {
+    const userMdPath = join(engramsPath, id, "USER.md");
+    await writeFile(userMdPath, user_profile + "\n", "utf-8");
+    userProfileWritten = true;
+  }
+
+  return { longTermWritten, userProfileWritten };
+}
+
+function assertDateCoverage(
+  writes: DailyWriteInput[],
+  expectedDates: string[],
+  skippedDates: string[]
+): void {
+  const writeDates = writes.map((write) => write.date);
+  const duplicateWriteDates = findDuplicates(writeDates);
+  if (duplicateWriteDates.length > 0) {
+    throw new Error(`Duplicate write dates are not allowed: ${duplicateWriteDates.join(", ")}`);
+  }
+
+  const duplicateSkippedDates = findDuplicates(skippedDates);
+  if (duplicateSkippedDates.length > 0) {
+    throw new Error(`Duplicate skipped_dates are not allowed: ${duplicateSkippedDates.join(", ")}`);
+  }
+
+  const overlappedDates = writeDates.filter((date) => skippedDates.includes(date));
+  if (overlappedDates.length > 0) {
+    throw new Error(`Dates cannot appear in both writes and skipped_dates: ${[...new Set(overlappedDates)].join(", ")}`);
+  }
+
+  const expectedSet = new Set(expectedDates);
+  const coveredDates = [...writeDates, ...skippedDates];
+  const unexpectedDates = coveredDates.filter((date) => !expectedSet.has(date));
+  if (unexpectedDates.length > 0) {
+    throw new Error(`Unexpected dates: ${[...new Set(unexpectedDates)].join(", ")}`);
+  }
+
+  const coveredSet = new Set(coveredDates);
+  const missingDates = expectedDates.filter((date) => !coveredSet.has(date));
+  if (missingDates.length > 0) {
+    throw new Error(`Missing dates: ${missingDates.join(", ")}`);
+  }
+}
+
+function findDuplicates(values: string[]): string[] {
+  const counts = new Map<string, number>();
+  for (const value of values) {
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([value]) => value);
+}
 
 const server = new McpServer({
   name: "relic",
@@ -210,16 +291,36 @@ server.tool(
         };
       }
 
-      const header = `cursor: ${result.cursor} | total: ${result.total} | returned: ${result.entries.length} | remaining: ${result.remaining}`;
+      const dates = [...new Set(result.entries.map((entry) => entry.date).filter(Boolean))];
+      const header = [
+        `cursor: ${result.cursor}`,
+        `total: ${result.total}`,
+        `returned: ${result.entries.length}`,
+        `remaining: ${result.remaining}`,
+        `dates: ${dates.length > 0 ? dates.join(", ") : "unknown"}`,
+      ].join(" | ");
       const body = result.entries
-        .map((e, i) => `[entry ${result.cursor + i + 1}]\n${e}`)
+        .map((entry, i) => {
+          const lines = [`[entry ${result.cursor + i + 1}]`];
+          if (entry.date) {
+            lines.push(`date: ${entry.date}`);
+          }
+          if (entry.summary) {
+            lines.push(`summary: ${entry.summary}`);
+          }
+          lines.push(entry.raw);
+          return lines.join("\n");
+        })
         .join("\n\n---\n\n");
 
       return {
         content: [{ type: "text" as const, text: `${header}\n\n${body}` }],
       };
     } catch (err) {
-      if (err instanceof ArchivePendingEngramNotFoundError) {
+      if (
+        err instanceof ArchivePendingEngramNotFoundError ||
+        err instanceof ArchiveCursorCorruptedError
+      ) {
         return {
           content: [{ type: "text" as const, text: err.message }],
           isError: true,
@@ -236,7 +337,21 @@ server.tool(
   "Write distilled memory to an Engram's memory file and advance the archive cursor. Call this after reviewing pending archive entries and distilling them into key insights.",
   {
     id: z.string().describe("Engram ID"),
-    content: z.string().describe("Distilled memory content to write to memory/YYYY-MM-DD.md"),
+    writes: z
+      .array(
+        z.object({
+          date: z.string().describe("Archive entry date for this memory file (YYYY-MM-DD)"),
+          content: z.string().describe("Distilled memory content for memory/YYYY-MM-DD.md"),
+        })
+      )
+      .min(0)
+      .describe("Distilled memory writes grouped by actual archive dates"),
+    expected_dates: z
+      .array(z.string())
+      .describe("All archive dates that must be explicitly covered by writes or skipped_dates"),
+    skipped_dates: z
+      .array(z.string())
+      .describe("Archive dates intentionally skipped because they produced no durable memory"),
     count: z
       .number()
       .describe("Number of archive entries distilled (from relic_archive_pending returned count)"),
@@ -248,10 +363,6 @@ server.tool(
       .string()
       .optional()
       .describe("User profile updates to write to USER.md (preferences, tendencies, work style — about the human, not the project)"),
-    date: z
-      .string()
-      .optional()
-      .describe("Date for memory file (YYYY-MM-DD, default: today)"),
     path: z
       .string()
       .optional()
@@ -261,43 +372,31 @@ server.tool(
     const engramsPath = await resolveEngramsPath(args.path);
 
     try {
-      // Step 1: Write daily memory
       const memoryWrite = new MemoryWrite(engramsPath);
-      const writeResult = await memoryWrite.execute(
+      assertDateCoverage(args.writes, args.expected_dates, args.skipped_dates);
+
+      const writeResults = await memoryWrite.executeBatch(args.id, args.writes);
+      const writeSummary =
+        writeResults.length > 0
+          ? writeResults
+              .map((result) => `${result.date} (${result.appended ? "appended" : "created"})`)
+              .join(", ")
+          : "no files";
+
+      const { longTermWritten, userProfileWritten } = await appendLongTermAndUserProfile(
+        engramsPath,
         args.id,
-        args.content,
-        args.date
+        args.long_term,
+        args.user_profile
       );
 
-      // Step 2: Append to MEMORY.md if long_term is provided
-      let longTermWritten = false;
-      if (args.long_term) {
-        const memoryMdPath = join(engramsPath, args.id, "MEMORY.md");
-        if (existsSync(memoryMdPath)) {
-          const existing = await readFile(memoryMdPath, "utf-8");
-          const separator = existing.endsWith("\n") ? "\n" : "\n\n";
-          await writeFile(memoryMdPath, existing + separator + args.long_term + "\n", "utf-8");
-        } else {
-          await writeFile(memoryMdPath, args.long_term + "\n", "utf-8");
-        }
-        longTermWritten = true;
-      }
-
-      // Step 2.5: Write USER.md if user_profile is provided
-      let userProfileWritten = false;
-      if (args.user_profile) {
-        const userMdPath = join(engramsPath, args.id, "USER.md");
-        await writeFile(userMdPath, args.user_profile + "\n", "utf-8");
-        userProfileWritten = true;
-      }
-
-      // Step 3: Advance cursor by the number of distilled entries
       const cursorUpdate = new ArchiveCursorUpdate(engramsPath);
       const cursorResult = await cursorUpdate.execute(args.id, args.count);
 
-      const parts = [
-        `Memory written to ${writeResult.date} (${writeResult.appended ? "appended" : "created"}).`,
-      ];
+      const parts = [`Memory written to ${writeSummary}.`];
+      if (args.skipped_dates.length > 0) {
+        parts.push(`Skipped dates: ${args.skipped_dates.join(", ")}.`);
+      }
       if (longTermWritten) {
         parts.push("Long-term memory (MEMORY.md) updated.");
       }
@@ -315,7 +414,12 @@ server.tool(
         ],
       };
     } catch (err) {
-      if (err instanceof MemoryWriteEngramNotFoundError) {
+      if (
+        err instanceof MemoryWriteEngramNotFoundError ||
+        err instanceof ArchiveCursorAdvanceOverflowError ||
+        err instanceof ArchiveCursorCorruptedError ||
+        err instanceof Error
+      ) {
         return {
           content: [{ type: "text" as const, text: err.message }],
           isError: true,

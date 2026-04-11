@@ -9,6 +9,11 @@ export interface MemoryWriteResult {
   path: string;
 }
 
+export interface MemoryWriteBatchItem {
+  date: string;
+  content: string;
+}
+
 /**
  * MemoryWrite — Engramのメモリエントリに追記する
  *
@@ -24,6 +29,16 @@ export class MemoryWrite {
     date?: string
   ): Promise<MemoryWriteResult> {
     const resolvedDate = date ?? new Date().toISOString().split("T")[0];
+    const [result] = await this.executeBatch(engramId, [
+      { date: resolvedDate, content },
+    ]);
+    return result;
+  }
+
+  async executeBatch(
+    engramId: string,
+    writes: MemoryWriteBatchItem[]
+  ): Promise<MemoryWriteResult[]> {
     const engramDir = join(this.engramsPath, engramId);
 
     if (!existsSync(engramDir)) {
@@ -33,24 +48,30 @@ export class MemoryWrite {
     const memoryDir = join(engramDir, "memory");
     await mkdir(memoryDir, { recursive: true });
 
-    const filePath = join(memoryDir, `${resolvedDate}.md`);
-    let appended = false;
+    const results: MemoryWriteResult[] = [];
 
-    if (existsSync(filePath)) {
-      const existing = await readFile(filePath, "utf-8");
-      const separator = existing.endsWith("\n") ? "\n" : "\n\n";
-      await writeFile(filePath, existing + separator + content + "\n", "utf-8");
-      appended = true;
-    } else {
-      await writeFile(filePath, content + "\n", "utf-8");
+    for (const write of writes) {
+      const filePath = join(memoryDir, `${write.date}.md`);
+      let appended = false;
+
+      if (existsSync(filePath)) {
+        const existing = await readFile(filePath, "utf-8");
+        const separator = existing.endsWith("\n") ? "\n" : "\n\n";
+        await writeFile(filePath, existing + separator + write.content + "\n", "utf-8");
+        appended = true;
+      } else {
+        await writeFile(filePath, write.content + "\n", "utf-8");
+      }
+
+      results.push({
+        engramId,
+        date: write.date,
+        appended,
+        path: filePath,
+      });
     }
 
-    return {
-      engramId,
-      date: resolvedDate,
-      appended,
-      path: filePath,
-    };
+    return results;
   }
 }
 
