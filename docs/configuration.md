@@ -23,7 +23,7 @@ relic config memory-window            # get (default: 2)
 relic config memory-window 5          # set
 
 # Distillation batch size — number of archive entries distilled at once
-relic config distillation-batch-size      # get (default: 30)
+relic config distillation-batch-size      # get (default: 100)
 relic config distillation-batch-size 50   # set
 
 # Mikoshi API key — required for Mikoshi access
@@ -47,7 +47,7 @@ relic config mikoshi-url http://localhost:3000 # set
   "defaultEngram": "rebel",
   "clawPath": "/home/user/.openclaw",
   "memoryWindowSize": 2,
-  "distillationBatchSize": 30,
+  "distillationBatchSize": 100,
   "mikoshiApiKey": "<your-api-key>",
   "mikoshiPassphrase": "<your-passphrase>",
   "mikoshiUrl": "https://mikoshi.ectplsm.com"

@@ -167,7 +167,7 @@ export function registerConfigCommand(program: Command): void {
   // relic config distillation-batch-size [n]
   config
     .command("distillation-batch-size [n]")
-    .description("Get or set the number of archive entries to distill at once (default: 30)")
+    .description("Get or set the number of archive entries to distill at once (default: 100)")
     .action(async (n: string | undefined) => {
       await ensureInitialized();
       const cfg = await loadConfig();

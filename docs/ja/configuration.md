@@ -23,7 +23,7 @@ relic config memory-window            # 取得（デフォルト: 2）
 relic config memory-window 5          # 設定
 
 # 蒸留バッチ件数 — 一度に蒸留する archive エントリ数
-relic config distillation-batch-size      # 取得（デフォルト: 30）
+relic config distillation-batch-size      # 取得（デフォルト: 100）
 relic config distillation-batch-size 50   # 設定
 
 # Mikoshi API key — Mikoshi 利用に必須
@@ -47,7 +47,7 @@ relic config mikoshi-url http://localhost:3000 # 設定
   "defaultEngram": "rebel",
   "clawPath": "/home/user/.openclaw",
   "memoryWindowSize": 2,
-  "distillationBatchSize": 30,
+  "distillationBatchSize": 100,
   "mikoshiApiKey": "<your-api-key>",
   "mikoshiPassphrase": "<your-passphrase>",
   "mikoshiUrl": "https://mikoshi.ectplsm.com"
