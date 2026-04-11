@@ -112,7 +112,7 @@ As you use a Construct, conversation logs are automatically saved to `archive.md
 
 > **"Organize my memories"**
 
-The Construct will review recent conversations, extract key facts and decisions into `memory/*.md`, promote important long-term insights to `MEMORY.md`, and update your preferences in `USER.md`. These distilled memories are then loaded into future sessions automatically.
+The Construct will review recent conversations, group them by the actual dates recorded in `archive.md`, extract key facts and decisions into the matching `memory/*.md` files, promote important long-term insights to `MEMORY.md`, and update your preferences in `USER.md`. These distilled memories are then loaded into future sessions automatically.
 
 ### 5. Learn More
 

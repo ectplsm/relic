@@ -69,7 +69,7 @@ The split is deliberate:
 | `relic_engram_create` | Create a new Engram with optional LLM-generated SOUL.md and IDENTITY.md |
 | `relic_archive_search` | Search the Engram's raw archive by keyword |
 | `relic_archive_pending` | Get un-distilled archive entries since the last distillation |
-| `relic_memory_write` | Write distilled memory, update `MEMORY.md` or `USER.md`, and advance the archive cursor |
+| `relic_memory_write` | Write distilled memory, including multi-date writes with explicit skipped dates, update `MEMORY.md` or `USER.md`, and advance the archive cursor |
 
 ## Memory Model
 
@@ -96,7 +96,7 @@ This keeps prompts compact while preserving full history.
 1. Hooks append raw turns to `archive.md`
 2. The user asks the Construct to organize memories
 3. The Construct fetches pending archive entries via MCP
-4. Key insights are distilled into `memory/*.md`
+4. Key insights are grouped by the actual dates recorded in `archive.md` and distilled into the matching `memory/*.md`
 5. Especially important facts can be promoted to `MEMORY.md`
 6. User tendencies can be updated in `USER.md`
 
