@@ -125,7 +125,7 @@ Engrams under `~/.relic/engrams/`.
 - `engram.json` stores editable profile fields like display name, description, and tags
 - `manifest.json` stores system-managed fields like the Engram ID and timestamps
 - `SOUL.md` and `IDENTITY.md` define the persona itself
-- `memory/YYYY-MM-DD.md` stores dated distilled memory entries
+- `memory/YYYY-MM-DD.md` stores distilled memory entries grouped by the actual archive dates
 
 ## Files Created Later
 

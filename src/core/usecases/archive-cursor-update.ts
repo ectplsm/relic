@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
+import { ArchivePending } from "./archive-pending.js";
 
 export interface ArchiveCursorUpdateResult {
   /** 更新前のcursor位置 */
@@ -27,6 +28,13 @@ export class ArchiveCursorUpdate {
 
     const cursorPath = join(engramDir, "archive.cursor");
     const previousCursor = await this.readCursor(cursorPath);
+    const archivePending = new ArchivePending(this.engramsPath);
+    const pending = await archivePending.execute(engramId, Number.MAX_SAFE_INTEGER);
+
+    if (count > pending.entries.length) {
+      throw new ArchiveCursorAdvanceOverflowError(engramId, count, pending.entries.length);
+    }
+
     const newCursor = previousCursor + count;
 
     await writeFile(cursorPath, String(newCursor), "utf-8");
@@ -44,6 +52,19 @@ export class ArchiveCursorUpdate {
     } catch {
       return 0;
     }
+  }
+}
+
+export class ArchiveCursorAdvanceOverflowError extends Error {
+  constructor(
+    public readonly id: string,
+    public readonly requestedCount: number,
+    public readonly availablePending: number
+  ) {
+    super(
+      `Engram "${id}" cursor advance overflow (${requestedCount} > ${availablePending}). Refusing to move archive.cursor.`
+    );
+    this.name = "ArchiveCursorAdvanceOverflowError";
   }
 }
 

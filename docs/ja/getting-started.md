@@ -124,7 +124,7 @@ shell ごとの設定、承認、ログ保存、記憶フローの詳細は [int
 - `engram.json` には表示名、説明、タグなどの編集可能なプロフィール情報が入ります
 - `manifest.json` には Engram ID やタイムスタンプなどのシステム管理情報が入ります
 - `SOUL.md` と `IDENTITY.md` がペルソナ本体を定義します
-- `memory/YYYY-MM-DD.md` には日付ごとの蒸留済み記憶が入ります
+- `memory/YYYY-MM-DD.md` には archive に記録された実際の日付ごとの蒸留済み記憶が入ります
 
 ## 後から増えるファイル
 

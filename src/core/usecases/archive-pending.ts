@@ -3,17 +3,42 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 
 const ENTRY_SEPARATOR = /\n---\n/;
-const DEFAULT_LIMIT = 30;
+const DEFAULT_LIMIT = 100;
+const ENTRY_HEADER_PATTERN = /^(\d{4}-\d{2}-\d{2}) \| ?(.*)$/;
+
+export interface ArchivePendingEntry {
+  /** archive.md 先頭行から抽出した日付 */
+  date: string | null;
+  /** archive.md 先頭行の summary 部分 */
+  summary: string | null;
+  /** エントリ全文 */
+  raw: string;
+  /** 先頭行を除いた本文 */
+  body: string;
+}
 
 export interface ArchivePendingResult {
   /** 未蒸留エントリ（cursor以降） */
-  entries: string[];
+  entries: ArchivePendingEntry[];
   /** 現在のcursor位置 */
   cursor: number;
   /** archive内の総エントリ数 */
   total: number;
   /** 今回返さなかった残りの未蒸留エントリ数 */
   remaining: number;
+}
+
+export class ArchiveCursorCorruptedError extends Error {
+  constructor(
+    public readonly id: string,
+    public readonly cursor: number,
+    public readonly total: number
+  ) {
+    super(
+      `Engram "${id}" archive cursor is invalid (${cursor} > ${total}). Repair archive.cursor before distilling.`
+    );
+    this.name = "ArchiveCursorCorruptedError";
+  }
 }
 
 /**
@@ -47,13 +72,16 @@ export class ArchivePending {
       .filter((e) => e.length > 0);
 
     const cursor = await this.readCursor(engramDir);
+    if (cursor > allEntries.length) {
+      throw new ArchiveCursorCorruptedError(engramId, cursor, allEntries.length);
+    }
     const pendingEntries = allEntries.slice(cursor);
 
     const effectiveLimit = limit ?? DEFAULT_LIMIT;
     const returned = pendingEntries.slice(0, effectiveLimit);
 
     return {
-      entries: returned,
+      entries: returned.map(parseArchiveEntry),
       cursor,
       total: allEntries.length,
       remaining: pendingEntries.length - returned.length,
@@ -72,6 +100,28 @@ export class ArchivePending {
       return 0;
     }
   }
+}
+
+export function parseArchiveEntry(raw: string): ArchivePendingEntry {
+  const trimmed = raw.trim();
+  const [header = "", ...rest] = trimmed.split("\n");
+  const match = header.match(ENTRY_HEADER_PATTERN);
+
+  if (!match) {
+    return {
+      date: null,
+      summary: null,
+      raw: trimmed,
+      body: trimmed,
+    };
+  }
+
+  return {
+    date: match[1],
+    summary: match[2] || null,
+    raw: trimmed,
+    body: rest.join("\n").trim(),
+  };
 }
 
 export class ArchivePendingEngramNotFoundError extends Error {

@@ -30,6 +30,7 @@ export {
 export {
   MemoryWrite,
   MemoryWriteEngramNotFoundError,
+  type MemoryWriteBatchItem,
   type MemoryWriteResult,
 } from "./memory-write.js";
 export {
@@ -49,11 +50,14 @@ export {
 } from "./sync.js";
 export {
   ArchivePending,
+  ArchiveCursorCorruptedError,
   ArchivePendingEngramNotFoundError,
+  type ArchivePendingEntry,
   type ArchivePendingResult,
 } from "./archive-pending.js";
 export {
   ArchiveCursorUpdate,
+  ArchiveCursorAdvanceOverflowError,
   ArchiveCursorUpdateEngramNotFoundError,
   type ArchiveCursorUpdateResult,
 } from "./archive-cursor-update.js";
