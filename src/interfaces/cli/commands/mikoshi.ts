@@ -216,10 +216,28 @@ export function registerMikoshiCommand(program: Command): void {
           // already_synced と avatar 変更なし
           printLine(`✅ Persona already in sync (${result.engramName})`);
         } else {
+          // Avatar URL drift の情報提示 (Phase 3):
+          // IDENTITY.md の diff が Avatar 行の値だけなら、ユーザーが
+          // 「自分は変更してないのに push_required と言われる」状態を
+          // 把握できるよう、確認プロンプトの前に理由を説明する。
+          if (result.avatarDrift) {
+            printErrorLine("⚠ IDENTITY.md differs only in the Avatar line.");
+            printErrorDetail(`local:  ${result.avatarDrift.localValue}`);
+            printErrorDetail(`remote: ${result.avatarDrift.remoteValue}`);
+            printErrorLine(
+              "  This typically happens after 'relic mikoshi pull' rewrote the Avatar line to the R2 URL.",
+            );
+            printErrorLine(
+              "  Pushing will overwrite the remote IDENTITY.md with the local version.",
+            );
+            printBlank();
+          }
+
           // Persona 確認 (already_synced のときは avatar-only なので persona 確認はスキップ)
           if (result.outcome !== "already_synced" && !opts.yes) {
-            const prompt =
-              result.outcome === "create_required"
+            const prompt = result.avatarDrift
+              ? `Push the Avatar URL change to Mikoshi for "${engramId}"? [y/N] `
+              : result.outcome === "create_required"
                 ? `Engram "${engramId}" does not exist on Mikoshi. Create it? [y/N] `
                 : `Overwrite Mikoshi persona with the local Relic version for "${engramId}"? [y/N] `;
             if (!(await confirm(prompt))) {

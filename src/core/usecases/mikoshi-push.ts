@@ -2,12 +2,16 @@ import { readFile, stat } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import type { EngramMeta } from "../entities/engram.js";
 import type { EngramRepository } from "../ports/engram-repository.js";
-import type { MikoshiClient } from "../ports/mikoshi.js";
+import type {
+  MikoshiClient,
+  MikoshiEngramDetail,
+} from "../ports/mikoshi.js";
 import { MikoshiApiError, AVATAR_MAX_BYTES } from "../ports/mikoshi.js";
 import { computePersonaHash } from "../sync/persona-hash.js";
 import {
   computeAvatarHash,
   detectAvatarMimeType,
+  isAvatarOnlyDrift,
   parseAvatarPath,
   resolveAvatarPath,
 } from "../sync/avatar.js";
@@ -46,6 +50,19 @@ export interface MikoshiPushAvatarInfo {
   localSize?: number;
 }
 
+/**
+ * persona hash が不一致で、かつ local と remote の IDENTITY.md の差分が
+ * Avatar 行の値だけだった場合にセットされる。
+ *
+ * pull 側で R2 URL にローカルを書き換えたときに自然に発生するケース。
+ * CLI はこの値を使って「これは Avatar URL の drift ですよ」という
+ * 専用メッセージを出してから push 承認を取り直す。
+ */
+export interface MikoshiPushAvatarDrift {
+  localValue: string;
+  remoteValue: string;
+}
+
 export interface MikoshiPushResult {
   outcome: MikoshiPushOutcome;
   engramId: string;
@@ -55,6 +72,8 @@ export interface MikoshiPushResult {
   remotePersonaHash?: string | null;
   /** Avatar 差分情報 (check 時点のスナップショット) */
   avatar?: MikoshiPushAvatarInfo;
+  /** push_required のとき、IDENTITY.md の diff が Avatar 行だけなら設定 */
+  avatarDrift?: MikoshiPushAvatarDrift;
 }
 
 export type MikoshiPushAvatarAction = "uploaded" | "skipped" | "failed";
@@ -248,6 +267,27 @@ export class MikoshiPush {
       };
     }
 
+    // push_required の場合、local と remote の IDENTITY.md の差分が
+    // Avatar 行だけかどうかをベストエフォートで調べる。
+    // pull 側の URL 書き換えで自然に発生する drift を CLI が説明できるようにする。
+    // detail 取得に失敗した場合は黙って諦めて通常の push フローに戻る。
+    let avatarDrift: MikoshiPushAvatarDrift | undefined;
+    try {
+      const detail = await this.mikoshi.getEngram(cloudEngram.id);
+      const remoteIdentity = extractRemoteIdentity(detail);
+      if (remoteIdentity) {
+        const drift = isAvatarOnlyDrift(identity, remoteIdentity);
+        if (drift.drift && drift.localValue && drift.remoteValue) {
+          avatarDrift = {
+            localValue: drift.localValue,
+            remoteValue: drift.remoteValue,
+          };
+        }
+      }
+    } catch {
+      // best effort — detail fetch error は drift 警告を諦めるだけに留める
+    }
+
     return {
       result: {
         outcome: "push_required",
@@ -256,6 +296,7 @@ export class MikoshiPush {
         cloudEngramId: cloudEngram.id,
         remotePersonaHash: remoteHash,
         avatar: avatarInfo,
+        avatarDrift,
       },
       apply: async () => {
         const expectedHash = remoteHash ?? "";
@@ -433,4 +474,15 @@ export class MikoshiPush {
       };
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function extractRemoteIdentity(detail: MikoshiEngramDetail): string | undefined {
+  for (const file of detail.personaFiles) {
+    if (file.fileType === "IDENTITY") return file.content;
+  }
+  return undefined;
 }
