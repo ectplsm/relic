@@ -186,6 +186,7 @@ export class LocalEngramRepository implements EngramRepository {
       id: meta.id,
       createdAt: meta.createdAt,
       updatedAt: meta.updatedAt,
+      ...(meta.avatarHash !== undefined ? { avatarHash: meta.avatarHash } : {}),
     };
   }
 
