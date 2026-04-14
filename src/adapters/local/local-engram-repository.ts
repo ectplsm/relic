@@ -131,6 +131,9 @@ export class LocalEngramRepository implements EngramRepository {
       ...(manifest.avatarHash !== undefined
         ? { avatarHash: manifest.avatarHash }
         : {}),
+      ...(manifest.avatarSourceUrl !== undefined
+        ? { avatarSourceUrl: manifest.avatarSourceUrl }
+        : {}),
     };
     await writeFile(
       manifestPath,
@@ -211,6 +214,9 @@ export class LocalEngramRepository implements EngramRepository {
       createdAt: meta.createdAt,
       updatedAt: meta.updatedAt,
       ...(meta.avatarHash !== undefined ? { avatarHash: meta.avatarHash } : {}),
+      ...(meta.avatarSourceUrl !== undefined
+        ? { avatarSourceUrl: meta.avatarSourceUrl }
+        : {}),
     };
   }
 
