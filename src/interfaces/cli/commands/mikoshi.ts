@@ -14,6 +14,9 @@ import {
   MikoshiPushPersonaConflictError,
   MikoshiPushPersonaHashError,
   MikoshiPushAvatarInvalidMimeError,
+  MikoshiPushAvatarHttpError,
+  MikoshiPushAvatarPrivateHostError,
+  MikoshiPushAvatarFetchError,
   MikoshiPushAvatarReadError,
   MikoshiPushAvatarTooLargeError,
 } from "../../../core/usecases/mikoshi-push.js";
@@ -250,6 +253,9 @@ export function registerMikoshiCommand(program: Command): void {
           if (needsAvatarUpload && !opts.yes) {
             const av = result.avatar!;
             printLine(`Avatar to upload for "${engramId}":`);
+            if (av.source === "url" && av.sourceUrl) {
+              printDetail(`url: ${av.sourceUrl}`);
+            }
             if (av.localPath) printDetail(`path: ${av.localPath}`);
             if (av.localMimeType) printDetail(`mime: ${av.localMimeType}`);
             if (av.localSize !== undefined) printDetail(`size: ${formatBytes(av.localSize)}`);
@@ -262,7 +268,11 @@ export function registerMikoshiCommand(program: Command): void {
 
           const spinnerMessage =
             result.outcome === "already_synced"
-              ? "Uploading avatar to Mikoshi..."
+              ? result.avatar?.source === "url"
+                ? "Fetching avatar from URL and uploading to Mikoshi..."
+                : "Uploading avatar to Mikoshi..."
+              : result.avatar?.source === "url" && result.avatar?.outcome === "upload_required"
+                ? "Pushing persona, then fetching avatar from URL..."
               : "Pushing persona to Mikoshi...";
           applySpinner = startSpinner(spinnerMessage);
           const applied = await apply();
@@ -315,7 +325,7 @@ export function registerMikoshiCommand(program: Command): void {
         }
         if (err instanceof MikoshiPushAvatarInvalidMimeError) {
           printError(`Error: Avatar format is not supported.`);
-          printErrorDetail(`Path: ${err.avatarPath}`);
+          printErrorDetail(`Source: ${err.avatarPath}`);
           printErrorDetail("Allowed: JPEG, PNG, WebP");
           process.exit(1);
         }
@@ -323,12 +333,30 @@ export function registerMikoshiCommand(program: Command): void {
           printError(
             `Error: Avatar exceeds ${formatBytes(err.maxBytes)} (actual: ${formatBytes(err.actualBytes)}).`,
           );
-          printErrorDetail(`Path: ${err.avatarPath}`);
+          printErrorDetail(`Source: ${err.avatarPath}`);
           process.exit(1);
         }
         if (err instanceof MikoshiPushAvatarReadError) {
           printError(`Error: Failed to read avatar file.`);
           printErrorDetail(`Path: ${err.avatarPath}`);
+          if (err.cause instanceof Error) {
+            printErrorDetail(err.cause.message);
+          }
+          process.exit(1);
+        }
+        if (err instanceof MikoshiPushAvatarHttpError) {
+          printError("Error: Avatar URL must use HTTPS.");
+          printErrorDetail(`URL: ${err.avatarUrl}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiPushAvatarPrivateHostError) {
+          printError("Error: Avatar URL points to a private host.");
+          printErrorDetail(`URL: ${err.avatarUrl}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiPushAvatarFetchError) {
+          printError("Error: Failed to fetch avatar from URL.");
+          printErrorDetail(`URL: ${err.avatarUrl}`);
           if (err.cause instanceof Error) {
             printErrorDetail(err.cause.message);
           }

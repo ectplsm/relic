@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { MikoshiClient, MikoshiEngramDetail } from "../ports/mikoshi.js";
 import {
-  parseAvatarPath,
+  parseAvatarRef,
   resolveAvatarPath,
   rewriteAvatarValue,
 } from "../sync/avatar.js";
@@ -195,9 +195,9 @@ export class MikoshiPull {
     if (!remoteAvatarUrl) return remoteIdentity;
 
     if (localIdentity && engramDir) {
-      const localRaw = parseAvatarPath(localIdentity);
-      if (localRaw) {
-        const resolved = resolveAvatarPath(localRaw, engramDir);
+      const localRef = parseAvatarRef(localIdentity);
+      if (localRef?.kind === "path") {
+        const resolved = resolveAvatarPath(localRef.value, engramDir);
         if (existsSync(resolved)) {
           return remoteIdentity;
         }
