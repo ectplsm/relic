@@ -38,6 +38,11 @@ export type MikoshiPushAvatarOutcome =
   | "skip"
   | "upload_required";
 
+export type MikoshiPushAvatarSkipReason =
+  | "remote_avatar_url_matches_identity"
+  | "source_url_unchanged"
+  | "local_file_hash_unchanged";
+
 export interface MikoshiPushAvatarInfo {
   outcome: MikoshiPushAvatarOutcome;
   source?: "file" | "url";
@@ -49,6 +54,8 @@ export interface MikoshiPushAvatarInfo {
   sourceUrl?: string;
   /** `sha256:<hex>` 形式。outcome が "skip" / "upload_required" のときのみ設定 */
   localHash?: string;
+  /** `skip` のときの理由 */
+  skipReason?: MikoshiPushAvatarSkipReason;
   /** バリデーション済み MIME。upload_required のときのみ設定 */
   localMimeType?: string;
   /** ファイルサイズ (bytes)。upload_required のときのみ設定 */
@@ -82,6 +89,8 @@ export interface MikoshiPushResult {
 }
 
 export type MikoshiPushAvatarAction = "uploaded" | "skipped" | "failed";
+export type MikoshiPushAvatarFailureStage = "fetch" | "upload";
+export type MikoshiPushAvatarProgressStage = "fetching" | "uploading";
 
 export interface MikoshiPushApplyResult {
   /**
@@ -99,6 +108,14 @@ export interface MikoshiPushApplyResult {
   newAvatarUrl?: string;
   /** `avatarAction === "failed"` の場合に設定される失敗原因 */
   avatarError?: Error;
+  /** `avatarAction === "failed"` の場合に設定される失敗段階 */
+  avatarFailureStage?: MikoshiPushAvatarFailureStage;
+  /** `avatarAction === "skipped"` の場合に設定される理由 */
+  avatarSkipReason?: MikoshiPushAvatarSkipReason;
+}
+
+export interface MikoshiPushApplyOptions {
+  onAvatarProgress?: (stage: MikoshiPushAvatarProgressStage) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -209,7 +226,7 @@ export class MikoshiPush {
 
   async check(engramId: string): Promise<{
     result: MikoshiPushResult;
-    apply?: () => Promise<MikoshiPushApplyResult>;
+    apply?: (options?: MikoshiPushApplyOptions) => Promise<MikoshiPushApplyResult>;
   }> {
     const local = await this.localRepo.get(engramId);
     if (!local) throw new MikoshiPushEngramNotFoundError(engramId);
@@ -246,7 +263,7 @@ export class MikoshiPush {
           remotePersonaHash: null,
           avatar: avatarInfo,
         },
-        apply: async () => {
+        apply: async (options) => {
           const created = await this.mikoshi.createEngram({
             name: local.meta.name,
             sourceEngramId: engramId,
@@ -260,6 +277,7 @@ export class MikoshiPush {
             engramId,
             avatarInfo,
             local.meta,
+            options,
           );
           return {
             action: "created",
@@ -276,12 +294,13 @@ export class MikoshiPush {
     if (remoteHash && localHash === remoteHash) {
       const apply =
         avatarInfo.outcome === "upload_required"
-          ? async (): Promise<MikoshiPushApplyResult> => {
+          ? async (options?: MikoshiPushApplyOptions): Promise<MikoshiPushApplyResult> => {
               const avatarOutcome = await this.applyAvatarUpload(
                 cloudEngram.id,
                 engramId,
                 avatarInfo,
                 local.meta,
+                options,
               );
               return {
                 action: "avatar_only",
@@ -335,7 +354,7 @@ export class MikoshiPush {
         avatar: avatarInfo,
         avatarDrift,
       },
-      apply: async () => {
+      apply: async (options) => {
         const expectedHash = remoteHash ?? "";
         let newPersonaHash: string;
         try {
@@ -361,6 +380,7 @@ export class MikoshiPush {
           engramId,
           avatarInfo,
           local.meta,
+          options,
         );
 
         return {
@@ -416,6 +436,7 @@ export class MikoshiPush {
           outcome: "skip",
           source: "url",
           sourceUrl: avatarRef.value,
+          skipReason: "remote_avatar_url_matches_identity",
         };
       }
 
@@ -425,6 +446,7 @@ export class MikoshiPush {
           source: "url",
           sourceUrl: avatarRef.value,
           localHash: existingHash,
+          skipReason: "source_url_unchanged",
         };
       }
 
@@ -474,7 +496,14 @@ export class MikoshiPush {
 
     const remoteHasAvatar = remoteAvatarUrl !== null && remoteAvatarUrl !== "";
     if (remoteHasAvatar && existingHash && localHash === existingHash) {
-      return { outcome: "skip", source: "file", rawPath, localPath, localHash };
+      return {
+        outcome: "skip",
+        source: "file",
+        rawPath,
+        localPath,
+        localHash,
+        skipReason: "local_file_hash_unchanged",
+      };
     }
 
     return {
@@ -500,14 +529,15 @@ export class MikoshiPush {
     engramId: string,
     info: MikoshiPushAvatarInfo,
     meta: EngramMeta,
+    options?: MikoshiPushApplyOptions,
   ): Promise<
     Pick<
       MikoshiPushApplyResult,
-      "avatarAction" | "newAvatarUrl" | "avatarError"
+      "avatarAction" | "newAvatarUrl" | "avatarError" | "avatarFailureStage" | "avatarSkipReason"
     >
   > {
     if (info.outcome !== "upload_required") {
-      return { avatarAction: "skipped" };
+      return { avatarAction: "skipped", avatarSkipReason: info.skipReason };
     }
 
     try {
@@ -522,6 +552,7 @@ export class MikoshiPush {
         }
 
         try {
+          options?.onAvatarProgress?.("fetching");
           const fetched = await fetchAvatarFromUrl(
             info.sourceUrl,
             AVATAR_MAX_BYTES,
@@ -553,6 +584,7 @@ export class MikoshiPush {
         avatarHash = info.localHash;
       }
 
+      options?.onAvatarProgress?.("uploading");
       const response = await this.mikoshi.uploadEngramAvatar(
         cloudEngramId,
         bytes,
@@ -573,9 +605,16 @@ export class MikoshiPush {
         newAvatarUrl: response.avatarUrl,
       };
     } catch (err) {
+      const failureStage: MikoshiPushAvatarFailureStage =
+        err instanceof MikoshiPushAvatarFetchError ||
+        err instanceof MikoshiPushAvatarHttpError ||
+        err instanceof MikoshiPushAvatarPrivateHostError
+          ? "fetch"
+          : "upload";
       return {
         avatarAction: "failed",
         avatarError: err instanceof Error ? err : new Error(String(err)),
+        avatarFailureStage: failureStage,
       };
     }
   }
