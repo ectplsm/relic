@@ -1,5 +1,6 @@
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import type { EngramMeta } from "../entities/engram.js";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { MikoshiClient } from "../ports/mikoshi.js";
 import { MikoshiApiError, AVATAR_MAX_BYTES } from "../ports/mikoshi.js";
@@ -56,19 +57,24 @@ export interface MikoshiPushResult {
   avatar?: MikoshiPushAvatarInfo;
 }
 
-export type MikoshiPushAvatarAction =
-  | "uploaded"
-  | "skipped"
-  | "not_applicable";
+export type MikoshiPushAvatarAction = "uploaded" | "skipped" | "failed";
 
 export interface MikoshiPushApplyResult {
-  action: "created" | "updated";
+  /**
+   * - `created`     : 新規 Engram を作成した（avatar は同じ apply 内で追随）
+   * - `updated`     : persona を上書きした
+   * - `avatar_only` : persona は同期済みだが avatar だけ更新した
+   */
+  action: "created" | "updated" | "avatar_only";
   cloudEngramId: string;
+  /** persona を更新したケースのみ設定 */
   newPersonaHash?: string;
   /** Avatar アップロードの結果 */
   avatarAction?: MikoshiPushAvatarAction;
   /** アップロード成功時のみ設定される R2 上の URL */
   newAvatarUrl?: string;
+  /** `avatarAction === "failed"` の場合に設定される失敗原因 */
+  avatarError?: Error;
 }
 
 // ---------------------------------------------------------------------------
@@ -187,9 +193,16 @@ export class MikoshiPush {
             soul,
             identity,
           });
+          const avatarOutcome = await this.applyAvatarUpload(
+            created.id,
+            engramId,
+            avatarInfo,
+            local.meta,
+          );
           return {
             action: "created",
             cloudEngramId: created.id,
+            ...avatarOutcome,
           };
         },
       };
@@ -199,6 +212,23 @@ export class MikoshiPush {
     const remoteHash = syncStatus.persona.token?.hash ?? null;
 
     if (remoteHash && localHash === remoteHash) {
+      const apply =
+        avatarInfo.outcome === "upload_required"
+          ? async (): Promise<MikoshiPushApplyResult> => {
+              const avatarOutcome = await this.applyAvatarUpload(
+                cloudEngram.id,
+                engramId,
+                avatarInfo,
+                local.meta,
+              );
+              return {
+                action: "avatar_only",
+                cloudEngramId: cloudEngram.id,
+                ...avatarOutcome,
+              };
+            }
+          : undefined;
+
       return {
         result: {
           outcome: "already_synced",
@@ -208,6 +238,7 @@ export class MikoshiPush {
           remotePersonaHash: remoteHash,
           avatar: avatarInfo,
         },
+        apply,
       };
     }
 
@@ -222,17 +253,14 @@ export class MikoshiPush {
       },
       apply: async () => {
         const expectedHash = remoteHash ?? "";
+        let newPersonaHash: string;
         try {
           const updated = await this.mikoshi.updatePersona(cloudEngram.id, {
             soul,
             identity,
             expectedRemotePersonaHash: expectedHash,
           });
-          return {
-            action: "updated",
-            cloudEngramId: cloudEngram.id,
-            newPersonaHash: updated.persona.hash,
-          };
+          newPersonaHash = updated.persona.hash;
         } catch (err) {
           if (err instanceof MikoshiApiError && err.isConflict && err.code === "PERSONA_CONFLICT") {
             const body = err.body as { currentPersona?: { hash?: string } } | undefined;
@@ -243,15 +271,27 @@ export class MikoshiPush {
           }
           throw err;
         }
+
+        const avatarOutcome = await this.applyAvatarUpload(
+          cloudEngram.id,
+          engramId,
+          avatarInfo,
+          local.meta,
+        );
+
+        return {
+          action: "updated",
+          cloudEngramId: cloudEngram.id,
+          newPersonaHash,
+          ...avatarOutcome,
+        };
       },
     };
   }
 
   async execute(engramId: string): Promise<MikoshiPushApplyResult | undefined> {
-    const { result, apply } = await this.check(engramId);
-    if (result.outcome === "already_synced" || !apply) {
-      return undefined;
-    }
+    const { apply } = await this.check(engramId);
+    if (!apply) return undefined;
     return apply();
   }
 
@@ -324,5 +364,60 @@ export class MikoshiPush {
       localMimeType: mimeType,
       localSize: size,
     };
+  }
+
+  /**
+   * 必要なら avatar をアップロードし、成功時に manifest を更新する。
+   *
+   * - `upload_required` 以外 → `avatarAction: "skipped"` で即返す
+   * - upload に失敗しても persona の成功は巻き戻さず、
+   *   `avatarAction: "failed"` と `avatarError` で呼び出し側に知らせる
+   */
+  private async applyAvatarUpload(
+    cloudEngramId: string,
+    engramId: string,
+    info: MikoshiPushAvatarInfo,
+    meta: EngramMeta,
+  ): Promise<
+    Pick<
+      MikoshiPushApplyResult,
+      "avatarAction" | "newAvatarUrl" | "avatarError"
+    >
+  > {
+    if (info.outcome !== "upload_required") {
+      return { avatarAction: "skipped" };
+    }
+
+    if (!info.localPath || !info.localMimeType || !info.localHash) {
+      // 型上はありうるが、check() 側の upload_required は常にこれらを満たす
+      return { avatarAction: "skipped" };
+    }
+
+    try {
+      const bytes = await readFile(info.localPath);
+      const response = await this.mikoshi.uploadEngramAvatar(
+        cloudEngramId,
+        bytes,
+        info.localMimeType,
+      );
+
+      // manifest の avatarHash を更新。updatedAt も合わせて進める。
+      await this.localRepo.updateManifest(engramId, {
+        id: meta.id,
+        createdAt: meta.createdAt,
+        updatedAt: new Date().toISOString(),
+        avatarHash: info.localHash,
+      });
+
+      return {
+        avatarAction: "uploaded",
+        newAvatarUrl: response.avatarUrl,
+      };
+    } catch (err) {
+      return {
+        avatarAction: "failed",
+        avatarError: err instanceof Error ? err : new Error(String(err)),
+      };
+    }
   }
 }

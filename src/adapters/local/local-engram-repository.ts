@@ -119,6 +119,26 @@ export class LocalEngramRepository implements EngramRepository {
     return join(this.basePath, id);
   }
 
+  async updateManifest(id: string, manifest: EngramManifest): Promise<void> {
+    const engramDir = join(this.basePath, id);
+    if (!existsSync(engramDir)) return;
+
+    const manifestPath = join(engramDir, MANIFEST_FILE);
+    const payload: EngramManifest = {
+      id: manifest.id,
+      createdAt: manifest.createdAt,
+      updatedAt: manifest.updatedAt,
+      ...(manifest.avatarHash !== undefined
+        ? { avatarHash: manifest.avatarHash }
+        : {}),
+    };
+    await writeFile(
+      manifestPath,
+      JSON.stringify(payload, null, 2),
+      "utf-8",
+    );
+  }
+
   async copyArchiveFiles(fromId: string, toId: string): Promise<boolean> {
     const ARCHIVE_FILES = ["archive.md", "archive.cursor"];
     const fromDir = join(this.basePath, fromId);

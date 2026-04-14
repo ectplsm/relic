@@ -1,4 +1,4 @@
-import type { Engram, EngramMeta } from "../entities/engram.js";
+import type { Engram, EngramManifest, EngramMeta } from "../entities/engram.js";
 
 /**
  * EngramRepository — Engram永続化層の抽象ポート
@@ -15,6 +15,15 @@ export interface EngramRepository {
 
   /** Engramを保存（作成 or 更新） */
   save(engram: Engram): Promise<void>;
+
+  /**
+   * マニフェストだけを差分書き換えする軽量更新。
+   *
+   * `save()` は全ファイルを書き戻してしまうので、avatarHash のような
+   * マニフェスト内のフィールドだけを安全に更新したい時に使う。
+   * 対象 Engram が存在しない場合の挙動は実装に委ねる（例外または no-op）。
+   */
+  updateManifest(id: string, manifest: EngramManifest): Promise<void>;
 
   /** Engramを削除 */
   delete(id: string): Promise<void>;
