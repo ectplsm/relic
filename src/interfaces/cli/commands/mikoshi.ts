@@ -415,6 +415,11 @@ export function registerMikoshiCommand(program: Command): void {
         printBlank();
         if (diff.soulDiffers) printDetail("SOUL.md     — differs");
         if (diff.identityDiffers) printDetail("IDENTITY.md — differs");
+        if (diff.rewrittenAvatarUrl) {
+          printDetail(
+            `Avatar line will be rewritten to Mikoshi URL: ${diff.rewrittenAvatarUrl}`,
+          );
+        }
         printBlank();
 
         // 確認プロンプト
