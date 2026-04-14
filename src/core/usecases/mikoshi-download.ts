@@ -1,5 +1,6 @@
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { MikoshiClient, MikoshiEngramDetail } from "../ports/mikoshi.js";
+import { rewriteAvatarValue } from "../sync/avatar.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -9,6 +10,11 @@ export interface MikoshiDownloadResult {
   engramId: string;
   engramName: string;
   cloudEngramId: string;
+  /**
+   * リモートに `avatarUrl` があり、ローカルに書き込んだ IDENTITY.md の
+   * Avatar 行をその URL で書き換えた場合にセットされる。
+   */
+  rewrittenAvatarUrl?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -69,6 +75,21 @@ export class MikoshiDownload {
       throw new MikoshiDownloadPersonaMissingError(cloudEngram.id);
     }
 
+    // Avatar URL fallback (Phase 3):
+    // リモートに avatarUrl があれば、IDENTITY.md の Avatar 行をその URL に
+    // 書き換えてから保存する。新規ダウンロード時はローカルに画像が無いので
+    // URL 版のほうが Construct / Shell で表示できて実用的。
+    // Avatar 行が無ければ rewriteAvatarValue は no-op なので何も起こらない。
+    let identityToWrite = identity;
+    let rewrittenAvatarUrl: string | undefined;
+    if (detail.avatarUrl) {
+      const next = rewriteAvatarValue(identity, detail.avatarUrl);
+      if (next !== identity) {
+        identityToWrite = next;
+        rewrittenAvatarUrl = detail.avatarUrl;
+      }
+    }
+
     // 4. ローカルに新規作成
     const now = new Date().toISOString();
     await this.localRepo.save({
@@ -82,7 +103,7 @@ export class MikoshiDownload {
       },
       files: {
         soul,
-        identity,
+        identity: identityToWrite,
       },
     });
 
@@ -90,6 +111,7 @@ export class MikoshiDownload {
       engramId,
       engramName: detail.name,
       cloudEngramId: cloudEngram.id,
+      rewrittenAvatarUrl,
     };
   }
 }

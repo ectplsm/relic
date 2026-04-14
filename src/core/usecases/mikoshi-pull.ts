@@ -1,5 +1,11 @@
+import { existsSync } from "node:fs";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { MikoshiClient, MikoshiEngramDetail } from "../ports/mikoshi.js";
+import {
+  parseAvatarPath,
+  resolveAvatarPath,
+  rewriteAvatarValue,
+} from "../sync/avatar.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -11,7 +17,21 @@ export interface MikoshiPullDiff {
   soulDiffers: boolean;
   identityDiffers: boolean;
   remoteSoul: string;
+  /**
+   * 書き込み対象の IDENTITY.md。
+   *
+   * リモート IDENTITY.md の Avatar 行を
+   * `avatarUrl` に書き換えた後の最終形で保持する。
+   * 書き換えが発生しなかった場合は remote 原文と同一。
+   */
   remoteIdentity: string;
+  /**
+   * Avatar 行を Mikoshi 上の URL に書き換えたかどうか。
+   *
+   * 書き換えが発生したときのみ URL 文字列がセットされ、
+   * CLI が書き換え結果をユーザーへ通知するのに使う。
+   */
+  rewrittenAvatarUrl?: string;
 }
 
 export interface MikoshiPullResult {
@@ -86,9 +106,27 @@ export class MikoshiPull {
       throw new MikoshiPullPersonaMissingError(cloudEngram.id);
     }
 
+    // Avatar URL fallback (Phase 3):
+    // ローカルに有効な avatar 画像があれば remote IDENTITY をそのまま採用。
+    // ローカル画像が無い / ローカル値が URL の場合で remote.avatarUrl があれば
+    // apply 対象の IDENTITY を URL 版に差し替える。Avatar 行自体が無ければ
+    // rewriteAvatarValue は no-op なので何も追加しない。
+    const engramDir = this.localRepo.getEngramPath(engramId);
+    const appliedIdentity = this.resolveAppliedIdentity({
+      remoteIdentity,
+      remoteAvatarUrl: detail.avatarUrl,
+      localIdentity: local.files.identity,
+      engramDir,
+    });
+
+    const rewrittenAvatarUrl =
+      detail.avatarUrl && appliedIdentity !== remoteIdentity
+        ? detail.avatarUrl
+        : undefined;
+
     // 4. 差分計算 (末尾空白の差異は無視)
     const soulDiffers = normalizeContent(local.files.soul) !== normalizeContent(remoteSoul);
-    const identityDiffers = normalizeContent(local.files.identity) !== normalizeContent(remoteIdentity);
+    const identityDiffers = normalizeContent(local.files.identity) !== normalizeContent(appliedIdentity);
 
     if (!soulDiffers && !identityDiffers) {
       return {
@@ -105,7 +143,8 @@ export class MikoshiPull {
       soulDiffers,
       identityDiffers,
       remoteSoul,
-      remoteIdentity,
+      remoteIdentity: appliedIdentity,
+      rewrittenAvatarUrl,
     };
 
     // 5. apply クロージャ
@@ -115,7 +154,7 @@ export class MikoshiPull {
 
       const updatedFiles = { ...fresh.files };
       if (soulDiffers) updatedFiles.soul = remoteSoul;
-      if (identityDiffers) updatedFiles.identity = remoteIdentity;
+      if (identityDiffers) updatedFiles.identity = appliedIdentity;
 
       await this.localRepo.save({
         meta: { ...fresh.meta, updatedAt: new Date().toISOString() },
@@ -133,6 +172,39 @@ export class MikoshiPull {
       },
       apply,
     };
+  }
+
+  /**
+   * apply 対象となる IDENTITY.md を決定する。
+   *
+   * - リモートに `avatarUrl` が無い → remote をそのまま
+   * - ローカルに Avatar 行の path があり、そのファイルが存在する
+   *   → ローカル画像が source of truth なので remote (path) を採用
+   * - それ以外（ローカル画像なし / ローカル値が URL / path だけあるがファイル欠如）
+   *   → remote IDENTITY の Avatar 行を R2 URL に書き換え
+   *
+   * Avatar 行自体が無ければ rewrite は no-op で remote と等価になる。
+   */
+  private resolveAppliedIdentity(args: {
+    remoteIdentity: string;
+    remoteAvatarUrl: string | null;
+    localIdentity: string | undefined;
+    engramDir: string | null;
+  }): string {
+    const { remoteIdentity, remoteAvatarUrl, localIdentity, engramDir } = args;
+    if (!remoteAvatarUrl) return remoteIdentity;
+
+    if (localIdentity && engramDir) {
+      const localRaw = parseAvatarPath(localIdentity);
+      if (localRaw) {
+        const resolved = resolveAvatarPath(localRaw, engramDir);
+        if (existsSync(resolved)) {
+          return remoteIdentity;
+        }
+      }
+    }
+
+    return rewriteAvatarValue(remoteIdentity, remoteAvatarUrl);
   }
 }
 
