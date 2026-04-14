@@ -1,7 +1,15 @@
+import { stat } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import type { EngramRepository } from "../ports/engram-repository.js";
 import type { MikoshiClient } from "../ports/mikoshi.js";
-import { MikoshiApiError } from "../ports/mikoshi.js";
+import { MikoshiApiError, AVATAR_MAX_BYTES } from "../ports/mikoshi.js";
 import { computePersonaHash } from "../sync/persona-hash.js";
+import {
+  computeAvatarHash,
+  detectAvatarMimeType,
+  parseAvatarPath,
+  resolveAvatarPath,
+} from "../sync/avatar.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -149,6 +157,16 @@ export class MikoshiPush {
     const localHash = computePersonaHash(soul, identity);
     if (!localHash) throw new MikoshiPushPersonaHashError(engramId);
 
+    const engramDir = this.localRepo.getEngramPath(engramId);
+    const avatarInfo = engramDir
+      ? await this.inspectAvatar(
+          identity,
+          engramDir,
+          local.meta.avatarHash,
+          engramId,
+        )
+      : { outcome: "no_avatar_field" as const };
+
     const cloudEngram = await this.mikoshi.getEngramBySourceId(engramId);
 
     if (!cloudEngram) {
@@ -158,6 +176,7 @@ export class MikoshiPush {
           engramId,
           engramName: local.meta.name,
           remotePersonaHash: null,
+          avatar: avatarInfo,
         },
         apply: async () => {
           const created = await this.mikoshi.createEngram({
@@ -187,6 +206,7 @@ export class MikoshiPush {
           engramName: local.meta.name,
           cloudEngramId: cloudEngram.id,
           remotePersonaHash: remoteHash,
+          avatar: avatarInfo,
         },
       };
     }
@@ -198,6 +218,7 @@ export class MikoshiPush {
         engramName: local.meta.name,
         cloudEngramId: cloudEngram.id,
         remotePersonaHash: remoteHash,
+        avatar: avatarInfo,
       },
       apply: async () => {
         const expectedHash = remoteHash ?? "";
@@ -232,5 +253,76 @@ export class MikoshiPush {
       return undefined;
     }
     return apply();
+  }
+
+  /**
+   * IDENTITY.md の Avatar フィールドを解析し、ローカルファイルを検査して
+   * 差分情報を返す。
+   *
+   * - Avatar フィールドなし / URL 値 → `no_avatar_field`
+   * - フィールドありだがファイル不在 → `no_local_file`（削除は自動化しない）
+   * - 既存 manifest ハッシュと一致 → `skip`
+   * - それ以外（初回 or 差分あり）→ `upload_required`
+   *
+   * MIME 非対応 / サイズ超過 / 読み取り失敗はエラーとして throw する。
+   */
+  private async inspectAvatar(
+    identity: string | undefined,
+    engramDir: string,
+    existingHash: string | undefined,
+    engramId: string,
+  ): Promise<MikoshiPushAvatarInfo> {
+    if (!identity) return { outcome: "no_avatar_field" };
+
+    const rawPath = parseAvatarPath(identity);
+    if (!rawPath) return { outcome: "no_avatar_field" };
+
+    const localPath = resolveAvatarPath(rawPath, engramDir);
+
+    if (!existsSync(localPath)) {
+      return { outcome: "no_local_file", rawPath, localPath };
+    }
+
+    const mimeType = detectAvatarMimeType(localPath);
+    if (!mimeType) {
+      throw new MikoshiPushAvatarInvalidMimeError(engramId, localPath);
+    }
+
+    let size: number;
+    try {
+      const stats = await stat(localPath);
+      size = stats.size;
+    } catch (err) {
+      throw new MikoshiPushAvatarReadError(engramId, localPath, err);
+    }
+
+    if (size > AVATAR_MAX_BYTES) {
+      throw new MikoshiPushAvatarTooLargeError(
+        engramId,
+        localPath,
+        size,
+        AVATAR_MAX_BYTES,
+      );
+    }
+
+    let localHash: string;
+    try {
+      localHash = await computeAvatarHash(localPath);
+    } catch (err) {
+      throw new MikoshiPushAvatarReadError(engramId, localPath, err);
+    }
+
+    if (existingHash && localHash === existingHash) {
+      return { outcome: "skip", rawPath, localPath, localHash };
+    }
+
+    return {
+      outcome: "upload_required",
+      rawPath,
+      localPath,
+      localHash,
+      localMimeType: mimeType,
+      localSize: size,
+    };
   }
 }
