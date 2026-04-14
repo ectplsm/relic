@@ -13,6 +13,9 @@ import {
   MikoshiPushEngramNotFoundError,
   MikoshiPushPersonaConflictError,
   MikoshiPushPersonaHashError,
+  MikoshiPushAvatarInvalidMimeError,
+  MikoshiPushAvatarReadError,
+  MikoshiPushAvatarTooLargeError,
 } from "../../../core/usecases/mikoshi-push.js";
 import {
   MikoshiDownload,
@@ -207,35 +210,69 @@ export function registerMikoshiCommand(program: Command): void {
         checkSpinner.stop();
         checkSpinner = undefined;
 
-        if (result.outcome === "already_synced") {
+        const needsAvatarUpload = result.avatar?.outcome === "upload_required";
+
+        if (!apply) {
+          // already_synced と avatar 変更なし
           printLine(`✅ Persona already in sync (${result.engramName})`);
         } else {
-          if (result.outcome === "create_required") {
-            if (
-              !opts.yes &&
-              !(await confirm(`Engram "${engramId}" does not exist on Mikoshi. Create it? [y/N] `))
-            ) {
+          // Persona 確認 (already_synced のときは avatar-only なので persona 確認はスキップ)
+          if (result.outcome !== "already_synced" && !opts.yes) {
+            const prompt =
+              result.outcome === "create_required"
+                ? `Engram "${engramId}" does not exist on Mikoshi. Create it? [y/N] `
+                : `Overwrite Mikoshi persona with the local Relic version for "${engramId}"? [y/N] `;
+            if (!(await confirm(prompt))) {
               printLine("Skipped.");
               return;
             }
-          } else if (
-            !opts.yes &&
-            !(await confirm(`Overwrite Mikoshi persona with the local Relic version for "${engramId}"? [y/N] `))
-          ) {
-            printLine("Skipped.");
-            return;
           }
 
-          applySpinner = startSpinner("Pushing persona to Mikoshi...");
-          const applied = await apply!();
+          // Avatar 確認
+          if (needsAvatarUpload && !opts.yes) {
+            const av = result.avatar!;
+            printLine(`Avatar to upload for "${engramId}":`);
+            if (av.localPath) printDetail(`path: ${av.localPath}`);
+            if (av.localMimeType) printDetail(`mime: ${av.localMimeType}`);
+            if (av.localSize !== undefined) printDetail(`size: ${formatBytes(av.localSize)}`);
+            if (av.localHash) printDetail(`hash: ${av.localHash}`);
+            if (!(await confirm(`Upload this avatar? [y/N] `))) {
+              printLine("Skipped.");
+              return;
+            }
+          }
+
+          const spinnerMessage =
+            result.outcome === "already_synced"
+              ? "Uploading avatar to Mikoshi..."
+              : "Pushing persona to Mikoshi...";
+          applySpinner = startSpinner(spinnerMessage);
+          const applied = await apply();
+
           if (applied.action === "created") {
             applySpinner.stop(`✅ Created "${result.engramName}" on Mikoshi.`);
             applySpinner = undefined;
             printLine(`Cloud ID: ${applied.cloudEngramId}`);
-          } else {
+          } else if (applied.action === "updated") {
             applySpinner.stop(`✅ Persona updated for "${result.engramName}".`);
             applySpinner = undefined;
-            printLine(`Hash: ${applied.newPersonaHash}`);
+            if (applied.newPersonaHash) printLine(`Hash: ${applied.newPersonaHash}`);
+          } else {
+            // avatar_only
+            applySpinner.stop(`✅ Avatar updated for "${result.engramName}".`);
+            applySpinner = undefined;
+          }
+
+          // Avatar の結果を最後に報告
+          if (applied.avatarAction === "uploaded" && applied.newAvatarUrl) {
+            printLine(`Avatar: ${applied.newAvatarUrl}`);
+          } else if (applied.avatarAction === "failed") {
+            printErrorLine(
+              `⚠ Avatar upload failed: ${applied.avatarError?.message ?? "unknown error"}`,
+            );
+            printErrorLine(
+              "  The persona change was saved. Retry with 'relic mikoshi push' to upload the avatar.",
+            );
           }
         }
       } catch (err) {
@@ -256,6 +293,27 @@ export function registerMikoshiCommand(program: Command): void {
             printErrorDetail(`Remote hash: ${err.conflictRemoteHash}`);
           }
           printErrorLine("Re-run 'relic mikoshi status' to review the current state.");
+          process.exit(1);
+        }
+        if (err instanceof MikoshiPushAvatarInvalidMimeError) {
+          printError(`Error: Avatar format is not supported.`);
+          printErrorDetail(`Path: ${err.avatarPath}`);
+          printErrorDetail("Allowed: JPEG, PNG, WebP");
+          process.exit(1);
+        }
+        if (err instanceof MikoshiPushAvatarTooLargeError) {
+          printError(
+            `Error: Avatar exceeds ${formatBytes(err.maxBytes)} (actual: ${formatBytes(err.actualBytes)}).`,
+          );
+          printErrorDetail(`Path: ${err.avatarPath}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiPushAvatarReadError) {
+          printError(`Error: Failed to read avatar file.`);
+          printErrorDetail(`Path: ${err.avatarPath}`);
+          if (err.cause instanceof Error) {
+            printErrorDetail(err.cause.message);
+          }
           process.exit(1);
         }
         if (err instanceof MikoshiApiError) {
@@ -545,6 +603,12 @@ function statusLabel(status: string): string {
     case "local_empty":   return "local empty";
     default:              return status;
   }
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
 function confirm(prompt: string): Promise<boolean> {

@@ -51,6 +51,8 @@ export const EngramManifestSchema = z.object({
   createdAt: z.string().datetime(),
   /** 最終更新日時 */
   updatedAt: z.string().datetime(),
+  /** 前回 push 時の avatar 画像ファイルの SHA-256 ハッシュ */
+  avatarHash: z.string().optional(),
 });
 
 export type EngramManifest = z.infer<typeof EngramManifestSchema>;
