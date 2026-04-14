@@ -380,6 +380,12 @@ export function registerMikoshiCommand(program: Command): void {
           applySpinner.stop(`✅ Pulled "${result.engramName}" from Mikoshi.`);
           applySpinner = undefined;
 
+          if (result.rewrittenAvatarUrl) {
+            printDetail(
+              `Avatar line rewritten to Mikoshi URL: ${result.rewrittenAvatarUrl}`,
+            );
+          }
+
           if (opts.sync) {
             const passphrase = await resolvePassphraseForSync();
             const syncUsecase = new MikoshiMemorySync(repo, client);
