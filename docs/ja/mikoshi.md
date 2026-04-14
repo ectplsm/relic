@@ -85,6 +85,15 @@ relic mikoshi pull -e rebel
 - `relic mikoshi list` は API key から見えるクラウド上の Engram を一覧表示する
 - `relic mikoshi pull -e <id>` は Mikoshi からローカル Engram を新規作成または更新する
 
+Avatar の挙動:
+
+- avatar の参照先は、OpenClaw 互換の `IDENTITY.md` フィールド `- **Avatar:** <value>` に記述する
+- `IDENTITY.md` に `- **Avatar:** ./avatar.png` や絶対画像パスがある場合、`push` はそのローカル画像を Mikoshi へ upload する
+- `IDENTITY.md` に `- **Avatar:** https://...` がある場合、`push` はクライアント側で画像を fetch してから Mikoshi へ upload する
+- `http://` の avatar URL は拒否される
+- `pull` 時、remote に `avatarUrl` があり、かつ有効なローカル avatar file が無い場合は、ローカルの `Avatar` 行を Mikoshi 側の URL へ書き換える
+- avatar は Mikoshi 管理のストレージへスナップショット保存されるため、配信時に外部 URL をそのまま晒さない
+
 ## Command Summary
 
 | Command | Direction | Description |
@@ -115,6 +124,8 @@ relic mikoshi pull --engram <engram-id>
 - `push` は remote Engram が無ければ新規作成し、作成前または上書き前に確認を出す。`--yes` でスキップできる
 - `pull` は local Engram が無ければ新規作成し、作成前または上書き前に確認を出す。`--yes` でスキップできる
 - `pull` は既存ローカル persona を上書きする前に drift を表示する
+- avatar の変更も persona の `push` / `pull` フローの一部として扱う
+- 必要な場合、`push` は avatar 専用の確認、skip 理由、URL fetch / upload 進捗を表示する
 - persona drift は明示的に扱う。雑な上書きはしない
 - 最後に確認してから remote が変わっていた場合、`push` は `409 Conflict` で拒否される
 

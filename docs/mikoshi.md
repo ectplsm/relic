@@ -83,6 +83,15 @@ What each command does:
 - `relic mikoshi list` lists cloud Engrams visible to your API key
 - `relic mikoshi pull -e <id>` creates or updates the local Engram from Mikoshi
 
+Avatar behavior:
+
+- avatar references are configured in the OpenClaw-compatible `IDENTITY.md` field: `- **Avatar:** <value>`
+- if `IDENTITY.md` contains `- **Avatar:** ./avatar.png` or an absolute image path, `push` uploads that local image to Mikoshi
+- if `IDENTITY.md` contains `- **Avatar:** https://...`, `push` fetches the image client-side and then uploads the fetched bytes to Mikoshi
+- `http://` avatar URLs are rejected
+- if `pull` sees a remote `avatarUrl` but no valid local avatar file, it rewrites the local `Avatar` line to the Mikoshi-hosted URL
+- successful avatar uploads are snapshotted into Mikoshi-managed storage; the external origin URL is not exposed as the served avatar
+
 ## Command Summary
 
 | Command | Direction | Description |
@@ -113,6 +122,8 @@ Notes:
 - `push` creates the remote Engram if it does not exist, and asks before creating or overwriting unless you pass `--yes`
 - `pull` creates the local Engram if it does not exist, and asks before creating or overwriting unless you pass `--yes`
 - `pull` shows persona drift before overwriting existing local files
+- avatar changes are handled as part of persona `push` / `pull`
+- `push` shows avatar-specific confirmation, skip reasons, and URL fetch/upload progress when applicable
 - persona drift is explicit and safety-sensitive
 - if the remote changed since your last `push` check, Mikoshi rejects the overwrite with `409 Conflict`
 

@@ -188,6 +188,8 @@ For LLM-assisted creation, persona authoring, template examples, and deletion ru
 
 Relic can push plaintext persona files and (end-to-end) encrypted memory files to [Mikoshi](https://mikoshi.ectplsm.com), so you can keep Engrams in the cloud and move them across machines without turning Mikoshi into your authoring source of truth.
 
+This includes avatar-aware persona push/pull: local image paths and external `https://` avatar URLs can be snapshotted into Mikoshi-managed storage during `relic mikoshi push`.
+
 For setup, API key configuration, persona push/pull, encrypted memory sync, and the recommended command flow, see [docs/mikoshi.md](docs/mikoshi.md).
 
 ## Configuration
