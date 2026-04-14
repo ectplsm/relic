@@ -115,6 +115,10 @@ export class LocalEngramRepository implements EngramRepository {
     }
   }
 
+  getEngramPath(id: string): string {
+    return join(this.basePath, id);
+  }
+
   async copyArchiveFiles(fromId: string, toId: string): Promise<boolean> {
     const ARCHIVE_FILES = ["archive.md", "archive.cursor"];
     const fromDir = join(this.basePath, fromId);

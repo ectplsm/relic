@@ -21,4 +21,13 @@ export interface EngramRepository {
 
   /** アーカイブファイル (archive.md, archive.cursor) を別Engramへコピー */
   copyArchiveFiles(fromId: string, toId: string): Promise<boolean>;
+
+  /**
+   * Engramのディレクトリ絶対パスを返す。
+   *
+   * 存在判定は行わず、リポジトリが想定するパスを返すだけ。
+   * avatar 画像の読み書きなどファイルシステム直接アクセスが必要な
+   * usecase から使う。リモート専用リポジトリでは null を返してよい。
+   */
+  getEngramPath(id: string): string | null;
 }
