@@ -7,6 +7,8 @@ import {
   UpdatePersonaResponseSchema,
   UploadMemoryResponseSchema,
   DownloadMemoryResponseSchema,
+  UploadEngramAvatarResponseSchema,
+  DeleteEngramAvatarResponseSchema,
   type MikoshiClient,
   type MikoshiEngram,
   type MikoshiEngramDetail,
@@ -18,6 +20,8 @@ import {
   type UploadMemoryInput,
   type UploadMemoryResponse,
   type DownloadMemoryResponse,
+  type UploadEngramAvatarResponse,
+  type DeleteEngramAvatarResponse,
 } from "../../core/ports/mikoshi.js";
 import { z } from "zod";
 
@@ -87,6 +91,32 @@ export class MikoshiApiClient implements MikoshiClient {
     return DownloadMemoryResponseSchema.parse(data);
   }
 
+  async uploadEngramAvatar(
+    engramId: string,
+    data: Buffer,
+    mimeType: string,
+  ): Promise<UploadEngramAvatarResponse> {
+    const form = new FormData();
+    // Blob は Uint8Array を受け付ける (Node 18+ 標準)
+    const blob = new Blob([new Uint8Array(data)], { type: mimeType });
+    form.append("file", blob, filenameForMimeType(mimeType));
+
+    const raw = await this.request(
+      "PUT",
+      `/api/v1/engrams/${enc(engramId)}/avatar`,
+      form,
+    );
+    return UploadEngramAvatarResponseSchema.parse(raw);
+  }
+
+  async deleteEngramAvatar(engramId: string): Promise<DeleteEngramAvatarResponse> {
+    const raw = await this.request(
+      "DELETE",
+      `/api/v1/engrams/${enc(engramId)}/avatar`,
+    );
+    return DeleteEngramAvatarResponseSchema.parse(raw);
+  }
+
   // -----------------------------------------------------------------------
   // Internal
   // -----------------------------------------------------------------------
@@ -105,8 +135,13 @@ export class MikoshiApiClient implements MikoshiClient {
     const init: RequestInit = { method, headers };
 
     if (body !== undefined) {
-      headers["Content-Type"] = "application/json";
-      init.body = JSON.stringify(body);
+      if (body instanceof FormData) {
+        // multipart boundary は fetch に自動で決めさせる
+        init.body = body;
+      } else {
+        headers["Content-Type"] = "application/json";
+        init.body = JSON.stringify(body);
+      }
     }
 
     const res = await fetch(url, init);
@@ -129,4 +164,17 @@ export class MikoshiApiClient implements MikoshiClient {
 /** URL-safe path segment encoding */
 function enc(segment: string): string {
   return encodeURIComponent(segment);
+}
+
+/**
+ * multipart/form-data 送信時のダミーファイル名。
+ * Mikoshi 側は MIME と内容で判定するので拡張子さえ合っていればよい。
+ */
+function filenameForMimeType(mimeType: string): string {
+  switch (mimeType) {
+    case "image/jpeg": return "avatar.jpg";
+    case "image/png": return "avatar.png";
+    case "image/webp": return "avatar.webp";
+    default: return "avatar";
+  }
 }

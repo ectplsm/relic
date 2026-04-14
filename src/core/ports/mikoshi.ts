@@ -237,6 +237,36 @@ export const DownloadMemoryResponseSchema = z.discriminatedUnion("hasMemory", [
 export type DownloadMemoryResponse = z.infer<typeof DownloadMemoryResponseSchema>;
 
 // ---------------------------------------------------------------------------
+// Avatar upload / delete
+// ---------------------------------------------------------------------------
+
+/** クライアントが許可する avatar MIME タイプ */
+export const AVATAR_SUPPORTED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+] as const;
+
+/** クライアント側事前バリデーションの最大バイト数 (Mikoshi 側と一致) */
+export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+
+export const UploadEngramAvatarResponseSchema = z.object({
+  avatarUrl: z.string(),
+});
+
+export type UploadEngramAvatarResponse = z.infer<
+  typeof UploadEngramAvatarResponseSchema
+>;
+
+export const DeleteEngramAvatarResponseSchema = z.object({
+  avatarUrl: z.null(),
+});
+
+export type DeleteEngramAvatarResponse = z.infer<
+  typeof DeleteEngramAvatarResponseSchema
+>;
+
+// ---------------------------------------------------------------------------
 // Error types
 // ---------------------------------------------------------------------------
 
@@ -286,4 +316,14 @@ export interface MikoshiClient {
 
   /** 暗号化メモリバンドルをダウンロード */
   downloadMemory(engramId: string): Promise<DownloadMemoryResponse>;
+
+  /** Avatar 画像をアップロード (multipart/form-data) */
+  uploadEngramAvatar(
+    engramId: string,
+    data: Buffer,
+    mimeType: string,
+  ): Promise<UploadEngramAvatarResponse>;
+
+  /** Avatar 画像を削除 */
+  deleteEngramAvatar(engramId: string): Promise<DeleteEngramAvatarResponse>;
 }
