@@ -164,16 +164,22 @@ export class MikoshiPush {
     if (!localHash) throw new MikoshiPushPersonaHashError(engramId);
 
     const engramDir = this.localRepo.getEngramPath(engramId);
+    const cloudEngram = await this.mikoshi.getEngramBySourceId(engramId);
+    const remoteAvatarUrl = cloudEngram?.avatarUrl ?? null;
+
+    // 差分検出は localHash だけでなくリモートの avatarUrl 有無も見る。
+    // - リモートに avatar がある → manifest ハッシュと比較 (従来挙動)
+    // - リモートに avatar が無い / リモート Engram 自体無し → manifest に関係なく upload_required
+    //   (Mikoshi エンドポイントを切り替えた場合に skip で詰まるのを防ぐ)
     const avatarInfo = engramDir
       ? await this.inspectAvatar(
           identity,
           engramDir,
           local.meta.avatarHash,
+          remoteAvatarUrl,
           engramId,
         )
       : { outcome: "no_avatar_field" as const };
-
-    const cloudEngram = await this.mikoshi.getEngramBySourceId(engramId);
 
     if (!cloudEngram) {
       return {
@@ -299,10 +305,15 @@ export class MikoshiPush {
    * IDENTITY.md の Avatar フィールドを解析し、ローカルファイルを検査して
    * 差分情報を返す。
    *
+   * 判定順:
    * - Avatar フィールドなし / URL 値 → `no_avatar_field`
    * - フィールドありだがファイル不在 → `no_local_file`（削除は自動化しない）
-   * - 既存 manifest ハッシュと一致 → `skip`
-   * - それ以外（初回 or 差分あり）→ `upload_required`
+   * - リモートに avatarUrl が **あり** かつ manifest ハッシュと一致 → `skip`
+   * - リモートに avatarUrl が **無い**、または ハッシュ不一致 → `upload_required`
+   *
+   * リモート側の avatarUrl が無ければ manifest ハッシュの一致は意味を持たない。
+   * これは Mikoshi エンドポイント切り替えや、リモート側で手動削除された
+   * ケースで skip で詰まるのを防ぐため。
    *
    * MIME 非対応 / サイズ超過 / 読み取り失敗はエラーとして throw する。
    */
@@ -310,6 +321,7 @@ export class MikoshiPush {
     identity: string | undefined,
     engramDir: string,
     existingHash: string | undefined,
+    remoteAvatarUrl: string | null,
     engramId: string,
   ): Promise<MikoshiPushAvatarInfo> {
     if (!identity) return { outcome: "no_avatar_field" };
@@ -352,7 +364,8 @@ export class MikoshiPush {
       throw new MikoshiPushAvatarReadError(engramId, localPath, err);
     }
 
-    if (existingHash && localHash === existingHash) {
+    const remoteHasAvatar = remoteAvatarUrl !== null && remoteAvatarUrl !== "";
+    if (remoteHasAvatar && existingHash && localHash === existingHash) {
       return { outcome: "skip", rawPath, localPath, localHash };
     }
 
