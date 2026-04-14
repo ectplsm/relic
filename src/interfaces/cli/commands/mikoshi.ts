@@ -11,9 +11,13 @@ import {
 import {
   MikoshiPush,
   MikoshiPushEngramNotFoundError,
+  type MikoshiPushAvatarInfo,
   MikoshiPushPersonaConflictError,
   MikoshiPushPersonaHashError,
   MikoshiPushAvatarInvalidMimeError,
+  MikoshiPushAvatarHttpError,
+  MikoshiPushAvatarPrivateHostError,
+  MikoshiPushAvatarFetchError,
   MikoshiPushAvatarReadError,
   MikoshiPushAvatarTooLargeError,
 } from "../../../core/usecases/mikoshi-push.js";
@@ -215,6 +219,7 @@ export function registerMikoshiCommand(program: Command): void {
         if (!apply) {
           // already_synced と avatar 変更なし
           printLine(`✅ Persona already in sync (${result.engramName})`);
+          printAvatarSkipReason(result.avatar);
         } else {
           // Avatar URL drift の情報提示 (Phase 3):
           // IDENTITY.md の diff が Avatar 行の値だけなら、ユーザーが
@@ -250,6 +255,9 @@ export function registerMikoshiCommand(program: Command): void {
           if (needsAvatarUpload && !opts.yes) {
             const av = result.avatar!;
             printLine(`Avatar to upload for "${engramId}":`);
+            if (av.source === "url" && av.sourceUrl) {
+              printDetail(`url: ${av.sourceUrl}`);
+            }
             if (av.localPath) printDetail(`path: ${av.localPath}`);
             if (av.localMimeType) printDetail(`mime: ${av.localMimeType}`);
             if (av.localSize !== undefined) printDetail(`size: ${formatBytes(av.localSize)}`);
@@ -262,10 +270,23 @@ export function registerMikoshiCommand(program: Command): void {
 
           const spinnerMessage =
             result.outcome === "already_synced"
-              ? "Uploading avatar to Mikoshi..."
+              ? result.avatar?.source === "url"
+                ? "Fetching avatar from URL and uploading to Mikoshi..."
+                : "Uploading avatar to Mikoshi..."
+              : result.avatar?.source === "url" && result.avatar?.outcome === "upload_required"
+                ? "Pushing persona, then fetching avatar from URL..."
               : "Pushing persona to Mikoshi...";
           applySpinner = startSpinner(spinnerMessage);
-          const applied = await apply();
+          const applied = await apply({
+            onAvatarProgress: (stage) => {
+              if (!applySpinner) return;
+              if (stage === "fetching") {
+                applySpinner.update("Fetching avatar from URL...");
+                return;
+              }
+              applySpinner.update("Uploading avatar to Mikoshi...");
+            },
+          });
 
           if (applied.action === "created") {
             applySpinner.stop(`✅ Created "${result.engramName}" on Mikoshi.`);
@@ -284,10 +305,14 @@ export function registerMikoshiCommand(program: Command): void {
           // Avatar の結果を最後に報告
           if (applied.avatarAction === "uploaded" && applied.newAvatarUrl) {
             printLine(`Avatar: ${applied.newAvatarUrl}`);
+          } else if (applied.avatarAction === "skipped" && applied.avatarSkipReason) {
+            printAvatarSkipReason({ outcome: "skip", skipReason: applied.avatarSkipReason });
           } else if (applied.avatarAction === "failed") {
-            printErrorLine(
-              `⚠ Avatar upload failed: ${applied.avatarError?.message ?? "unknown error"}`,
-            );
+            const failureLabel =
+              applied.avatarFailureStage === "fetch"
+                ? "Avatar fetch failed"
+                : "Avatar upload failed";
+            printErrorLine(`⚠ ${failureLabel}: ${applied.avatarError?.message ?? "unknown error"}`);
             printErrorLine(
               "  The persona change was saved. Retry with 'relic mikoshi push' to upload the avatar.",
             );
@@ -315,7 +340,7 @@ export function registerMikoshiCommand(program: Command): void {
         }
         if (err instanceof MikoshiPushAvatarInvalidMimeError) {
           printError(`Error: Avatar format is not supported.`);
-          printErrorDetail(`Path: ${err.avatarPath}`);
+          printErrorDetail(`Source: ${err.avatarPath}`);
           printErrorDetail("Allowed: JPEG, PNG, WebP");
           process.exit(1);
         }
@@ -323,12 +348,30 @@ export function registerMikoshiCommand(program: Command): void {
           printError(
             `Error: Avatar exceeds ${formatBytes(err.maxBytes)} (actual: ${formatBytes(err.actualBytes)}).`,
           );
-          printErrorDetail(`Path: ${err.avatarPath}`);
+          printErrorDetail(`Source: ${err.avatarPath}`);
           process.exit(1);
         }
         if (err instanceof MikoshiPushAvatarReadError) {
           printError(`Error: Failed to read avatar file.`);
           printErrorDetail(`Path: ${err.avatarPath}`);
+          if (err.cause instanceof Error) {
+            printErrorDetail(err.cause.message);
+          }
+          process.exit(1);
+        }
+        if (err instanceof MikoshiPushAvatarHttpError) {
+          printError("Error: Avatar URL must use HTTPS.");
+          printErrorDetail(`URL: ${err.avatarUrl}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiPushAvatarPrivateHostError) {
+          printError("Error: Avatar URL points to a private host.");
+          printErrorDetail(`URL: ${err.avatarUrl}`);
+          process.exit(1);
+        }
+        if (err instanceof MikoshiPushAvatarFetchError) {
+          printError("Error: Failed to fetch avatar from URL.");
+          printErrorDetail(`URL: ${err.avatarUrl}`);
           if (err.cause instanceof Error) {
             printErrorDetail(err.cause.message);
           }
@@ -586,6 +629,22 @@ export function registerMikoshiCommand(program: Command): void {
       }
     });
 
+}
+
+function printAvatarSkipReason(avatar?: Pick<MikoshiPushAvatarInfo, "outcome" | "skipReason">): void {
+  if (!avatar || avatar.outcome !== "skip" || !avatar.skipReason) return;
+
+  switch (avatar.skipReason) {
+    case "remote_avatar_url_matches_identity":
+      printLine("Avatar upload skipped: remote avatar URL already matches the local Avatar field.");
+      return;
+    case "source_url_unchanged":
+      printLine("Avatar upload skipped: avatar source URL is unchanged from the last successful push.");
+      return;
+    case "local_file_hash_unchanged":
+      printLine("Avatar upload skipped: local avatar file hash matches the last successful push.");
+      return;
+  }
 }
 
 // ---------------------------------------------------------------------------

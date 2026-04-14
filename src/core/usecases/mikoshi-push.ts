@@ -10,9 +10,11 @@ import { MikoshiApiError, AVATAR_MAX_BYTES } from "../ports/mikoshi.js";
 import { computePersonaHash } from "../sync/persona-hash.js";
 import {
   computeAvatarHash,
+  computeAvatarHashFromBytes,
   detectAvatarMimeType,
   isAvatarOnlyDrift,
-  parseAvatarPath,
+  fetchAvatarFromUrl,
+  parseAvatarRef,
   resolveAvatarPath,
 } from "../sync/avatar.js";
 
@@ -25,7 +27,7 @@ export type MikoshiPushOutcome = "create_required" | "push_required" | "already_
 /**
  * Avatar 差分判定の結果。
  *
- * - `no_avatar_field`     : IDENTITY.md に Avatar フィールドが無い、または URL 値
+ * - `no_avatar_field`     : IDENTITY.md に Avatar フィールドが無い
  * - `no_local_file`       : Avatar フィールドはあるがローカルにファイルが無い（削除は自動化しない）
  * - `skip`                : ローカルハッシュがリモート (manifest) と一致
  * - `upload_required`     : 初回 or ハッシュ不一致。アップロード候補
@@ -36,14 +38,24 @@ export type MikoshiPushAvatarOutcome =
   | "skip"
   | "upload_required";
 
+export type MikoshiPushAvatarSkipReason =
+  | "remote_avatar_url_matches_identity"
+  | "source_url_unchanged"
+  | "local_file_hash_unchanged";
+
 export interface MikoshiPushAvatarInfo {
   outcome: MikoshiPushAvatarOutcome;
+  source?: "file" | "url";
   /** 解決済みの絶対パス (outcome が no_avatar_field 以外で設定) */
   localPath?: string;
   /** IDENTITY.md に書かれていた生のパス値 */
   rawPath?: string;
+  /** IDENTITY.md に書かれていた外部 URL */
+  sourceUrl?: string;
   /** `sha256:<hex>` 形式。outcome が "skip" / "upload_required" のときのみ設定 */
   localHash?: string;
+  /** `skip` のときの理由 */
+  skipReason?: MikoshiPushAvatarSkipReason;
   /** バリデーション済み MIME。upload_required のときのみ設定 */
   localMimeType?: string;
   /** ファイルサイズ (bytes)。upload_required のときのみ設定 */
@@ -77,6 +89,8 @@ export interface MikoshiPushResult {
 }
 
 export type MikoshiPushAvatarAction = "uploaded" | "skipped" | "failed";
+export type MikoshiPushAvatarFailureStage = "fetch" | "upload";
+export type MikoshiPushAvatarProgressStage = "fetching" | "uploading";
 
 export interface MikoshiPushApplyResult {
   /**
@@ -94,6 +108,14 @@ export interface MikoshiPushApplyResult {
   newAvatarUrl?: string;
   /** `avatarAction === "failed"` の場合に設定される失敗原因 */
   avatarError?: Error;
+  /** `avatarAction === "failed"` の場合に設定される失敗段階 */
+  avatarFailureStage?: MikoshiPushAvatarFailureStage;
+  /** `avatarAction === "skipped"` の場合に設定される理由 */
+  avatarSkipReason?: MikoshiPushAvatarSkipReason;
+}
+
+export interface MikoshiPushApplyOptions {
+  onAvatarProgress?: (stage: MikoshiPushAvatarProgressStage) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -161,6 +183,37 @@ export class MikoshiPushAvatarInvalidMimeError extends Error {
   }
 }
 
+export class MikoshiPushAvatarHttpError extends Error {
+  constructor(
+    public readonly engramId: string,
+    public readonly avatarUrl: string,
+  ) {
+    super(`Avatar URL for "${engramId}" must use HTTPS: ${avatarUrl}`);
+    this.name = "MikoshiPushAvatarHttpError";
+  }
+}
+
+export class MikoshiPushAvatarPrivateHostError extends Error {
+  constructor(
+    public readonly engramId: string,
+    public readonly avatarUrl: string,
+  ) {
+    super(`Avatar URL for "${engramId}" points to a private host: ${avatarUrl}`);
+    this.name = "MikoshiPushAvatarPrivateHostError";
+  }
+}
+
+export class MikoshiPushAvatarFetchError extends Error {
+  constructor(
+    public readonly engramId: string,
+    public readonly avatarUrl: string,
+    public readonly cause?: unknown,
+  ) {
+    super(`Failed to fetch avatar URL for "${engramId}": ${avatarUrl}`);
+    this.name = "MikoshiPushAvatarFetchError";
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Usecase
 // ---------------------------------------------------------------------------
@@ -173,7 +226,7 @@ export class MikoshiPush {
 
   async check(engramId: string): Promise<{
     result: MikoshiPushResult;
-    apply?: () => Promise<MikoshiPushApplyResult>;
+    apply?: (options?: MikoshiPushApplyOptions) => Promise<MikoshiPushApplyResult>;
   }> {
     const local = await this.localRepo.get(engramId);
     if (!local) throw new MikoshiPushEngramNotFoundError(engramId);
@@ -195,6 +248,7 @@ export class MikoshiPush {
           identity,
           engramDir,
           local.meta.avatarHash,
+          local.meta.avatarSourceUrl,
           remoteAvatarUrl,
           engramId,
         )
@@ -209,7 +263,7 @@ export class MikoshiPush {
           remotePersonaHash: null,
           avatar: avatarInfo,
         },
-        apply: async () => {
+        apply: async (options) => {
           const created = await this.mikoshi.createEngram({
             name: local.meta.name,
             sourceEngramId: engramId,
@@ -223,6 +277,7 @@ export class MikoshiPush {
             engramId,
             avatarInfo,
             local.meta,
+            options,
           );
           return {
             action: "created",
@@ -239,12 +294,13 @@ export class MikoshiPush {
     if (remoteHash && localHash === remoteHash) {
       const apply =
         avatarInfo.outcome === "upload_required"
-          ? async (): Promise<MikoshiPushApplyResult> => {
+          ? async (options?: MikoshiPushApplyOptions): Promise<MikoshiPushApplyResult> => {
               const avatarOutcome = await this.applyAvatarUpload(
                 cloudEngram.id,
                 engramId,
                 avatarInfo,
                 local.meta,
+                options,
               );
               return {
                 action: "avatar_only",
@@ -298,7 +354,7 @@ export class MikoshiPush {
         avatar: avatarInfo,
         avatarDrift,
       },
-      apply: async () => {
+      apply: async (options) => {
         const expectedHash = remoteHash ?? "";
         let newPersonaHash: string;
         try {
@@ -324,6 +380,7 @@ export class MikoshiPush {
           engramId,
           avatarInfo,
           local.meta,
+          options,
         );
 
         return {
@@ -347,7 +404,9 @@ export class MikoshiPush {
    * 差分情報を返す。
    *
    * 判定順:
-   * - Avatar フィールドなし / URL 値 → `no_avatar_field`
+   * - Avatar フィールドなし → `no_avatar_field`
+   * - URL 値で、remote.avatarUrl と一致 or manifest の source URL と一致 → `skip`
+   * - URL 値で、それ以外 → `upload_required`
    * - フィールドありだがファイル不在 → `no_local_file`（削除は自動化しない）
    * - リモートに avatarUrl が **あり** かつ manifest ハッシュと一致 → `skip`
    * - リモートに avatarUrl が **無い**、または ハッシュ不一致 → `upload_required`
@@ -362,18 +421,48 @@ export class MikoshiPush {
     identity: string | undefined,
     engramDir: string,
     existingHash: string | undefined,
+    existingSourceUrl: string | undefined,
     remoteAvatarUrl: string | null,
     engramId: string,
   ): Promise<MikoshiPushAvatarInfo> {
     if (!identity) return { outcome: "no_avatar_field" };
 
-    const rawPath = parseAvatarPath(identity);
-    if (!rawPath) return { outcome: "no_avatar_field" };
+    const avatarRef = parseAvatarRef(identity);
+    if (!avatarRef) return { outcome: "no_avatar_field" };
+
+    if (avatarRef.kind === "url") {
+      if (remoteAvatarUrl && avatarRef.value === remoteAvatarUrl) {
+        return {
+          outcome: "skip",
+          source: "url",
+          sourceUrl: avatarRef.value,
+          skipReason: "remote_avatar_url_matches_identity",
+        };
+      }
+
+      if (existingSourceUrl && avatarRef.value === existingSourceUrl) {
+        return {
+          outcome: "skip",
+          source: "url",
+          sourceUrl: avatarRef.value,
+          localHash: existingHash,
+          skipReason: "source_url_unchanged",
+        };
+      }
+
+      return {
+        outcome: "upload_required",
+        source: "url",
+        sourceUrl: avatarRef.value,
+      };
+    }
+
+    const rawPath = avatarRef.value;
 
     const localPath = resolveAvatarPath(rawPath, engramDir);
 
     if (!existsSync(localPath)) {
-      return { outcome: "no_local_file", rawPath, localPath };
+      return { outcome: "no_local_file", source: "file", rawPath, localPath };
     }
 
     const mimeType = detectAvatarMimeType(localPath);
@@ -407,11 +496,19 @@ export class MikoshiPush {
 
     const remoteHasAvatar = remoteAvatarUrl !== null && remoteAvatarUrl !== "";
     if (remoteHasAvatar && existingHash && localHash === existingHash) {
-      return { outcome: "skip", rawPath, localPath, localHash };
+      return {
+        outcome: "skip",
+        source: "file",
+        rawPath,
+        localPath,
+        localHash,
+        skipReason: "local_file_hash_unchanged",
+      };
     }
 
     return {
       outcome: "upload_required",
+      source: "file",
       rawPath,
       localPath,
       localHash,
@@ -432,27 +529,66 @@ export class MikoshiPush {
     engramId: string,
     info: MikoshiPushAvatarInfo,
     meta: EngramMeta,
+    options?: MikoshiPushApplyOptions,
   ): Promise<
     Pick<
       MikoshiPushApplyResult,
-      "avatarAction" | "newAvatarUrl" | "avatarError"
+      "avatarAction" | "newAvatarUrl" | "avatarError" | "avatarFailureStage" | "avatarSkipReason"
     >
   > {
     if (info.outcome !== "upload_required") {
-      return { avatarAction: "skipped" };
-    }
-
-    if (!info.localPath || !info.localMimeType || !info.localHash) {
-      // 型上はありうるが、check() 側の upload_required は常にこれらを満たす
-      return { avatarAction: "skipped" };
+      return { avatarAction: "skipped", avatarSkipReason: info.skipReason };
     }
 
     try {
-      const bytes = await readFile(info.localPath);
+      let bytes: Buffer;
+      let mimeType: string;
+      let avatarHash: string;
+      let avatarSourceUrl: string | undefined;
+
+      if (info.source === "url") {
+        if (!info.sourceUrl) {
+          return { avatarAction: "skipped" };
+        }
+
+        try {
+          options?.onAvatarProgress?.("fetching");
+          const fetched = await fetchAvatarFromUrl(
+            info.sourceUrl,
+            AVATAR_MAX_BYTES,
+            10_000,
+          );
+          bytes = fetched.bytes;
+          mimeType = fetched.mimeType;
+          avatarHash = computeAvatarHashFromBytes(bytes);
+          avatarSourceUrl = info.sourceUrl;
+        } catch (err) {
+          if (err instanceof Error) {
+            const message = err.message.toLowerCase();
+            if (message.includes("must use https")) {
+              throw new MikoshiPushAvatarHttpError(engramId, info.sourceUrl);
+            }
+            if (message.includes("private host")) {
+              throw new MikoshiPushAvatarPrivateHostError(engramId, info.sourceUrl);
+            }
+          }
+          throw new MikoshiPushAvatarFetchError(engramId, info.sourceUrl, err);
+        }
+      } else {
+        if (!info.localPath || !info.localMimeType || !info.localHash) {
+          // 型上はありうるが、check() 側の upload_required は常にこれらを満たす
+          return { avatarAction: "skipped" };
+        }
+        bytes = await readFile(info.localPath);
+        mimeType = info.localMimeType;
+        avatarHash = info.localHash;
+      }
+
+      options?.onAvatarProgress?.("uploading");
       const response = await this.mikoshi.uploadEngramAvatar(
         cloudEngramId,
         bytes,
-        info.localMimeType,
+        mimeType,
       );
 
       // manifest の avatarHash を更新。updatedAt も合わせて進める。
@@ -460,7 +596,8 @@ export class MikoshiPush {
         id: meta.id,
         createdAt: meta.createdAt,
         updatedAt: new Date().toISOString(),
-        avatarHash: info.localHash,
+        avatarHash,
+        avatarSourceUrl,
       });
 
       return {
@@ -468,9 +605,16 @@ export class MikoshiPush {
         newAvatarUrl: response.avatarUrl,
       };
     } catch (err) {
+      const failureStage: MikoshiPushAvatarFailureStage =
+        err instanceof MikoshiPushAvatarFetchError ||
+        err instanceof MikoshiPushAvatarHttpError ||
+        err instanceof MikoshiPushAvatarPrivateHostError
+          ? "fetch"
+          : "upload";
       return {
         avatarAction: "failed",
         avatarError: err instanceof Error ? err : new Error(String(err)),
+        avatarFailureStage: failureStage,
       };
     }
   }
