@@ -9,6 +9,34 @@ import { computePersonaHash } from "../sync/persona-hash.js";
 
 export type MikoshiPushOutcome = "create_required" | "push_required" | "already_synced";
 
+/**
+ * Avatar 差分判定の結果。
+ *
+ * - `no_avatar_field`     : IDENTITY.md に Avatar フィールドが無い、または URL 値
+ * - `no_local_file`       : Avatar フィールドはあるがローカルにファイルが無い（削除は自動化しない）
+ * - `skip`                : ローカルハッシュがリモート (manifest) と一致
+ * - `upload_required`     : 初回 or ハッシュ不一致。アップロード候補
+ */
+export type MikoshiPushAvatarOutcome =
+  | "no_avatar_field"
+  | "no_local_file"
+  | "skip"
+  | "upload_required";
+
+export interface MikoshiPushAvatarInfo {
+  outcome: MikoshiPushAvatarOutcome;
+  /** 解決済みの絶対パス (outcome が no_avatar_field 以外で設定) */
+  localPath?: string;
+  /** IDENTITY.md に書かれていた生のパス値 */
+  rawPath?: string;
+  /** `sha256:<hex>` 形式。outcome が "skip" / "upload_required" のときのみ設定 */
+  localHash?: string;
+  /** バリデーション済み MIME。upload_required のときのみ設定 */
+  localMimeType?: string;
+  /** ファイルサイズ (bytes)。upload_required のときのみ設定 */
+  localSize?: number;
+}
+
 export interface MikoshiPushResult {
   outcome: MikoshiPushOutcome;
   engramId: string;
@@ -16,12 +44,23 @@ export interface MikoshiPushResult {
   /** クラウド側の canonical ID (existing remote only) */
   cloudEngramId?: string;
   remotePersonaHash?: string | null;
+  /** Avatar 差分情報 (check 時点のスナップショット) */
+  avatar?: MikoshiPushAvatarInfo;
 }
+
+export type MikoshiPushAvatarAction =
+  | "uploaded"
+  | "skipped"
+  | "not_applicable";
 
 export interface MikoshiPushApplyResult {
   action: "created" | "updated";
   cloudEngramId: string;
   newPersonaHash?: string;
+  /** Avatar アップロードの結果 */
+  avatarAction?: MikoshiPushAvatarAction;
+  /** アップロード成功時のみ設定される R2 上の URL */
+  newAvatarUrl?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -49,6 +88,43 @@ export class MikoshiPushPersonaConflictError extends Error {
   ) {
     super(`Persona conflict for "${engramId}"`);
     this.name = "MikoshiPushPersonaConflictError";
+  }
+}
+
+export class MikoshiPushAvatarReadError extends Error {
+  constructor(
+    public readonly engramId: string,
+    public readonly avatarPath: string,
+    public readonly cause?: unknown,
+  ) {
+    super(`Failed to read avatar file for "${engramId}": ${avatarPath}`);
+    this.name = "MikoshiPushAvatarReadError";
+  }
+}
+
+export class MikoshiPushAvatarTooLargeError extends Error {
+  constructor(
+    public readonly engramId: string,
+    public readonly avatarPath: string,
+    public readonly actualBytes: number,
+    public readonly maxBytes: number,
+  ) {
+    super(
+      `Avatar for "${engramId}" is ${actualBytes} bytes, exceeds limit of ${maxBytes} bytes`,
+    );
+    this.name = "MikoshiPushAvatarTooLargeError";
+  }
+}
+
+export class MikoshiPushAvatarInvalidMimeError extends Error {
+  constructor(
+    public readonly engramId: string,
+    public readonly avatarPath: string,
+  ) {
+    super(
+      `Avatar for "${engramId}" has unsupported format: ${avatarPath} (only JPEG, PNG, and WebP are allowed)`,
+    );
+    this.name = "MikoshiPushAvatarInvalidMimeError";
   }
 }
 
