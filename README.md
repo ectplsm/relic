@@ -21,6 +21,7 @@ Relic manages AI **Engrams** (memory + personality) and injects them across codi
 - [Engram Management](#engram-management)
 - [Cloud Storage and Sharing](#cloud-storage-and-sharing)
 - [Configuration](#configuration)
+- [Roadmap](#roadmap)
 
 ## Requirements
 
@@ -198,6 +199,14 @@ Relic stores its runtime defaults in `~/.relic/config.json`.
 Use `relic config` to manage the default Engram, Claw path, memory window, and distillation batch size.
 
 For command examples and precedence rules, see [docs/configuration.md](docs/configuration.md).
+
+## Roadmap
+
+Upcoming milestones that shape where Relic is heading:
+
+- **Tighter OpenClaw integration** — deeper interop with OpenClaw and other Claw-based frameworks, beyond the current push / pull / sync surface.
+- **Structured memory decomposition** — break `MEMORY.md` down into episodic, semantic, and procedural memory so the Construct can recall the right kind of knowledge at the right time.
+- **Memory Wiki on llm-wiki** — build a navigable memory wiki on top of [llm-wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), turning long-term memory into a browsable, linkable knowledge base instead of flat Markdown.
 
 ## License
 
