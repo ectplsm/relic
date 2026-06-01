@@ -36,12 +36,13 @@ Relic は各 shell の hook 機構を使って、prompt と response を `archiv
 
 `relic codex` の初回起動時に、`~/.relic/hooks/codex-stop.js` を `~/.codex/hooks.json` に登録します。
 
-> Codex hooks には `features.codex_hooks=true` が必要です。
-> `relic codex` は毎回 `-c features.codex_hooks=true` を付けて自動で有効化します。
-> 不安定機能の警告を消したい場合は、`~/.codex/config.toml` に以下を追加します。
+> Codex hooks には `features.hooks=true` が必要です。
+> `relic codex` は毎回 `-c features.hooks=true` を付けて自動で有効化します。
+> グローバルに有効化したい場合は、`~/.codex/config.toml` に以下を追加します。
 >
 > ```toml
-> suppress_unstable_features_warning = true
+> [features]
+> hooks = true
 > ```
 
 ### Gemini CLI

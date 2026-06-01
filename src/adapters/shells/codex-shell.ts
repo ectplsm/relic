@@ -52,7 +52,7 @@ export class CodexShell implements ShellLauncher {
     }
 
     args.push(
-      "-c", "features.codex_hooks=true",
+      "-c", "features.hooks=true",
       ...(options?.extraArgs ?? []),
     );
 
