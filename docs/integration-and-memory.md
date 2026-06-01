@@ -36,12 +36,13 @@ On the first run of `relic claude`, Relic registers `~/.relic/hooks/claude-stop.
 
 On the first run of `relic codex`, Relic registers `~/.relic/hooks/codex-stop.js` in `~/.codex/hooks.json`.
 
-> Codex hooks require `features.codex_hooks=true`.
-> `relic codex` enables that automatically on every launch via `-c features.codex_hooks=true`.
-> If you want to suppress the unstable feature warning, add this to `~/.codex/config.toml`:
+> Codex hooks require `features.hooks=true`.
+> `relic codex` enables that automatically on every launch via `-c features.hooks=true`.
+> You can also enable hooks globally in `~/.codex/config.toml`:
 >
 > ```toml
-> suppress_unstable_features_warning = true
+> [features]
+> hooks = true
 > ```
 
 ### Gemini CLI
