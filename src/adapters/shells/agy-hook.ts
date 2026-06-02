@@ -89,11 +89,11 @@ process.stdin.on("end", () => {
     // Some Antigravity builds do not report terminationReason consistently.
     // Stop is already the final-loop hook; only skip explicitly non-idle events.
     if (input.fullyIdle === false) {
-      exitWithOk();
+      return exitWithOk();
     }
 
     const engramId = process.env.RELIC_ENGRAM_ID;
-    if (!engramId) exitWithOk();
+    if (!engramId) return exitWithOk();
 
     let prompt = "";
     let response = "";
@@ -221,7 +221,7 @@ export function setupAgyHook(): void {
       {
         type: "command",
         command: RELIC_HOOK_COMMAND,
-        timeout: 5,
+        timeout: 5000,
       },
     ],
   };
