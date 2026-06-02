@@ -49,7 +49,8 @@ Relic は各 shell の hook 機構を使って、prompt と response を `archiv
 
 `relic agy` の初回起動時に、次をセットアップします。
 
-1. `~/.relic/hooks/agy-stop.js` を `~/.gemini/antigravity-cli/settings.json` に登録
+1. `~/.relic/hooks/agy-stop.js` を `~/.gemini/config/hooks.json` に登録
+2. Relic MCP server を `~/.gemini/antigravity-cli/settings.json` に登録
 
 Relic はコンパイル済みのペルソナを隠しの一時ファイル（`.gemini/.agy-engram-tmp.md`）に書き出し、`--prompt-interactive` 経由で AI に自律的に読み込ませます。その後 `Stop` フックが `transcript.jsonl` を解析して `archive.md` に会話ログを記録し、一時ファイルを確実に削除します。
 

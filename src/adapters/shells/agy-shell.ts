@@ -30,17 +30,21 @@ export class AgyShell implements ShellLauncher {
     writeAgyHookScript();
 
     if (!isAgyHookSetup()) {
-      console.log("Setting up Antigravity AfterAgent hook and MCP server (first run only)...");
+      console.log("Setting up Antigravity Stop hook and MCP server (first run only)...");
       setupAgyHook();
-      console.log("Hook and MCP registered to ~/.gemini/antigravity-cli/settings.json");
+      console.log("Hook registered to ~/.gemini/config/hooks.json");
+      console.log("MCP registered to ~/.gemini/antigravity-cli/settings.json");
       console.log();
     }
 
     const env: Record<string, string> = {};
     if (options?.engramId) env.RELIC_ENGRAM_ID = options.engramId;
     const finalEnv = Object.keys(env).length > 0 ? env : undefined;
+    const cwd = options?.cwd || process.cwd();
+    const geminiDir = join(cwd, ".gemini");
 
     if (options?.skipInjection) {
+      setupAgyHook({ engramId: options?.engramId });
       await spawnShell(
         this.command,
         [...(options?.extraArgs ?? [])],
@@ -54,8 +58,6 @@ export class AgyShell implements ShellLauncher {
     
     // Agentic load injection via workspace .gemini directory to avoid permission prompts
     // Use a hidden dotfile to prevent it from showing up in git diffs or file explorers
-    const cwd = options?.cwd || process.cwd();
-    const geminiDir = join(cwd, ".gemini");
     const engramPath = join(geminiDir, ".agy-engram-tmp.md");
     
     if (!existsSync(geminiDir)) {
@@ -64,6 +66,7 @@ export class AgyShell implements ShellLauncher {
 
     // Write the compiled persona to a temporary file
     writeFileSync(engramPath, overriddenPrompt, "utf-8");
+    setupAgyHook({ engramId: options?.engramId, tmpEngramPath: engramPath });
 
     // Pass the absolute path of the temp engram to the hook via environment variable
     const envForSpawn = { ...(finalEnv || {}), RELIC_AGY_TMP_ENGRAM_PATH: engramPath };

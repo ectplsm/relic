@@ -84,7 +84,7 @@ Add this to `~/.gemini/antigravity-cli/settings.json`:
   }
 }
 ```
-*(Note: Running `relic agy` will automatically set up the logging hook and this MCP config for you on first launch.)*
+*(Note: Running `relic agy` will automatically set up this MCP config and the logging hook in `~/.gemini/config/hooks.json` on first launch.)*
 
 Gemini CLI (Deprecated) — add this to `~/.gemini/settings.json`:
 
@@ -189,7 +189,7 @@ For the full system model and domain terms, see [docs/concepts.md](docs/concepts
 
 ## Shell Integration and Memory
 
-Relic supports Claude Code, Codex CLI, and Gemini CLI.
+Relic supports Claude Code, Codex CLI, and Antigravity CLI (agy). Gemini CLI remains supported but deprecated.
 Background hooks append raw conversation logs to `archive.md`, and the MCP server handles archive search and memory distillation.
 
 For shell compatibility, hook behavior, setup, approvals, prompt inclusion, and distillation flow, see [docs/integration-and-memory.md](docs/integration-and-memory.md).

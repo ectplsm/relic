@@ -40,7 +40,24 @@ Codex CLI:
 codex mcp add relic -- relic-mcp
 ```
 
-Gemini CLI — add this to `~/.gemini/settings.json`:
+Antigravity CLI (agy):
+
+Add this to `~/.gemini/antigravity-cli/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "relic": {
+      "command": "relic-mcp",
+      "trust": true
+    }
+  }
+}
+```
+
+Running `relic agy` also sets up this MCP config and the logging hook in `~/.gemini/config/hooks.json` automatically.
+
+Gemini CLI (Deprecated) — add this to `~/.gemini/settings.json`:
 
 ```json
 {
@@ -71,7 +88,13 @@ Codex CLI:
 relic codex
 ```
 
-Gemini CLI:
+Antigravity CLI (agy):
+
+```bash
+relic agy
+```
+
+Gemini CLI (Deprecated):
 
 ```bash
 relic gemini

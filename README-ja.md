@@ -84,7 +84,7 @@ Antigravity CLI (agy):
   }
 }
 ```
-*（※ \`relic agy\` コマンドを初回起動すると、アーカイブ用フックとMCP設定が自動的に登録されます）*
+*（※ \`relic agy\` コマンドを初回起動すると、この MCP 設定と `~/.gemini/config/hooks.json` へのアーカイブ用フックが自動的に登録されます）*
 
 Gemini CLI (非推奨) — `~/.gemini/settings.json` に以下を追加:
 
@@ -189,7 +189,7 @@ Constructが最近の会話を振り返り、`archive.md` に記録された実�
 
 ## Shell 連携と記憶
 
-Relic は Claude Code、Codex CLI、Gemini CLI に対応しています。
+Relic は Claude Code、Codex CLI、Antigravity CLI (agy) に対応しています。Gemini CLI もサポートされていますが、現在は非推奨です。
 生の会話ログは background hook が `archive.md` に追記し、archive 検索と記憶蒸留は MCP サーバーが担当します。
 
 対応 Shell、hook の挙動、セットアップ、承認、プロンプトへの記憶再投入、蒸留フローの詳細は [docs/ja/integration-and-memory.md](docs/ja/integration-and-memory.md) を参照してください。

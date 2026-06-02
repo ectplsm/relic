@@ -49,7 +49,8 @@ On the first run of `relic codex`, Relic registers `~/.relic/hooks/codex-stop.js
 
 On the first run of `relic agy`, Relic sets up:
 
-1. `~/.relic/hooks/agy-stop.js` in `~/.gemini/antigravity-cli/settings.json`
+1. `~/.relic/hooks/agy-stop.js` in `~/.gemini/config/hooks.json`
+2. The Relic MCP server in `~/.gemini/antigravity-cli/settings.json`
 
 Relic writes the compiled persona to a hidden temporary file (`.gemini/.agy-engram-tmp.md`) and instructs the AI to read it via `--prompt-interactive`. The `Stop` hook then parses `transcript.jsonl` to record the conversation into `archive.md` and deletes the temporary file.
 
