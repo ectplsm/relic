@@ -2,7 +2,9 @@
 |:---:|:---:|
 
 # Relic: AI Persona Injection System
-![NPM Downloads](https://img.shields.io/npm/dt/%40ectplsm%2Frelic)
+[![NPM Version](https://img.shields.io/npm/v/%40ectplsm%2Frelic)](https://www.npmjs.com/package/@ectplsm/relic)
+[![NPM Downloads](https://img.shields.io/npm/dt/%40ectplsm%2Frelic)](https://www.npmjs.com/package/@ectplsm/relic)
+[![License](https://img.shields.io/npm/l/%40ectplsm%2Frelic)](https://github.com/ectplsm/relic/blob/main/LICENCE.md)
 
 <img src="assets/relic-hero.svg" alt="PROJECT RELIC" width="720">
 
@@ -28,8 +30,6 @@ Relic manages AI **Engrams** (memory + personality) and injects them across codi
 - Node.js 18 or later
 
 ## Install
-
-<img alt="version badge" src="https://img.shields.io/github/v/release/ectplsm/relic?filter=*.*.*">
 
 ```bash
 npm install -g @ectplsm/relic
@@ -208,6 +208,27 @@ Upcoming milestones that shape where Relic is heading:
 - **Structured memory decomposition** — break `MEMORY.md` down into episodic, semantic, and procedural memory so the Construct can recall the right kind of knowledge at the right time.
 - **Memory Wiki on llm-wiki** — build a navigable memory wiki on top of [llm-wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), turning long-term memory into a browsable, linkable knowledge base instead of flat Markdown.
 
+## Development
+
+We welcome contributions! To set up the project locally for development:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/ectplsm/relic.git
+   cd relic
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Available scripts:
+   - `npm run build`: Compile TypeScript into the `dist/` directory.
+   - `npm run typecheck`: Run the TypeScript compiler without emitting files.
+   - `npm run dev:cli`: Run the CLI in development mode (using `tsx`).
+   - `npm run dev:mcp`: Run the MCP server in development mode (using `tsx`).
+
+Before contributing, please read [CLAUDE.md](./CLAUDE.md) for strict coding conventions, parent documents, and PR rules.
+
 ## License
 
-[MIT](./LICENCE.md)
+This project is licensed under the MIT License - see the [LICENCE.md](./LICENCE.md) file for details.

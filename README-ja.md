@@ -2,7 +2,9 @@
 |:---:|:---:|
 
 # Relic: AI Persona Injection System
-![NPM Downloads](https://img.shields.io/npm/dt/%40ectplsm%2Frelic)
+[![NPM Version](https://img.shields.io/npm/v/%40ectplsm%2Frelic)](https://www.npmjs.com/package/@ectplsm/relic)
+[![NPM Downloads](https://img.shields.io/npm/dt/%40ectplsm%2Frelic)](https://www.npmjs.com/package/@ectplsm/relic)
+[![License](https://img.shields.io/npm/l/%40ectplsm%2Frelic)](https://github.com/ectplsm/relic/blob/main/LICENCE.md)
 
 <img src="assets/relic-hero.svg" alt="PROJECT RELIC" width="720">
 
@@ -28,8 +30,6 @@ Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code
 - Node.js 18 以上
 
 ## インストール
-
-<img alt="version badge" src="https://img.shields.io/github/v/release/ectplsm/relic?filter=*.*.*">
 
 ```bash
 npm install -g @ectplsm/relic
@@ -208,6 +208,27 @@ Relic がこれから目指すマイルストーン:
 - **記憶の構造化分解** — `MEMORY.md` を「エピソード記憶 / 意味記憶 / 手続き記憶」に分解し、Construct が場面に応じて適切な種類の知識を引き出せるようにする。
 - **llm-wiki ベースの記憶 Wiki** — [llm-wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) を土台に、長期記憶をフラットな Markdown ではなく、相互リンク可能で閲覧しやすいナレッジベースとして構築する。
 
+## 開発と貢献
+
+コントリビューションを歓迎します！ローカルでの開発環境をセットアップするには以下を実行してください:
+
+1. リポジトリをクローンする:
+   ```bash
+   git clone https://github.com/ectplsm/relic.git
+   cd relic
+   ```
+2. 依存関係をインストールする:
+   ```bash
+   npm install
+   ```
+3. 利用可能なスクリプト:
+   - `npm run build`: TypeScriptをコンパイルして `dist/` ディレクトリに出力します。
+   - `npm run typecheck`: TypeScriptの型チェックを（コンパイルファイルを出力せずに）実行します。
+   - `npm run dev:cli`: 開発モードでCLIを実行します（`tsx`を使用）。
+   - `npm run dev:mcp`: 開発モードでMCPサーバーを実行します（`tsx`を使用）。
+
+開発ルールやプルリクエストの規約については、事前に [CLAUDE.md](./CLAUDE.md) をご一読ください。
+
 ## ライセンス
 
-[MIT](./LICENCE.md)
+このプロジェクトはMITライセンスのもとで公開されています。詳細は [LICENCE.md](./LICENCE.md) を参照してください。
