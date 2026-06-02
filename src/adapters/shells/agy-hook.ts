@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { execFileSync } from "node:child_process";
 
 const RELIC_DIR = join(homedir(), ".relic");
 const HOOKS_DIR = join(RELIC_DIR, "hooks");
@@ -31,6 +32,38 @@ function buildAgyHookCommand(runtime?: AgyHookRuntime): string {
   return env.length > 0
     ? `env ${env.join(" ")} ${RELIC_HOOK_BASE_COMMAND}`
     : RELIC_HOOK_BASE_COMMAND;
+}
+
+function resolveCommandPath(command: string): string {
+  try {
+    return execFileSync("which", [command], {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim() || command;
+  } catch {
+    return command;
+  }
+}
+
+function resolveRelicMcpCommand(): { command: string; args: string[] } {
+  const relicMcpPath = resolveCommandPath("relic-mcp");
+  return {
+    command: resolveCommandPath("node"),
+    args: [relicMcpPath],
+  };
+}
+
+function addPermissionAllow(settings: Record<string, unknown>, permission: string): void {
+  const permissions = (
+    typeof settings.permissions === "object" && settings.permissions !== null
+      ? settings.permissions
+      : {}
+  ) as Record<string, unknown>;
+  const allow = Array.isArray(permissions.allow) ? permissions.allow : [];
+  if (!allow.includes(permission)) {
+    permissions.allow = [...allow, permission];
+  }
+  settings.permissions = permissions;
 }
 
 /**
@@ -213,13 +246,14 @@ export function setupAgyHook(runtime?: AgyHookRuntime): void {
 
   // 自動で mcpServers に relic-mcp を追加する
   const mcpServers = (mcpConfig.mcpServers ?? {}) as Record<string, unknown>;
-  if (!mcpServers["relic"]) {
-    mcpServers["relic"] = {
-      command: "relic-mcp",
-      trust: true
-    };
-    mcpConfig.mcpServers = mcpServers;
-  }
+  const relicMcpCommand = resolveRelicMcpCommand();
+  mcpServers["relic"] = {
+    command: relicMcpCommand.command,
+    args: relicMcpCommand.args,
+    trust: true
+  };
+  mcpConfig.mcpServers = mcpServers;
+  addPermissionAllow(settings, "mcp(relic/*)");
 
   writeFileSync(AGY_SETTINGS_PATH, JSON.stringify(settings, null, 2), "utf-8");
   writeFileSync(AGY_MCP_CONFIG_PATH, JSON.stringify(mcpConfig, null, 2), "utf-8");

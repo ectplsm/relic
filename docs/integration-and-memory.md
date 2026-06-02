@@ -51,8 +51,11 @@ On the first run of `relic agy`, Relic sets up:
 
 1. `~/.relic/hooks/agy-stop.js` in `~/.gemini/config/hooks.json`
 2. The Relic MCP server in `~/.gemini/antigravity-cli/mcp_config.json`
+3. `mcp(relic/*)` in `~/.gemini/antigravity-cli/settings.json` permissions
 
 Relic writes the compiled persona to a hidden temporary file (`.gemini/.agy-engram-tmp.md`) and instructs the AI to read it via `--prompt-interactive`. The `Stop` hook then parses `transcript.jsonl` to record the conversation into `archive.md` and deletes the temporary file.
+
+> Known issue: Antigravity CLI 2.0 may load MCP configuration without exposing the MCP tools to the agent. When that happens, memory distillation commands such as "Organize my memories" cannot run in that session. Relic intentionally instructs the agent not to create temporary scripts or manual JSON-RPC clients as a workaround. Restart Antigravity and check `/mcp`; if the `relic` server is not active or its tools are not exposed, use Claude Code or Codex CLI for memory distillation until Antigravity's MCP tool injection stabilizes.
 
 ## MCP Server
 
@@ -160,11 +163,28 @@ Add this to `~/.gemini/antigravity-cli/mcp_config.json`:
 {
   "mcpServers": {
     "relic": {
-      "command": "relic-mcp",
+      "command": "/path/to/node",
+      "args": [
+        "/path/to/relic-mcp"
+      ],
       "trust": true
     }
   }
 }
 ```
 
-> `trust: true` is required if you want to suppress confirmation dialogs for Relic tools.
+To suppress confirmation dialogs for Relic tools, allow the Relic MCP server in `~/.gemini/antigravity-cli/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp(relic/*)"
+    ]
+  }
+}
+```
+
+`relic agy` adds this permission automatically.
+
+If `/mcp` does not show the `relic` server as active, or if the agent still cannot see `relic_archive_pending` and `relic_memory_write`, treat memory distillation in Antigravity as unavailable for that session. Do not work around it by asking the agent to write temporary MCP scripts into the project.

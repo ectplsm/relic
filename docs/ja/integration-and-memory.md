@@ -51,8 +51,11 @@ Relic は各 shell の hook 機構を使って、prompt と response を `archiv
 
 1. `~/.relic/hooks/agy-stop.js` を `~/.gemini/config/hooks.json` に登録
 2. Relic MCP server を `~/.gemini/antigravity-cli/mcp_config.json` に登録
+3. `~/.gemini/antigravity-cli/settings.json` の permissions に `mcp(relic/*)` を追加
 
 Relic はコンパイル済みのペルソナを隠しの一時ファイル（`.gemini/.agy-engram-tmp.md`）に書き出し、`--prompt-interactive` 経由で AI に自律的に読み込ませます。その後 `Stop` フックが `transcript.jsonl` を解析して `archive.md` に会話ログを記録し、一時ファイルを確実に削除します。
+
+> 既知の制限: Antigravity CLI 2.0 では、MCP 設定を読み込んでも MCP ツールが agent 側に露出しないことがあります。この状態では「記憶を整理して」のような記憶蒸留コマンドはそのセッションでは実行できません。Relic はこの場合、agent に一時スクリプトや手動 JSON-RPC client を作らせる回避策を禁止します。Antigravity を再起動して `/mcp` を確認し、`relic` server が active でない、または tool が露出していない場合は、Antigravity 側の MCP tool injection が安定するまで Claude Code または Codex CLI で記憶蒸留してください。
 
 ## MCP サーバー
 
@@ -160,11 +163,28 @@ approval_mode = "approve"
 {
   "mcpServers": {
     "relic": {
-      "command": "relic-mcp",
+      "command": "/path/to/node",
+      "args": [
+        "/path/to/relic-mcp"
+      ],
       "trust": true
     }
   }
 }
 ```
 
-> Relic ツールの確認ダイアログを抑止したいなら `trust: true` が必要です。
+Relic ツールの確認ダイアログを抑止するには、`~/.gemini/antigravity-cli/settings.json` で Relic MCP server を allow します。
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp(relic/*)"
+    ]
+  }
+}
+```
+
+`relic agy` はこの permission を自動追加します。
+
+`/mcp` で `relic` server が active にならない場合や、agent が `relic_archive_pending` / `relic_memory_write` を認識できない場合、そのセッションでは Antigravity での記憶蒸留は利用不可として扱ってください。project 内に一時 MCP スクリプトを書かせる回避策は使いません。
