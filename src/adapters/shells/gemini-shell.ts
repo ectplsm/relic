@@ -5,6 +5,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
@@ -66,6 +67,11 @@ async function captureDefaultSystemPrompt(command: string, cwd = process.cwd()):
   const content = readFileSync(systemMdPath, "utf-8");
   mkdirSync(RELIC_DIR, { recursive: true });
   writeFileSync(GEMINI_DEFAULT_CACHE, content, "utf-8");
+  try {
+    unlinkSync(systemMdPath);
+  } catch {
+    // Cache creation succeeded; cleanup failure should not block launch.
+  }
   return content;
 }
 
