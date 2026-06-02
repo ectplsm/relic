@@ -8,7 +8,7 @@
 |-------|---------|---------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt` による直接上書き |
 | [Codex CLI](https://github.com/openai/codex) | `relic codex` | `-c developer_instructions` による developer role 注入 |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `GEMINI_SYSTEM_MD` による system prompt 注入 |
+| [Antigravity CLI](https://github.com/google-gemini/antigravity-cli) | `relic agy` | Agentic File Load (`--prompt-interactive`) |
 
 全 shell コマンドは以下を共通で受けます。
 
@@ -26,7 +26,7 @@ Relic は各 shell の hook 機構を使って、prompt と response を `archiv
 |-------|------|
 | [Claude Code](https://github.com/anthropics/claude-code) | Stop hook |
 | [Codex CLI](https://github.com/openai/codex) | Stop hook |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | AfterAgent hook |
+| [Antigravity CLI](https://github.com/google-gemini/antigravity-cli) | Stop hook |
 
 ### Claude Code
 
@@ -45,16 +45,13 @@ Relic は各 shell の hook 機構を使って、prompt と response を `archiv
 > hooks = true
 > ```
 
-### Gemini CLI
+### Antigravity CLI
 
-`relic gemini` の初回起動時に、次をセットアップします。
+`relic agy` の初回起動時に、次をセットアップします。
 
-1. `~/.relic/hooks/gemini-after-agent.js` を `~/.gemini/settings.json` に登録
-2. Gemini CLI の built-in system prompt を `~/.relic/gemini-system-default.md` にキャッシュ
+1. `~/.relic/hooks/agy-stop.js` を `~/.gemini/antigravity-cli/settings.json` に登録
 
-デフォルトプロンプトのキャプチャでは、Shell の作業ディレクトリ配下の `.gemini/system.md` から Gemini が生成した内容を読み取ります。
-
-その後は、キャッシュした prompt に Engram persona を追記し、`GEMINI_SYSTEM_MD` 経由で注入します。
+Relic はコンパイル済みのペルソナを隠しの一時ファイル（`.gemini/.agy-engram-tmp.md`）に書き出し、`--prompt-interactive` 経由で AI に自律的に読み込ませます。その後 `Stop` フックが `transcript.jsonl` を解析して `archive.md` に会話ログを記録し、一時ファイルを確実に削除します。
 
 ## MCP サーバー
 
@@ -154,9 +151,9 @@ approval_mode = "approve"
 > Codex CLI では `trust_level = "trusted"` だけでは MCP 承認はカバーされません。
 > 確実なのは per-tool の `approval_mode` です。
 
-### Gemini CLI
+### Antigravity CLI
 
-`~/.gemini/settings.json` に以下を追加します。
+`~/.gemini/antigravity-cli/settings.json` に以下を追加します。
 
 ```json
 {

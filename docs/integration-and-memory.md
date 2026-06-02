@@ -8,7 +8,7 @@ This guide covers how Relic connects to shells, records raw logs, and turns them
 |-------|---------|-----------------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt` (direct override) |
 | [Codex CLI](https://github.com/openai/codex) | `relic codex` | `-c developer_instructions` (developer-role message) |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `GEMINI_SYSTEM_MD` (system prompt) |
+| [Antigravity CLI](https://github.com/google-gemini/antigravity-cli) | `relic agy` | Agentic File Load (`--prompt-interactive`) |
 
 All shell commands support:
 
@@ -26,7 +26,7 @@ Relic uses each shell's hook mechanism to append prompt and response pairs to `a
 |-------|------|
 | [Claude Code](https://github.com/anthropics/claude-code) | Stop hook |
 | [Codex CLI](https://github.com/openai/codex) | Stop hook |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | AfterAgent hook |
+| [Antigravity CLI](https://github.com/google-gemini/antigravity-cli) | Stop hook |
 
 ### Claude Code
 
@@ -45,16 +45,13 @@ On the first run of `relic codex`, Relic registers `~/.relic/hooks/codex-stop.js
 > hooks = true
 > ```
 
-### Gemini CLI
+### Antigravity CLI
 
-On the first run of `relic gemini`, Relic sets up:
+On the first run of `relic agy`, Relic sets up:
 
-1. `~/.relic/hooks/gemini-after-agent.js` in `~/.gemini/settings.json`
-2. `~/.relic/gemini-system-default.md` as a cache of Gemini CLI's built-in system prompt
+1. `~/.relic/hooks/agy-stop.js` in `~/.gemini/antigravity-cli/settings.json`
 
-The default prompt capture reads Gemini's generated `system.md` from `.gemini/system.md` under the shell working directory.
-
-After that, Relic appends the Engram persona to the cached prompt and injects it through `GEMINI_SYSTEM_MD`.
+Relic writes the compiled persona to a hidden temporary file (`.gemini/.agy-engram-tmp.md`) and instructs the AI to read it via `--prompt-interactive`. The `Stop` hook then parses `transcript.jsonl` to record the conversation into `archive.md` and deletes the temporary file.
 
 ## MCP Server
 
@@ -154,9 +151,9 @@ approval_mode = "approve"
 > `trust_level = "trusted"` does not cover MCP approvals in Codex CLI.
 > Per-tool `approval_mode` is the reliable path.
 
-### Gemini CLI
+### Antigravity CLI
 
-Add this to `~/.gemini/settings.json`:
+Add this to `~/.gemini/antigravity-cli/settings.json`:
 
 ```json
 {
