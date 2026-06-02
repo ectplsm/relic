@@ -52,6 +52,8 @@ Relic は各 shell の hook 機構を使って、prompt と response を `archiv
 1. `~/.relic/hooks/gemini-after-agent.js` を `~/.gemini/settings.json` に登録
 2. Gemini CLI の built-in system prompt を `~/.relic/gemini-system-default.md` にキャッシュ
 
+デフォルトプロンプトのキャプチャでは、Shell の作業ディレクトリ配下の `.gemini/system.md` から Gemini が生成した内容を読み取ります。
+
 その後は、キャッシュした prompt に Engram persona を追記し、`GEMINI_SYSTEM_MD` 経由で注入します。
 
 ## MCP サーバー
