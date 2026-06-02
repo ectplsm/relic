@@ -161,7 +161,7 @@ If you are upgrading from an older Relic version, see [docs/migration.md](docs/m
        +------------║  Engram   ║--------->|Construct|
        |            ║ (persona) ║          | (live)  |
        |            ╚═══════════╝          +---------+
-       |            SOUL.md              claude / codex / gemini
+       |            SOUL.md              claude / codex / agy
        |            IDENTITY.md               |
        |            USER.md                   | hooks append logs
        |            MEMORY.md                 |

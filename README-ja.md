@@ -161,7 +161,7 @@ Constructが最近の会話を振り返り、`archive.md` に記録された実�
        +------------║  Engram   ║--------->|Construct|
        |            ║ (persona) ║          | (live)  |
        |            ╚═══════════╝          +---------+
-       |            SOUL.md              claude / codex / gemini
+       |            SOUL.md              claude / codex / agy
        |            IDENTITY.md               |
        |            USER.md                   | hooks append logs
        |            MEMORY.md                 |
