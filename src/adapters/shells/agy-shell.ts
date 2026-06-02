@@ -77,18 +77,6 @@ export class AgyShell implements ShellLauncher {
       ...(options?.extraArgs ?? [])
     ];
 
-    // Automatically delete the temporary hidden file after 30 seconds
-    // as a fallback in case the Stop hook doesn't fire correctly.
-    const cleanupTimer = setTimeout(() => {
-      try {
-        if (existsSync(engramPath)) {
-          unlinkSync(engramPath);
-        }
-      } catch {
-        // ignore
-      }
-    }, 30000);
-
     try {
       await spawnShell(
         this.command,
@@ -97,8 +85,7 @@ export class AgyShell implements ShellLauncher {
         envForSpawn
       );
     } finally {
-      clearTimeout(cleanupTimer);
-      // Clean up the engram file if the shell exits before the timer
+      // Clean up the engram file if the shell exits abruptly
       try {
         if (existsSync(engramPath)) {
           unlinkSync(engramPath);
