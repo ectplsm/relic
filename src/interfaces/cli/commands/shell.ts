@@ -9,6 +9,7 @@ import {
   resolveMemoryWindowSize,
   resolveDistillationBatchSize,
 } from "../../../shared/config.js";
+import { AgyShell } from "../../../adapters/shells/agy-shell.js";
 import { ClaudeShell } from "../../../adapters/shells/claude-shell.js";
 import { GeminiShell } from "../../../adapters/shells/gemini-shell.js";
 import { CodexShell } from "../../../adapters/shells/codex-shell.js";
@@ -22,6 +23,11 @@ interface ShellDef {
 }
 
 const SHELLS: ShellDef[] = [
+  {
+    name: "agy",
+    description: "Summon an Engram into Antigravity CLI",
+    create: () => new AgyShell(),
+  },
   {
     name: "claude",
     description: "Summon an Engram into Claude Code CLI",

@@ -50,6 +50,7 @@ export function isResumeArgs(shellName: string, extraArgs: string[]): boolean {
       return CODEX_RESUME_SUBCOMMANDS.has(extraArgs[0]);
 
     case "Gemini CLI":
+    case "Antigravity CLI":
       return extraArgs.some((arg) => GEMINI_RESUME_FLAGS.has(arg));
 
     default:

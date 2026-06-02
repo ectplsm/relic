@@ -8,7 +8,7 @@ This guide covers how Relic connects to shells, records raw logs, and turns them
 |-------|---------|-----------------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt` (direct override) |
 | [Codex CLI](https://github.com/openai/codex) | `relic codex` | `-c developer_instructions` (developer-role message) |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `GEMINI_SYSTEM_MD` (system prompt) |
+| [Antigravity CLI](https://github.com/google-gemini/antigravity-cli) | `relic agy` | Agentic File Load (`--prompt-interactive`) |
 
 All shell commands support:
 
@@ -26,7 +26,7 @@ Relic uses each shell's hook mechanism to append prompt and response pairs to `a
 |-------|------|
 | [Claude Code](https://github.com/anthropics/claude-code) | Stop hook |
 | [Codex CLI](https://github.com/openai/codex) | Stop hook |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | AfterAgent hook |
+| [Antigravity CLI](https://github.com/google-gemini/antigravity-cli) | Stop hook |
 
 ### Claude Code
 
@@ -45,16 +45,19 @@ On the first run of `relic codex`, Relic registers `~/.relic/hooks/codex-stop.js
 > hooks = true
 > ```
 
-### Gemini CLI
+### Antigravity CLI
 
-On the first run of `relic gemini`, Relic sets up:
+On the first run of `relic agy`, Relic sets up:
 
-1. `~/.relic/hooks/gemini-after-agent.js` in `~/.gemini/settings.json`
-2. `~/.relic/gemini-system-default.md` as a cache of Gemini CLI's built-in system prompt
+1. `~/.relic/hooks/agy-stop.js` in `~/.gemini/config/hooks.json`
+2. The Relic MCP server in `~/.gemini/antigravity-cli/mcp_config.json`
+3. `mcp(relic/*)` in `~/.gemini/antigravity-cli/settings.json` permissions
 
-The default prompt capture reads Gemini's generated `system.md` from `.gemini/system.md` under the shell working directory.
+Relic writes the compiled persona to a hidden temporary file (`.gemini/.agy-engram-tmp.md`) and instructs the AI to read it via `--prompt-interactive`. The `Stop` hook then parses `transcript.jsonl` to record the conversation into `archive.md` and deletes the temporary file.
 
-After that, Relic appends the Engram persona to the cached prompt and injects it through `GEMINI_SYSTEM_MD`.
+The registered Antigravity hook command is Engram-independent. `relic agy` passes the active Engram ID and temporary persona path through the launched `agy` process environment, so switching Engrams does not rewrite the hook to point at a specific persona.
+
+> Known issue: Antigravity CLI 2.0 may load MCP configuration without exposing the MCP tools to the agent. When that happens, memory distillation commands such as "Organize my memories" cannot run in that session. Relic intentionally instructs the agent not to create temporary scripts or manual JSON-RPC clients as a workaround. Restart Antigravity and check `/mcp`; if the `relic` server is not active or its tools are not exposed, use Claude Code or Codex CLI for memory distillation until Antigravity's MCP tool injection stabilizes.
 
 ## MCP Server
 
@@ -154,19 +157,36 @@ approval_mode = "approve"
 > `trust_level = "trusted"` does not cover MCP approvals in Codex CLI.
 > Per-tool `approval_mode` is the reliable path.
 
-### Gemini CLI
+### Antigravity CLI
 
-Add this to `~/.gemini/settings.json`:
+Add this to `~/.gemini/antigravity-cli/mcp_config.json`:
 
 ```json
 {
   "mcpServers": {
     "relic": {
-      "command": "relic-mcp",
+      "command": "/path/to/node",
+      "args": [
+        "/path/to/relic-mcp"
+      ],
       "trust": true
     }
   }
 }
 ```
 
-> `trust: true` is required if you want to suppress confirmation dialogs for Relic tools.
+To suppress confirmation dialogs for Relic tools, allow the Relic MCP server in `~/.gemini/antigravity-cli/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp(relic/*)"
+    ]
+  }
+}
+```
+
+`relic agy` adds this permission automatically.
+
+If `/mcp` does not show the `relic` server as active, or if the agent still cannot see `relic_archive_pending` and `relic_memory_write`, treat memory distillation in Antigravity as unavailable for that session. Do not work around it by asking the agent to write temporary MCP scripts into the project.

@@ -10,7 +10,7 @@
 
 **Inject a unified AI persona with persistent memory into any coding CLI.**
 
-Relic manages AI **Engrams** (memory + personality) and injects them across coding assistants like Claude Code, Codex CLI, and Gemini CLI. It also integrates with OpenClaw and other Claw-based agent frameworks. One persona, shared across any shell.
+Relic manages AI **Engrams** (memory + personality) and injects them across coding assistants like Claude Code, Codex CLI, and Antigravity CLI (agy). (Gemini CLI is also supported but deprecated.) It also integrates with OpenClaw and other Claw-based agent frameworks. One persona, shared across any shell.
 
 ## Table of Contents
 
@@ -70,7 +70,23 @@ Codex CLI:
 codex mcp add relic -- relic-mcp
 ```
 
-Gemini CLI — add this to `~/.gemini/settings.json`:
+Antigravity CLI (agy):
+
+Add this to `~/.gemini/antigravity-cli/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "relic": {
+      "command": "relic-mcp",
+      "trust": true
+    }
+  }
+}
+```
+*(Note: Running `relic agy` will automatically set up this MCP config and the logging hook in `~/.gemini/config/hooks.json` on first launch.)*
+
+Gemini CLI (Deprecated) — add this to `~/.gemini/settings.json`:
 
 ```json
 {
@@ -101,7 +117,13 @@ Codex CLI:
 relic codex
 ```
 
-Gemini CLI:
+Antigravity CLI (agy):
+
+```bash
+relic agy
+```
+
+Gemini CLI (Deprecated):
 
 ```bash
 relic gemini
@@ -139,7 +161,7 @@ If you are upgrading from an older Relic version, see [docs/migration.md](docs/m
        +------------║  Engram   ║--------->|Construct|
        |            ║ (persona) ║          | (live)  |
        |            ╚═══════════╝          +---------+
-       |            SOUL.md              claude / codex / gemini
+       |            SOUL.md              claude / codex / agy
        |            IDENTITY.md               |
        |            USER.md                   | hooks append logs
        |            MEMORY.md                 |
@@ -167,7 +189,7 @@ For the full system model and domain terms, see [docs/concepts.md](docs/concepts
 
 ## Shell Integration and Memory
 
-Relic supports Claude Code, Codex CLI, and Gemini CLI.
+Relic supports Claude Code, Codex CLI, and Antigravity CLI (agy). Gemini CLI remains supported but deprecated.
 Background hooks append raw conversation logs to `archive.md`, and the MCP server handles archive search and memory distillation.
 
 For shell compatibility, hook behavior, setup, approvals, prompt inclusion, and distillation flow, see [docs/integration-and-memory.md](docs/integration-and-memory.md).

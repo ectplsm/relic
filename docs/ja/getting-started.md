@@ -40,7 +40,24 @@ Codex CLI:
 codex mcp add relic -- relic-mcp
 ```
 
-Gemini CLI — `~/.gemini/settings.json` に以下を追加:
+Antigravity CLI (agy):
+
+`~/.gemini/antigravity-cli/mcp_config.json` に以下を追加します。
+
+```json
+{
+  "mcpServers": {
+    "relic": {
+      "command": "relic-mcp",
+      "trust": true
+    }
+  }
+}
+```
+
+`relic agy` を実行すると、この MCP 設定と `~/.gemini/config/hooks.json` へのログ保存 hook も自動登録されます。
+
+Gemini CLI (非推奨) — `~/.gemini/settings.json` に以下を追加:
 
 ```json
 {
@@ -71,7 +88,13 @@ Codex CLI:
 relic codex
 ```
 
-Gemini CLI:
+Antigravity CLI (agy):
+
+```bash
+relic agy
+```
+
+Gemini CLI (非推奨):
 
 ```bash
 relic gemini

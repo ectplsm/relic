@@ -8,7 +8,7 @@
 |-------|---------|---------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt` による直接上書き |
 | [Codex CLI](https://github.com/openai/codex) | `relic codex` | `-c developer_instructions` による developer role 注入 |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `GEMINI_SYSTEM_MD` による system prompt 注入 |
+| [Antigravity CLI](https://github.com/google-gemini/antigravity-cli) | `relic agy` | Agentic File Load (`--prompt-interactive`) |
 
 全 shell コマンドは以下を共通で受けます。
 
@@ -26,7 +26,7 @@ Relic は各 shell の hook 機構を使って、prompt と response を `archiv
 |-------|------|
 | [Claude Code](https://github.com/anthropics/claude-code) | Stop hook |
 | [Codex CLI](https://github.com/openai/codex) | Stop hook |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | AfterAgent hook |
+| [Antigravity CLI](https://github.com/google-gemini/antigravity-cli) | Stop hook |
 
 ### Claude Code
 
@@ -45,16 +45,19 @@ Relic は各 shell の hook 機構を使って、prompt と response を `archiv
 > hooks = true
 > ```
 
-### Gemini CLI
+### Antigravity CLI
 
-`relic gemini` の初回起動時に、次をセットアップします。
+`relic agy` の初回起動時に、次をセットアップします。
 
-1. `~/.relic/hooks/gemini-after-agent.js` を `~/.gemini/settings.json` に登録
-2. Gemini CLI の built-in system prompt を `~/.relic/gemini-system-default.md` にキャッシュ
+1. `~/.relic/hooks/agy-stop.js` を `~/.gemini/config/hooks.json` に登録
+2. Relic MCP server を `~/.gemini/antigravity-cli/mcp_config.json` に登録
+3. `~/.gemini/antigravity-cli/settings.json` の permissions に `mcp(relic/*)` を追加
 
-デフォルトプロンプトのキャプチャでは、Shell の作業ディレクトリ配下の `.gemini/system.md` から Gemini が生成した内容を読み取ります。
+Relic はコンパイル済みのペルソナを隠しの一時ファイル（`.gemini/.agy-engram-tmp.md`）に書き出し、`--prompt-interactive` 経由で AI に自律的に読み込ませます。その後 `Stop` フックが `transcript.jsonl` を解析して `archive.md` に会話ログを記録し、一時ファイルを確実に削除します。
 
-その後は、キャッシュした prompt に Engram persona を追記し、`GEMINI_SYSTEM_MD` 経由で注入します。
+登録される Antigravity hook command は Engram 非依存です。`relic agy` は起動中の `agy` process の環境変数を通じて active Engram ID と一時 persona path を渡すため、Engram を切り替えても hook が特定の persona を指す形にはなりません。
+
+> 既知の制限: Antigravity CLI 2.0 では、MCP 設定を読み込んでも MCP ツールが agent 側に露出しないことがあります。この状態では「記憶を整理して」のような記憶蒸留コマンドはそのセッションでは実行できません。Relic はこの場合、agent に一時スクリプトや手動 JSON-RPC client を作らせる回避策を禁止します。Antigravity を再起動して `/mcp` を確認し、`relic` server が active でない、または tool が露出していない場合は、Antigravity 側の MCP tool injection が安定するまで Claude Code または Codex CLI で記憶蒸留してください。
 
 ## MCP サーバー
 
@@ -154,19 +157,36 @@ approval_mode = "approve"
 > Codex CLI では `trust_level = "trusted"` だけでは MCP 承認はカバーされません。
 > 確実なのは per-tool の `approval_mode` です。
 
-### Gemini CLI
+### Antigravity CLI
 
-`~/.gemini/settings.json` に以下を追加します。
+`~/.gemini/antigravity-cli/mcp_config.json` に以下を追加します。
 
 ```json
 {
   "mcpServers": {
     "relic": {
-      "command": "relic-mcp",
+      "command": "/path/to/node",
+      "args": [
+        "/path/to/relic-mcp"
+      ],
       "trust": true
     }
   }
 }
 ```
 
-> Relic ツールの確認ダイアログを抑止したいなら `trust: true` が必要です。
+Relic ツールの確認ダイアログを抑止するには、`~/.gemini/antigravity-cli/settings.json` で Relic MCP server を allow します。
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp(relic/*)"
+    ]
+  }
+}
+```
+
+`relic agy` はこの permission を自動追加します。
+
+`/mcp` で `relic` server が active にならない場合や、agent が `relic_archive_pending` / `relic_memory_write` を認識できない場合、そのセッションでは Antigravity での記憶蒸留は利用不可として扱ってください。project 内に一時 MCP スクリプトを書かせる回避策は使いません。
