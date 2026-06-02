@@ -93,7 +93,7 @@ function composeRelicSection(
 # Archive Protocol (MCP)
 
 You have an archive via the Relic MCP tools for persistent memory.
-Your memories persist across ALL sessions and ALL LLM shells (Claude, Gemini, GPT, etc.).
+Your memories persist across ALL sessions and ALL LLM shells (Antigravity CLI, Claude, Gemini, etc.).
 
 Session logs are written automatically by a background hook — do NOT write them yourself.
 

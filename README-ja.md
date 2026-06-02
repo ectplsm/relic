@@ -10,7 +10,7 @@
 
 **同一人格・同一記憶のAIペルソナを、あらゆるコーディングCLIに注入。**
 
-Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code・Codex CLI・Gemini CLIといったコーディングアシスタントに横断的に注入します。OpenClawをはじめとするClaw系エージェントフレームワークとも連携可能。ひとつの人格を、あらゆるShellで共有しましょう。
+Relicは、AIの**エングラム**（記憶+人格）を管理し、Claude Code・Codex CLI・Antigravity CLI (agy) といったコーディングアシスタントに横断的に注入します（Gemini CLI もサポートされますが現在は非推奨です）。OpenClawをはじめとするClaw系エージェントフレームワークとも連携可能。ひとつの人格を、あらゆるShellで共有しましょう。
 
 ## 目次
 
@@ -70,7 +70,23 @@ Codex CLI:
 codex mcp add relic -- relic-mcp
 ```
 
-Gemini CLI — `~/.gemini/settings.json` に以下を追加:
+Antigravity CLI (agy):
+
+`~/.gemini/antigravity-cli/settings.json` に以下を追加します。
+
+```json
+{
+  "mcpServers": {
+    "relic": {
+      "command": "relic-mcp",
+      "trust": true
+    }
+  }
+}
+```
+*（※ \`relic agy\` コマンドを初回起動すると、アーカイブ用フックとMCP設定が自動的に登録されます）*
+
+Gemini CLI (非推奨) — `~/.gemini/settings.json` に以下を追加:
 
 ```json
 {
@@ -101,7 +117,13 @@ Codex CLI:
 relic codex
 ```
 
-Gemini CLI:
+Antigravity CLI (agy):
+
+```bash
+relic agy
+```
+
+Gemini CLI (非推奨):
 
 ```bash
 relic gemini

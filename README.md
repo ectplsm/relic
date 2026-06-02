@@ -10,7 +10,7 @@
 
 **Inject a unified AI persona with persistent memory into any coding CLI.**
 
-Relic manages AI **Engrams** (memory + personality) and injects them across coding assistants like Claude Code, Codex CLI, and Gemini CLI. It also integrates with OpenClaw and other Claw-based agent frameworks. One persona, shared across any shell.
+Relic manages AI **Engrams** (memory + personality) and injects them across coding assistants like Claude Code, Codex CLI, and Antigravity CLI (agy). (Gemini CLI is also supported but deprecated.) It also integrates with OpenClaw and other Claw-based agent frameworks. One persona, shared across any shell.
 
 ## Table of Contents
 
@@ -70,7 +70,23 @@ Codex CLI:
 codex mcp add relic -- relic-mcp
 ```
 
-Gemini CLI — add this to `~/.gemini/settings.json`:
+Antigravity CLI (agy):
+
+Add this to `~/.gemini/antigravity-cli/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "relic": {
+      "command": "relic-mcp",
+      "trust": true
+    }
+  }
+}
+```
+*(Note: Running `relic agy` will automatically set up the logging hook and this MCP config for you on first launch.)*
+
+Gemini CLI (Deprecated) — add this to `~/.gemini/settings.json`:
 
 ```json
 {
@@ -101,7 +117,13 @@ Codex CLI:
 relic codex
 ```
 
-Gemini CLI:
+Antigravity CLI (agy):
+
+```bash
+relic agy
+```
+
+Gemini CLI (Deprecated):
 
 ```bash
 relic gemini
