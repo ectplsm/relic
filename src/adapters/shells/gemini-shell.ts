@@ -4,13 +4,11 @@ import { promisify } from "node:util";
 import {
   existsSync,
   mkdirSync,
-  mkdtempSync,
   readFileSync,
-  rmSync,
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
-import { homedir, tmpdir } from "node:os";
+import { homedir } from "node:os";
 import type { ShellLauncher, InjectionMode, ShellLaunchOptions } from "../../core/ports/shell-launcher.js";
 import { spawnShell, writeTempPrompt } from "./spawn-shell.js";
 import { setupGeminiHook, isGeminiHookSetup, writeGeminiHookScript } from "./gemini-hook.js";
@@ -28,52 +26,47 @@ const RELIC_ENGRAM_END = "<!-- RELIC ENGRAM END -->";
  * 組み込みシステムプロンプトをキャプチャして返す。
  * キャプチャ結果は ~/.relic/gemini-system-default.md にキャッシュされる。
  */
-async function captureDefaultSystemPrompt(command: string): Promise<string> {
-  const tempDir = mkdtempSync(join(tmpdir(), "relic-gemini-capture-"));
-  const geminiDir = join(tempDir, ".gemini");
+async function captureDefaultSystemPrompt(command: string, cwd = process.cwd()): Promise<string> {
+  const geminiDir = join(cwd, ".gemini");
   mkdirSync(geminiDir, { recursive: true });
 
-  try {
-    await new Promise<void>((resolve) => {
-      const child = spawn(command, [], {
-        cwd: tempDir,
-        env: { ...process.env, GEMINI_WRITE_SYSTEM_MD: "true" },
-        // stdin を /dev/null 相当にして TTY なしで起動
-        stdio: ["ignore", "pipe", "pipe"],
-      });
-
-      // ファイル書き出し猶予として5秒後に強制終了
-      const timeout = setTimeout(() => {
-        child.kill("SIGTERM");
-      }, 5000);
-
-      child.on("close", () => {
-        clearTimeout(timeout);
-        resolve();
-      });
-
-      child.on("error", () => {
-        clearTimeout(timeout);
-        resolve();
-      });
+  await new Promise<void>((resolve) => {
+    const child = spawn(command, [], {
+      cwd,
+      env: { ...process.env, GEMINI_WRITE_SYSTEM_MD: "true" },
+      // stdin を /dev/null 相当にして TTY なしで起動
+      stdio: ["ignore", "pipe", "pipe"],
     });
 
-    const systemMdPath = join(geminiDir, "system.md");
-    if (!existsSync(systemMdPath)) {
-      throw new Error(
-        "Failed to capture Gemini default system prompt.\n" +
-        "Run manually: GEMINI_WRITE_SYSTEM_MD=true gemini\n" +
-        `Then copy .gemini/system.md to ${GEMINI_DEFAULT_CACHE}`
-      );
-    }
+    // ファイル書き出し猶予として5秒後に強制終了
+    const timeout = setTimeout(() => {
+      child.kill("SIGTERM");
+    }, 5000);
 
-    const content = readFileSync(systemMdPath, "utf-8");
-    mkdirSync(RELIC_DIR, { recursive: true });
-    writeFileSync(GEMINI_DEFAULT_CACHE, content, "utf-8");
-    return content;
-  } finally {
-    rmSync(tempDir, { recursive: true, force: true });
+    child.on("close", () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+
+    child.on("error", () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+  });
+
+  const systemMdPath = join(geminiDir, "system.md");
+  if (!existsSync(systemMdPath)) {
+    throw new Error(
+      "Failed to capture Gemini default system prompt.\n" +
+      `Run manually from ${cwd}: GEMINI_WRITE_SYSTEM_MD=true gemini\n` +
+      `Then copy ${systemMdPath} to ${GEMINI_DEFAULT_CACHE}`
+    );
   }
+
+  const content = readFileSync(systemMdPath, "utf-8");
+  mkdirSync(RELIC_DIR, { recursive: true });
+  writeFileSync(GEMINI_DEFAULT_CACHE, content, "utf-8");
+  return content;
 }
 
 /**
@@ -152,7 +145,7 @@ export class GeminiShell implements ShellLauncher {
       defaultPrompt = readFileSync(GEMINI_DEFAULT_CACHE, "utf-8");
     } else {
       console.log("Capturing Gemini default system prompt (first run only)...");
-      defaultPrompt = await captureDefaultSystemPrompt(this.command);
+      defaultPrompt = await captureDefaultSystemPrompt(this.command, options?.cwd);
       console.log(`Cached to: ${GEMINI_DEFAULT_CACHE}`);
       console.log();
     }

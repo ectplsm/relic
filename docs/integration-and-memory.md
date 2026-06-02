@@ -52,6 +52,8 @@ On the first run of `relic gemini`, Relic sets up:
 1. `~/.relic/hooks/gemini-after-agent.js` in `~/.gemini/settings.json`
 2. `~/.relic/gemini-system-default.md` as a cache of Gemini CLI's built-in system prompt
 
+The default prompt capture reads Gemini's generated `system.md` from `.gemini/system.md` under the shell working directory.
+
 After that, Relic appends the Engram persona to the cached prompt and injects it through `GEMINI_SYSTEM_MD`.
 
 ## MCP Server
