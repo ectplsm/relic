@@ -44,7 +44,7 @@ export class AgyShell implements ShellLauncher {
     const geminiDir = join(cwd, ".gemini");
 
     if (options?.skipInjection) {
-      setupAgyHook({ engramId: options?.engramId });
+      setupAgyHook();
       await spawnShell(
         this.command,
         [...(options?.extraArgs ?? [])],
@@ -66,9 +66,10 @@ export class AgyShell implements ShellLauncher {
 
     // Write the compiled persona to a temporary file
     writeFileSync(engramPath, overriddenPrompt, "utf-8");
-    setupAgyHook({ engramId: options?.engramId, tmpEngramPath: engramPath });
+    setupAgyHook();
 
-    // Pass the absolute path of the temp engram to the hook via environment variable
+    // Pass runtime context to the hook through the agy process environment.
+    // The hook registration itself stays Engram-independent.
     const envForSpawn = { ...(finalEnv || {}), RELIC_AGY_TMP_ENGRAM_PATH: engramPath };
 
     // Pass a short instruction for the AI to read the persona autonomously

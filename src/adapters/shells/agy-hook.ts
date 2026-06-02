@@ -10,28 +10,10 @@ const AGY_SETTINGS_PATH = join(homedir(), ".gemini", "antigravity-cli", "setting
 const AGY_MCP_CONFIG_PATH = join(homedir(), ".gemini", "antigravity-cli", "mcp_config.json");
 const AGY_HOOKS_PATH = join(homedir(), ".gemini", "config", "hooks.json");
 const RELIC_HOOK_NAME = "relic-archive-log";
-const RELIC_HOOK_BASE_COMMAND = `node ${shellQuote(AGY_HOOK_SCRIPT_PATH)}`;
-
-interface AgyHookRuntime {
-  engramId?: string;
-  tmpEngramPath?: string;
-}
+const RELIC_HOOK_COMMAND = `node ${shellQuote(AGY_HOOK_SCRIPT_PATH)}`;
 
 function shellQuote(value: string): string {
   return `'${value.replace(/'/g, `'\\''`)}'`;
-}
-
-function buildAgyHookCommand(runtime?: AgyHookRuntime): string {
-  const env: string[] = [];
-  if (runtime?.engramId) {
-    env.push(`RELIC_ENGRAM_ID=${shellQuote(runtime.engramId)}`);
-  }
-  if (runtime?.tmpEngramPath) {
-    env.push(`RELIC_AGY_TMP_ENGRAM_PATH=${shellQuote(runtime.tmpEngramPath)}`);
-  }
-  return env.length > 0
-    ? `env ${env.join(" ")} ${RELIC_HOOK_BASE_COMMAND}`
-    : RELIC_HOOK_BASE_COMMAND;
 }
 
 function resolveCommandPath(command: string): string {
@@ -69,7 +51,7 @@ function addPermissionAllow(settings: Record<string, unknown>, permission: strin
 /**
  * Stop hook スクリプトの内容。
  * Antigravity CLI の各ターン(execution loop)終了後に発火し、会話ログを Engram archive に追記する。
- * 対象 Engram ID は hook command に埋め込んだ RELIC_ENGRAM_ID 環境変数で受け取る。
+ * 対象 Engram ID は agy 起動時の RELIC_ENGRAM_ID 環境変数で受け取る。
  */
 const HOOK_SCRIPT = `#!/usr/bin/env node
 const { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync } = require("node:fs");
@@ -177,7 +159,7 @@ export function writeAgyHookScript(): void {
   writeFileSync(AGY_HOOK_SCRIPT_PATH, HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
 }
 
-export function setupAgyHook(runtime?: AgyHookRuntime): void {
+export function setupAgyHook(): void {
   const agyDir = join(homedir(), ".gemini", "antigravity-cli");
   const agyConfigDir = join(homedir(), ".gemini", "config");
   mkdirSync(agyDir, { recursive: true });
@@ -238,7 +220,7 @@ export function setupAgyHook(runtime?: AgyHookRuntime): void {
     Stop: [
       {
         type: "command",
-        command: buildAgyHookCommand(runtime),
+        command: RELIC_HOOK_COMMAND,
         timeout: 5,
       },
     ],
@@ -271,7 +253,7 @@ export function isAgyHookSetup(): boolean {
 
     const relicHook = hooksConfig[RELIC_HOOK_NAME] as { Stop?: Array<{ command?: string }> } | undefined;
     const hasHook = Array.isArray(relicHook?.Stop) &&
-      relicHook.Stop.some((hook) => typeof hook.command === "string" && hook.command.includes(AGY_HOOK_SCRIPT_PATH));
+      relicHook.Stop.some((hook) => hook.command === RELIC_HOOK_COMMAND);
     
     // MCPサーバーの確認
     const mcpServers = (mcpConfig.mcpServers ?? {}) as Record<string, unknown>;

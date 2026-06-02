@@ -55,6 +55,8 @@ Relic は各 shell の hook 機構を使って、prompt と response を `archiv
 
 Relic はコンパイル済みのペルソナを隠しの一時ファイル（`.gemini/.agy-engram-tmp.md`）に書き出し、`--prompt-interactive` 経由で AI に自律的に読み込ませます。その後 `Stop` フックが `transcript.jsonl` を解析して `archive.md` に会話ログを記録し、一時ファイルを確実に削除します。
 
+登録される Antigravity hook command は Engram 非依存です。`relic agy` は起動中の `agy` process の環境変数を通じて active Engram ID と一時 persona path を渡すため、Engram を切り替えても hook が特定の persona を指す形にはなりません。
+
 > 既知の制限: Antigravity CLI 2.0 では、MCP 設定を読み込んでも MCP ツールが agent 側に露出しないことがあります。この状態では「記憶を整理して」のような記憶蒸留コマンドはそのセッションでは実行できません。Relic はこの場合、agent に一時スクリプトや手動 JSON-RPC client を作らせる回避策を禁止します。Antigravity を再起動して `/mcp` を確認し、`relic` server が active でない、または tool が露出していない場合は、Antigravity 側の MCP tool injection が安定するまで Claude Code または Codex CLI で記憶蒸留してください。
 
 ## MCP サーバー

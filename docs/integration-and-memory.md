@@ -55,6 +55,8 @@ On the first run of `relic agy`, Relic sets up:
 
 Relic writes the compiled persona to a hidden temporary file (`.gemini/.agy-engram-tmp.md`) and instructs the AI to read it via `--prompt-interactive`. The `Stop` hook then parses `transcript.jsonl` to record the conversation into `archive.md` and deletes the temporary file.
 
+The registered Antigravity hook command is Engram-independent. `relic agy` passes the active Engram ID and temporary persona path through the launched `agy` process environment, so switching Engrams does not rewrite the hook to point at a specific persona.
+
 > Known issue: Antigravity CLI 2.0 may load MCP configuration without exposing the MCP tools to the agent. When that happens, memory distillation commands such as "Organize my memories" cannot run in that session. Relic intentionally instructs the agent not to create temporary scripts or manual JSON-RPC clients as a workaround. Restart Antigravity and check `/mcp`; if the `relic` server is not active or its tools are not exposed, use Claude Code or Codex CLI for memory distillation until Antigravity's MCP tool injection stabilizes.
 
 ## MCP Server
