@@ -116,29 +116,19 @@ export function setupAgyHook(): void {
     }
   }
 
-  const hooks = (settings.hooks ?? {}) as Record<string, unknown[]>;
-  const stopHooks = (hooks.Stop ?? []) as Array<{ hooks: Array<{ name?: string }> }>;
-
-  const alreadyRegistered = stopHooks.some((group) =>
-    group.hooks?.some((h) => h.name === RELIC_HOOK_NAME)
-  );
+  const hooks = (settings.hooks ?? {}) as Record<string, any>;
   
-  if (!alreadyRegistered) {
-    hooks.Stop = [
-      ...stopHooks,
+  hooks[RELIC_HOOK_NAME] = {
+    Stop: [
       {
-        hooks: [
-          {
-            type: "command",
-            command: `node ${AGY_HOOK_SCRIPT_PATH}`,
-            name: RELIC_HOOK_NAME,
-            timeout: 5000,
-          },
-        ],
+        type: "command",
+        command: `node ${AGY_HOOK_SCRIPT_PATH}`,
+        timeout: 5000,
       },
-    ];
-    settings.hooks = hooks;
-  }
+    ],
+  };
+  
+  settings.hooks = hooks;
   
   // 自動で mcpServers に relic-mcp を追加する
   const mcpServers = (settings.mcpServers ?? {}) as Record<string, unknown>;
@@ -160,10 +150,8 @@ export function isAgyHookSetup(): boolean {
     const settings = JSON.parse(readFileSync(AGY_SETTINGS_PATH, "utf-8"));
     
     // フックの確認
-    const stopHooks: Array<{ hooks?: Array<{ name?: string }> }> = settings.hooks?.Stop ?? [];
-    const hasHook = stopHooks.some((group) =>
-      group.hooks?.some((h) => h.name === RELIC_HOOK_NAME)
-    );
+    const hooks = (settings.hooks ?? {}) as Record<string, any>;
+    const hasHook = Array.isArray(hooks[RELIC_HOOK_NAME]?.Stop) && hooks[RELIC_HOOK_NAME].Stop.length > 0;
     
     // MCPサーバーの確認
     const mcpServers = (settings.mcpServers ?? {}) as Record<string, unknown>;
