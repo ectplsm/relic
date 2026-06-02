@@ -6,6 +6,7 @@ const RELIC_DIR = join(homedir(), ".relic");
 const HOOKS_DIR = join(RELIC_DIR, "hooks");
 export const AGY_HOOK_SCRIPT_PATH = join(HOOKS_DIR, "agy-stop.js");
 const AGY_SETTINGS_PATH = join(homedir(), ".gemini", "antigravity-cli", "settings.json");
+const AGY_MCP_CONFIG_PATH = join(homedir(), ".gemini", "antigravity-cli", "mcp_config.json");
 const AGY_HOOKS_PATH = join(homedir(), ".gemini", "config", "hooks.json");
 const RELIC_HOOK_NAME = "relic-archive-log";
 const RELIC_HOOK_BASE_COMMAND = `node ${shellQuote(AGY_HOOK_SCRIPT_PATH)}`;
@@ -158,8 +159,17 @@ export function setupAgyHook(runtime?: AgyHookRuntime): void {
     }
   }
 
+  let mcpConfig: Record<string, unknown> = {};
+  if (existsSync(AGY_MCP_CONFIG_PATH)) {
+    try {
+      mcpConfig = JSON.parse(readFileSync(AGY_MCP_CONFIG_PATH, "utf-8"));
+    } catch {
+      mcpConfig = {};
+    }
+  }
+
   // Remove the old experimental location. Antigravity hooks are loaded from
-  // hooks.json, while settings.json remains the MCP configuration file.
+  // hooks.json, while settings.json remains the preferences file.
   const legacyHooks = (settings.hooks ?? {}) as Record<string, unknown>;
   if (legacyHooks[RELIC_HOOK_NAME]) {
     delete legacyHooks[RELIC_HOOK_NAME];
@@ -167,6 +177,18 @@ export function setupAgyHook(runtime?: AgyHookRuntime): void {
       delete settings.hooks;
     } else {
       settings.hooks = legacyHooks;
+    }
+  }
+
+  // Remove the old incorrect MCP location. Antigravity CLI loads MCP servers
+  // from mcp_config.json, not settings.json.
+  const legacyMcpServers = (settings.mcpServers ?? {}) as Record<string, unknown>;
+  if (legacyMcpServers["relic"]) {
+    delete legacyMcpServers["relic"];
+    if (Object.keys(legacyMcpServers).length === 0) {
+      delete settings.mcpServers;
+    } else {
+      settings.mcpServers = legacyMcpServers;
     }
   }
 
@@ -190,25 +212,27 @@ export function setupAgyHook(runtime?: AgyHookRuntime): void {
   };
 
   // 自動で mcpServers に relic-mcp を追加する
-  const mcpServers = (settings.mcpServers ?? {}) as Record<string, unknown>;
+  const mcpServers = (mcpConfig.mcpServers ?? {}) as Record<string, unknown>;
   if (!mcpServers["relic"]) {
     mcpServers["relic"] = {
       command: "relic-mcp",
       trust: true
     };
-    settings.mcpServers = mcpServers;
+    mcpConfig.mcpServers = mcpServers;
   }
 
   writeFileSync(AGY_SETTINGS_PATH, JSON.stringify(settings, null, 2), "utf-8");
+  writeFileSync(AGY_MCP_CONFIG_PATH, JSON.stringify(mcpConfig, null, 2), "utf-8");
   writeFileSync(AGY_HOOKS_PATH, JSON.stringify(hooksConfig, null, 2), "utf-8");
 }
 
 export function isAgyHookSetup(): boolean {
   if (!existsSync(AGY_HOOK_SCRIPT_PATH)) return false;
   if (!existsSync(AGY_SETTINGS_PATH)) return false;
+  if (!existsSync(AGY_MCP_CONFIG_PATH)) return false;
   if (!existsSync(AGY_HOOKS_PATH)) return false;
   try {
-    const settings = JSON.parse(readFileSync(AGY_SETTINGS_PATH, "utf-8"));
+    const mcpConfig = JSON.parse(readFileSync(AGY_MCP_CONFIG_PATH, "utf-8"));
     const hooksConfig = JSON.parse(readFileSync(AGY_HOOKS_PATH, "utf-8"));
 
     const relicHook = hooksConfig[RELIC_HOOK_NAME] as { Stop?: Array<{ command?: string }> } | undefined;
@@ -216,7 +240,7 @@ export function isAgyHookSetup(): boolean {
       relicHook.Stop.some((hook) => typeof hook.command === "string" && hook.command.includes(AGY_HOOK_SCRIPT_PATH));
     
     // MCPサーバーの確認
-    const mcpServers = (settings.mcpServers ?? {}) as Record<string, unknown>;
+    const mcpServers = (mcpConfig.mcpServers ?? {}) as Record<string, unknown>;
     const hasMcp = !!mcpServers["relic"];
     
     return hasHook && hasMcp;

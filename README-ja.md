@@ -72,7 +72,7 @@ codex mcp add relic -- relic-mcp
 
 Antigravity CLI (agy):
 
-`~/.gemini/antigravity-cli/settings.json` に以下を追加します。
+`~/.gemini/antigravity-cli/mcp_config.json` に以下を追加します。
 
 ```json
 {

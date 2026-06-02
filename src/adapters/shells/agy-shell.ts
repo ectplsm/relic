@@ -33,7 +33,7 @@ export class AgyShell implements ShellLauncher {
       console.log("Setting up Antigravity Stop hook and MCP server (first run only)...");
       setupAgyHook();
       console.log("Hook registered to ~/.gemini/config/hooks.json");
-      console.log("MCP registered to ~/.gemini/antigravity-cli/settings.json");
+      console.log("MCP registered to ~/.gemini/antigravity-cli/mcp_config.json");
       console.log();
     }
 
