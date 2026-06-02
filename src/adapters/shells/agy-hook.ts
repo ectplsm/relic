@@ -4,20 +4,17 @@ import { homedir } from "node:os";
 
 const RELIC_DIR = join(homedir(), ".relic");
 const HOOKS_DIR = join(RELIC_DIR, "hooks");
-export const AGY_HOOK_SCRIPT_PATH = join(HOOKS_DIR, "agy-after-agent.js");
+export const AGY_HOOK_SCRIPT_PATH = join(HOOKS_DIR, "agy-stop.js");
 const AGY_SETTINGS_PATH = join(homedir(), ".gemini", "antigravity-cli", "settings.json");
 const RELIC_HOOK_NAME = "relic-archive-log";
 
 /**
- * AfterAgent hook スクリプトの内容。
- * Antigravity CLI の各ターン終了後に発火し、会話ログを Engram archive に追記する。
+ * Stop hook スクリプトの内容。
+ * Antigravity CLI の各ターン(execution loop)終了後に発火し、会話ログを Engram archive に追記する。
  * RELIC_ENGRAM_ID 環境変数で対象 Engram ID を受け取る。
  */
 const HOOK_SCRIPT = `#!/usr/bin/env node
-// Relic AfterAgent hook for Antigravity CLI
-// Automatically logs each conversation turn to the Engram archive.
-// Receives AfterAgentInput JSON on stdin.
-const { appendFileSync, existsSync, mkdirSync } = require("node:fs");
+const { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync } = require("node:fs");
 const { join, dirname } = require("node:path");
 const { homedir } = require("node:os");
 
@@ -27,24 +24,77 @@ process.stdin.on("data", (chunk) => { raw += chunk; });
 process.stdin.on("end", () => {
   try {
     const input = JSON.parse(raw);
+    
+    // Stop event needs to return JSON to stdout
+    const exitWithOk = () => {
+      console.log(JSON.stringify({}));
+      process.exit(0);
+    };
+
+    if (input.terminationReason !== "model_stop" || !input.fullyIdle) {
+      exitWithOk();
+    }
+
+    // Reliable cleanup: immediately delete the temp engram file using absolute path from env
+    const tmpEngramPath = process.env.RELIC_AGY_TMP_ENGRAM_PATH;
+    if (tmpEngramPath) {
+      try {
+        if (existsSync(tmpEngramPath)) unlinkSync(tmpEngramPath);
+      } catch {
+        // silently ignore cleanup errors
+      }
+    }
+
     const engramId = process.env.RELIC_ENGRAM_ID;
-    if (!engramId) process.exit(0);
+    if (!engramId) exitWithOk();
 
-    const prompt = (input.prompt || "").trim();
-    const response = (input.prompt_response || "").trim();
-    if (!prompt && !response) process.exit(0);
+    let prompt = "";
+    let response = "";
 
-    const archivePath = join(homedir(), ".relic", "engrams", engramId, "archive.md");
-    mkdirSync(dirname(archivePath), { recursive: true });
+    // Parse transcript.jsonl
+    if (input.transcriptPath && existsSync(input.transcriptPath)) {
+      const lines = readFileSync(input.transcriptPath, "utf-8").split("\\n").filter(Boolean);
+      let lastUserIndex = -1;
+      
+      for (const line of lines) {
+        try {
+          const entry = JSON.parse(line);
+          if (entry.type === "USER_INPUT") {
+             lastUserIndex = entry.step_index;
+             prompt = entry.content || "";
+             response = ""; // reset response for the new turn
+          }
+          if (entry.type === "PLANNER_RESPONSE" && entry.content && entry.step_index >= lastUserIndex) {
+             response += (response ? "\\n\\n" : "") + entry.content;
+          }
+        } catch {}
+      }
+    }
 
-    const date = new Date().toISOString().split("T")[0];
-    const summary = prompt.slice(0, 80).replace(/\\n/g, " ");
-    const entry = \`\\n---\\n\${date} | \${summary}\\n\${response}\\n\`;
-    appendFileSync(archivePath, entry, "utf-8");
-  } catch {
-    // silently ignore
+    prompt = prompt.trim();
+    response = response.trim();
+
+    // Prevent logging the initial automated persona injection
+    if (prompt.includes("[SYSTEM CONFIGURATION] Read your core persona")) {
+      prompt = "";
+      response = "";
+    }
+
+    if (prompt || response) {
+      const archivePath = join(homedir(), ".relic", "engrams", engramId, "archive.md");
+      mkdirSync(dirname(archivePath), { recursive: true });
+
+      const date = new Date().toISOString().split("T")[0];
+      const summary = prompt.slice(0, 80).replace(/\\n/g, " ");
+      const entry = \`\\n---\\n\${date} | \${summary}\\n\${response}\\n\`;
+      appendFileSync(archivePath, entry, "utf-8");
+    }
+    
+    exitWithOk();
+  } catch (err) {
+    console.log(JSON.stringify({}));
+    process.exit(0);
   }
-  process.exit(0);
 });
 `;
 
@@ -67,15 +117,15 @@ export function setupAgyHook(): void {
   }
 
   const hooks = (settings.hooks ?? {}) as Record<string, unknown[]>;
-  const afterAgentHooks = (hooks.AfterAgent ?? []) as Array<{ hooks: Array<{ name?: string }> }>;
+  const stopHooks = (hooks.Stop ?? []) as Array<{ hooks: Array<{ name?: string }> }>;
 
-  const alreadyRegistered = afterAgentHooks.some((group) =>
+  const alreadyRegistered = stopHooks.some((group) =>
     group.hooks?.some((h) => h.name === RELIC_HOOK_NAME)
   );
   
   if (!alreadyRegistered) {
-    hooks.AfterAgent = [
-      ...afterAgentHooks,
+    hooks.Stop = [
+      ...stopHooks,
       {
         hooks: [
           {
@@ -110,8 +160,8 @@ export function isAgyHookSetup(): boolean {
     const settings = JSON.parse(readFileSync(AGY_SETTINGS_PATH, "utf-8"));
     
     // フックの確認
-    const afterAgentHooks: Array<{ hooks?: Array<{ name?: string }> }> = settings.hooks?.AfterAgent ?? [];
-    const hasHook = afterAgentHooks.some((group) =>
+    const stopHooks: Array<{ hooks?: Array<{ name?: string }> }> = settings.hooks?.Stop ?? [];
+    const hasHook = stopHooks.some((group) =>
       group.hooks?.some((h) => h.name === RELIC_HOOK_NAME)
     );
     
