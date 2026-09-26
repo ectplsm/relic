@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import type { Command } from "commander";
-import type { ShellLauncher } from "../../../core/ports/shell-launcher.js";
+import type { ShellKind, ShellLauncher } from "../../../core/ports/shell-launcher.js";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
 import { Summon, EngramNotFoundError } from "../../../core/usecases/index.js";
 import {
@@ -12,28 +12,29 @@ import {
 import { ClaudeShell } from "../../../adapters/shells/claude-shell.js";
 import { GeminiShell } from "../../../adapters/shells/gemini-shell.js";
 import { CodexShell } from "../../../adapters/shells/codex-shell.js";
+import { CodexArgsError, parseCodexArgs } from "../../../adapters/shells/codex-args.js";
 import { isResumeArgs } from "../../../adapters/shells/resume-detect.js";
 
 
 interface ShellDef {
-  name: string;
+  kind: ShellKind;
   description: string;
   create: () => ShellLauncher;
 }
 
 const SHELLS: ShellDef[] = [
   {
-    name: "claude",
+    kind: "claude",
     description: "Summon an Engram into Claude Code CLI",
     create: () => new ClaudeShell(),
   },
   {
-    name: "gemini",
+    kind: "gemini",
     description: "Summon an Engram into Gemini CLI",
     create: () => new GeminiShell(),
   },
   {
-    name: "codex",
+    kind: "codex",
     description: "Summon an Engram into Codex CLI",
     create: () => new CodexShell(),
   },
@@ -41,14 +42,21 @@ const SHELLS: ShellDef[] = [
 
 export function registerShellCommands(program: Command): void {
   for (const shell of SHELLS) {
-    program
-      .command(shell.name)
+    const command = program
+      .command(shell.kind)
       .description(shell.description)
       .option("-e, --engram <id>", "Engram ID to summon (default: config.defaultEngram)")
-      .option("-p, --path <dir>", "Override engrams directory path")
       .option("--cwd <dir>", "Working directory for the Shell (default: current directory)")
       .allowUnknownOption(true)
-      .allowExcessArguments(true)
+      .allowExcessArguments(true);
+
+    if (shell.kind === "codex") {
+      command.option("--path <dir>", "Override engrams directory path");
+    } else {
+      command.option("-p, --path <dir>", "Override engrams directory path");
+    }
+
+    command
       .action(async (opts: { engram?: string; path?: string; cwd?: string }, cmd: Command) => {
         const launcher = shell.create();
 
@@ -81,11 +89,17 @@ export function registerShellCommands(program: Command): void {
           });
 
           // --engram, --path, --cwd 以外の引数をShellにパススルー
-          const extraArgs = cmd.args;
+          let extraArgs = cmd.args;
+          let selectedProfile: string | undefined;
+          if (shell.kind === "codex") {
+            const parsed = parseCodexArgs(extraArgs);
+            extraArgs = parsed.argsWithoutProfile;
+            selectedProfile = parsed.profile;
+          }
           const cwd = opts.cwd ? resolve(opts.cwd) : process.cwd();
 
           // resume 系操作の検出
-          const skipInjection = isResumeArgs(launcher.name, extraArgs);
+          const skipInjection = isResumeArgs(shell.kind, extraArgs);
 
           if (skipInjection) {
             console.log(`Resuming ${launcher.name} session (${result.engramName})...`);
@@ -98,9 +112,14 @@ export function registerShellCommands(program: Command): void {
             extraArgs,
             cwd,
             engramId,
+            selectedProfile,
             skipInjection,
           });
         } catch (err) {
+          if (err instanceof CodexArgsError) {
+            console.error(`Error: ${err.message}`);
+            process.exit(1);
+          }
           if (err instanceof EngramNotFoundError) {
             console.error(`Error: ${err.message}`);
             process.exit(1);

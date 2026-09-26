@@ -53,6 +53,7 @@ export class CodexShell implements ShellLauncher {
 
     args.push(
       "-c", "features.hooks=true",
+      ...(options?.selectedProfile ? ["--profile", options.selectedProfile] : []),
       ...(options?.extraArgs ?? []),
     );
 

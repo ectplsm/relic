@@ -8,12 +8,17 @@
  */
 export type InjectionMode = "system-prompt" | "developer-message" | "instruction-file" | "user-message";
 
+/** Relic が対応するShellの安定した内部識別子 */
+export type ShellKind = "claude" | "gemini" | "codex";
+
 /**
  * Shell起動オプション
  */
 export interface ShellLaunchOptions {
   /** Shell に追加で渡す引数 */
   extraArgs?: string[];
+  /** ユーザーが明示したCodex profile名 */
+  selectedProfile?: string;
   /** Shell の作業ディレクトリ */
   cwd?: string;
   /** 注入するEngram ID（Shell固有のセットアップに使用） */
