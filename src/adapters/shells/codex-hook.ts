@@ -1,11 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { resolveCodexHome, resolveCodexHooksPath } from "./codex-home.js";
 
 const RELIC_DIR = join(homedir(), ".relic");
 const HOOKS_DIR = join(RELIC_DIR, "hooks");
 export const CODEX_HOOK_SCRIPT_PATH = join(HOOKS_DIR, "codex-stop.js");
-const CODEX_HOOKS_PATH = join(homedir(), ".codex", "hooks.json");
 const RELIC_HOOK_COMMAND = `node ${join(HOOKS_DIR, "codex-stop.js")}`;
 
 /**
@@ -96,14 +96,14 @@ export function writeCodexHookScript(): void {
  * 既にセットアップ済みの場合はスキップ。
  */
 export function setupCodexHook(): void {
-  // ~/.codex/hooks.json に Stop フックを登録
-  const codexDir = join(homedir(), ".codex");
+  const codexDir = resolveCodexHome();
+  const codexHooksPath = resolveCodexHooksPath();
   mkdirSync(codexDir, { recursive: true });
 
   let hooksConfig: Record<string, unknown> = {};
-  if (existsSync(CODEX_HOOKS_PATH)) {
+  if (existsSync(codexHooksPath)) {
     try {
-      hooksConfig = JSON.parse(readFileSync(CODEX_HOOKS_PATH, "utf-8"));
+      hooksConfig = JSON.parse(readFileSync(codexHooksPath, "utf-8"));
     } catch {
       hooksConfig = {};
     }
@@ -131,17 +131,18 @@ export function setupCodexHook(): void {
     },
   ];
   hooksConfig.hooks = hooks;
-  writeFileSync(CODEX_HOOKS_PATH, JSON.stringify(hooksConfig, null, 2), "utf-8");
+  writeFileSync(codexHooksPath, JSON.stringify(hooksConfig, null, 2), "utf-8");
 }
 
 /**
  * Stop フックがセットアップ済みか確認する。
  */
 export function isCodexHookSetup(): boolean {
+  const codexHooksPath = resolveCodexHooksPath();
   if (!existsSync(CODEX_HOOK_SCRIPT_PATH)) return false;
-  if (!existsSync(CODEX_HOOKS_PATH)) return false;
+  if (!existsSync(codexHooksPath)) return false;
   try {
-    const hooksConfig = JSON.parse(readFileSync(CODEX_HOOKS_PATH, "utf-8"));
+    const hooksConfig = JSON.parse(readFileSync(codexHooksPath, "utf-8"));
     const stopHooks: Array<{ hooks?: Array<{ command?: string }> }> =
       hooksConfig.hooks?.Stop ?? [];
     return stopHooks.some((group) =>

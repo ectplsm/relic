@@ -4,6 +4,7 @@ import type { ShellLauncher, InjectionMode, ShellLaunchOptions } from "../../cor
 import { spawnShell } from "./spawn-shell.js";
 import { wrapWithOverride } from "./override-preamble.js";
 import { setupCodexHook, isCodexHookSetup, writeCodexHookScript } from "./codex-hook.js";
+import { resolveCodexHome, resolveCodexHooksPath } from "./codex-home.js";
 
 const execAsync = promisify(exec);
 
@@ -38,7 +39,7 @@ export class CodexShell implements ShellLauncher {
     if (!isCodexHookSetup()) {
       console.log("Setting up Codex CLI Stop hook (first run only)...");
       setupCodexHook();
-      console.log("Hook registered to ~/.codex/hooks.json");
+      console.log(`Hook registered to ${resolveCodexHooksPath()}`);
       console.log();
     }
 
@@ -57,9 +58,11 @@ export class CodexShell implements ShellLauncher {
       ...(options?.extraArgs ?? []),
     );
 
-    const env: Record<string, string> = {};
+    const env: Record<string, string> = {
+      CODEX_HOME: resolveCodexHome(),
+    };
     if (options?.engramId) env.RELIC_ENGRAM_ID = options.engramId;
 
-    await spawnShell(this.command, args, options?.cwd, Object.keys(env).length > 0 ? env : undefined);
+    await spawnShell(this.command, args, options?.cwd, env);
   }
 }
