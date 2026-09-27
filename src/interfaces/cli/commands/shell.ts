@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import type { Command } from "commander";
 import type { ShellKind, ShellLauncher } from "../../../core/ports/shell-launcher.js";
 import { LocalEngramRepository } from "../../../adapters/local/index.js";
@@ -111,7 +111,8 @@ export function registerShellCommands(program: Command): void {
           await launcher.launch(result.prompt, {
             extraArgs,
             cwd,
-            engramId,
+            engramId: result.engramId,
+            archivePath: join(engramsPath, result.engramId, "archive.md"),
             selectedProfile,
             skipInjection,
           });

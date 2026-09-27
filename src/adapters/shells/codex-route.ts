@@ -54,6 +54,13 @@ export function createCodexRouteId(route: CodexRoute): string {
   return createHash("sha256").update(canonical).digest("hex");
 }
 
+export function formatCodexRouteMarker(id: string): string {
+  if (!CODEX_ROUTE_ID.test(id)) {
+    throw new CodexRouteError(`Invalid Codex route ID: ${id}`);
+  }
+  return `<!-- relic-route:${id} -->`;
+}
+
 /** Create or reuse the immutable route for one Engram archive destination. */
 export function createCodexRoute(
   engramId: string,

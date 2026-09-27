@@ -5,12 +5,14 @@ import { spawnShell } from "./spawn-shell.js";
 import { wrapWithOverride } from "./override-preamble.js";
 import { setupCodexHook, isCodexHookSetup, writeCodexHookScript } from "./codex-hook.js";
 import { resolveCodexHome, resolveCodexHooksPath } from "./codex-home.js";
+import { createCodexRuntimeProfile } from "./codex-profile.js";
+import { createCodexRoute, formatCodexRouteMarker } from "./codex-route.js";
 
 const execAsync = promisify(exec);
 
 /**
  * Codex CLI アダプター
- * `-c developer_instructions=<prompt>` でEngramをdeveloperロールとして注入する。
+ * 一時profileの developer_instructions でEngramをdeveloperロールとして注入する。
  * user-messageよりシステムプロンプトに近い強度で注入できる。
  *
  * 初回起動時に Stop フックを ~/.codex/hooks.json に登録し、
@@ -32,6 +34,11 @@ export class CodexShell implements ShellLauncher {
   }
 
   async launch(prompt: string, options?: ShellLaunchOptions): Promise<void> {
+    if (!options) {
+      throw new Error("Codex launch options are required.");
+    }
+    const injection = resolveCodexInjection(options);
+
     // フックスクリプトを毎回最新に更新
     writeCodexHookScript();
 
@@ -43,26 +50,49 @@ export class CodexShell implements ShellLauncher {
       console.log();
     }
 
-    const args: string[] = [];
+    const codexHome = resolveCodexHome();
+    const env = { CODEX_HOME: codexHome };
 
-    // resume 系操作時は injection をスキップ（前回セッションに焼き付き済み）
-    if (!options?.skipInjection) {
-      args.push(
-        "-c", `developer_instructions=${JSON.stringify(wrapWithOverride(prompt))}`,
-      );
+    // resume/fork は保存済みdeveloper instructionsを使い、再注入しない。
+    if (!injection) {
+      const args = [
+        ...(options.extraArgs ?? []),
+        ...(options.selectedProfile ? ["--profile", options.selectedProfile] : []),
+      ];
+      await spawnShell(this.command, args, options.cwd, env);
+      return;
     }
 
-    args.push(
-      "-c", "features.hooks=true",
-      ...(options?.selectedProfile ? ["--profile", options.selectedProfile] : []),
-      ...(options?.extraArgs ?? []),
-    );
+    const route = createCodexRoute(injection.engramId, injection.archivePath);
+    const developerInstructions = [
+      formatCodexRouteMarker(route.id),
+      wrapWithOverride(prompt),
+    ].join("\n\n");
+    const runtimeProfile = createCodexRuntimeProfile({
+      codexHome,
+      selectedProfile: options.selectedProfile,
+      developerInstructions,
+    });
 
-    const env: Record<string, string> = {
-      CODEX_HOME: resolveCodexHome(),
-    };
-    if (options?.engramId) env.RELIC_ENGRAM_ID = options.engramId;
-
-    await spawnShell(this.command, args, options?.cwd, env);
+    try {
+      await spawnShell(
+        this.command,
+        ["--profile", runtimeProfile.name, ...(options.extraArgs ?? [])],
+        options.cwd,
+        env,
+      );
+    } finally {
+      runtimeProfile.cleanup();
+    }
   }
+}
+
+function resolveCodexInjection(
+  options: ShellLaunchOptions,
+): { engramId: string; archivePath: string } | undefined {
+  if (options.skipInjection) return undefined;
+  if (!options.engramId || !options.archivePath) {
+    throw new Error("Codex launch requires an Engram ID and archive path.");
+  }
+  return { engramId: options.engramId, archivePath: options.archivePath };
 }
