@@ -11,17 +11,68 @@ const RELIC_HOOK_COMMAND = `node ${join(HOOKS_DIR, "codex-stop.js")}`;
 /**
  * Stop hook スクリプトの内容。
  * Codex CLI の各ターン終了後に発火し、会話ログを Engram archive に追記する。
- * RELIC_ENGRAM_ID 環境変数で対象 Engram ID を受け取る。
+ * developer instructions内のroute markerから対象archiveを解決する。
  * stdin には { last_assistant_message, transcript_path, session_id, ... } が渡される。
  * Claude の Stop hook と異なり last_assistant_message が直接取得できるため wait 不要。
  */
-const HOOK_SCRIPT = `#!/usr/bin/env node
+export const CODEX_HOOK_SCRIPT = `#!/usr/bin/env node
 // Relic Stop hook for Codex CLI
 // Automatically logs each conversation turn to the Engram archive.
 // Receives Stop hook JSON on stdin.
-const { appendFileSync, existsSync, mkdirSync, readFileSync } = require("node:fs");
-const { join, dirname } = require("node:path");
+const { appendFileSync, existsSync, lstatSync, mkdirSync, readFileSync } = require("node:fs");
+const { createHash } = require("node:crypto");
+const { join, dirname, isAbsolute, resolve } = require("node:path");
 const { homedir } = require("node:os");
+
+const ROUTE_ID_PATTERN = /^[a-f0-9]{64}$/;
+const ROUTE_MARKER_PATTERN = /<!-- relic-route:([a-f0-9]{64}) -->/g;
+const ROUTES_DIR = join(homedir(), ".relic", "runtime", "codex", "routes");
+
+function collectRouteIds(entry, routeIds) {
+  const texts = [];
+  if (entry?.type === "turn_context" && typeof entry.payload?.developer_instructions === "string") {
+    texts.push(entry.payload.developer_instructions);
+  }
+
+  const payload = entry?.payload;
+  if (entry?.type === "response_item" && payload?.type === "message" && payload.role === "developer") {
+    if (typeof payload.content === "string") texts.push(payload.content);
+    if (Array.isArray(payload.content)) {
+      for (const item of payload.content) {
+        if (typeof item === "string") texts.push(item);
+        else if (item && typeof item.text === "string") texts.push(item.text);
+      }
+    }
+  }
+
+  for (const text of texts) {
+    for (const match of text.matchAll(ROUTE_MARKER_PATTERN)) routeIds.add(match[1]);
+  }
+}
+
+function readRoute(routeId) {
+  if (!ROUTE_ID_PATTERN.test(routeId)) return null;
+  const routePath = join(ROUTES_DIR, routeId + ".json");
+
+  try {
+    const stat = lstatSync(routePath);
+    if (!stat.isFile() || stat.isSymbolicLink() || (stat.mode & 0o077) !== 0) return null;
+
+    const route = JSON.parse(readFileSync(routePath, "utf-8"));
+    if (!route || typeof route !== "object" || Array.isArray(route)) return null;
+    if (Object.keys(route).sort().join(",") !== "archivePath,engramId,version") return null;
+    if (route.version !== 1) return null;
+    if (typeof route.engramId !== "string" || !route.engramId || route.engramId.includes("\\0")) return null;
+    if (typeof route.archivePath !== "string" || !isAbsolute(route.archivePath)) return null;
+    if (resolve(route.archivePath) !== route.archivePath) return null;
+
+    const canonical = JSON.stringify([route.version, route.engramId, route.archivePath]);
+    const expectedId = createHash("sha256").update(canonical).digest("hex");
+    return expectedId === routeId ? route : null;
+  } catch {
+    return null;
+  }
+}
 
 let raw = "";
 process.stdin.setEncoding("utf-8");
@@ -29,20 +80,16 @@ process.stdin.on("data", (chunk) => { raw += chunk; });
 process.stdin.on("end", () => {
   try {
     const input = JSON.parse(raw);
-    const engramId = process.env.RELIC_ENGRAM_ID;
-    if (!engramId) process.exit(0);
-
-    const archivePath = join(homedir(), ".relic", "engrams", engramId, "archive.md");
-    mkdirSync(dirname(archivePath), { recursive: true });
 
     // Codex Stop hook は last_assistant_message を直接提供する
     const lastResponse = (input.last_assistant_message || "").trim();
 
-    // transcript から最後のユーザー入力を取得
+    // transcript からroute markerと最後のユーザー入力を取得
     // Codex transcript format:
     //   { type: "response_item", payload: { type: "message", role: "user", content: [{ type: "input_text", text: "..." }] } }
     // <environment_context> で始まるエントリはシステム注入なのでスキップする
     let lastPrompt = "";
+    const routeIds = new Set();
     const transcriptPath = input.transcript_path;
     if (transcriptPath && existsSync(transcriptPath)) {
       const lines = readFileSync(transcriptPath, "utf-8")
@@ -50,6 +97,8 @@ process.stdin.on("end", () => {
         .filter(Boolean)
         .map((l) => { try { return JSON.parse(l); } catch { return null; } })
         .filter(Boolean);
+
+      for (const entry of lines) collectRouteIds(entry, routeIds);
 
       for (let i = lines.length - 1; i >= 0; i--) {
         const entry = lines[i];
@@ -69,8 +118,15 @@ process.stdin.on("end", () => {
       }
     }
 
+    // marker欠落・複数route・route改ざん時は何も書かない。
+    if (routeIds.size !== 1) process.exit(0);
+    const route = readRoute([...routeIds][0]);
+    if (!route) process.exit(0);
+
     if (!lastPrompt && !lastResponse) process.exit(0);
 
+    const archivePath = route.archivePath;
+    mkdirSync(dirname(archivePath), { recursive: true });
     const date = new Date().toISOString().split("T")[0];
     const summary = lastPrompt.slice(0, 80).replace(/\\n/g, " ");
     const entry = \`\\n---\\n\${date} | \${summary}\\n\${lastResponse}\\n\`;
@@ -88,7 +144,7 @@ process.stdin.on("end", () => {
  */
 export function writeCodexHookScript(): void {
   mkdirSync(HOOKS_DIR, { recursive: true });
-  writeFileSync(CODEX_HOOK_SCRIPT_PATH, HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
+  writeFileSync(CODEX_HOOK_SCRIPT_PATH, CODEX_HOOK_SCRIPT, { encoding: "utf-8", mode: 0o755 });
 }
 
 /**
