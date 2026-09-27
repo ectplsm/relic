@@ -26,9 +26,12 @@ const { homedir } = require("node:os");
 
 const ROUTE_ID_PATTERN = /^[a-f0-9]{64}$/;
 const ROUTE_MARKER_PATTERN = /<!-- relic-route:([a-f0-9]{64}) -->/g;
+const ROUTE_MARKER_PREFIX = "<!-- relic-route:";
+const RELIC_SECTION_PATTERN = /<RELIC>([\\s\\S]*?)<\\/RELIC>/g;
+const LEGACY_ENGRAM_ID_PATTERN = /^\\s*-\\s*engramId:\\s*(.+?)\\s*$/m;
 const ROUTES_DIR = join(homedir(), ".relic", "runtime", "codex", "routes");
 
-function collectRouteIds(entry, routeIds) {
+function collectRoutingMetadata(entry, routing) {
   const texts = [];
   if (entry?.type === "turn_context" && typeof entry.payload?.developer_instructions === "string") {
     texts.push(entry.payload.developer_instructions);
@@ -46,8 +49,24 @@ function collectRouteIds(entry, routeIds) {
   }
 
   for (const text of texts) {
-    for (const match of text.matchAll(ROUTE_MARKER_PATTERN)) routeIds.add(match[1]);
+    if (text.includes(ROUTE_MARKER_PREFIX)) routing.routeMarkerSeen = true;
+    for (const match of text.matchAll(ROUTE_MARKER_PATTERN)) routing.routeIds.add(match[1]);
+
+    for (const section of text.matchAll(RELIC_SECTION_PATTERN)) {
+      const match = section[1].match(LEGACY_ENGRAM_ID_PATTERN);
+      const engramId = match?.[1]?.trim();
+      if (engramId && isLegacyEngramId(engramId)) routing.legacyEngramIds.add(engramId);
+    }
   }
+}
+
+function isLegacyEngramId(engramId) {
+  return engramId.length <= 255
+    && engramId !== "."
+    && engramId !== ".."
+    && !engramId.includes("/")
+    && !engramId.includes("\\\\")
+    && !engramId.includes("\\0");
 }
 
 function readRoute(routeId) {
@@ -89,7 +108,11 @@ process.stdin.on("end", () => {
     //   { type: "response_item", payload: { type: "message", role: "user", content: [{ type: "input_text", text: "..." }] } }
     // <environment_context> で始まるエントリはシステム注入なのでスキップする
     let lastPrompt = "";
-    const routeIds = new Set();
+    const routing = {
+      routeMarkerSeen: false,
+      routeIds: new Set(),
+      legacyEngramIds: new Set(),
+    };
     const transcriptPath = input.transcript_path;
     if (transcriptPath && existsSync(transcriptPath)) {
       const lines = readFileSync(transcriptPath, "utf-8")
@@ -98,7 +121,7 @@ process.stdin.on("end", () => {
         .map((l) => { try { return JSON.parse(l); } catch { return null; } })
         .filter(Boolean);
 
-      for (const entry of lines) collectRouteIds(entry, routeIds);
+      for (const entry of lines) collectRoutingMetadata(entry, routing);
 
       for (let i = lines.length - 1; i >= 0; i--) {
         const entry = lines[i];
@@ -118,14 +141,22 @@ process.stdin.on("end", () => {
       }
     }
 
-    // marker欠落・複数route・route改ざん時は何も書かない。
-    if (routeIds.size !== 1) process.exit(0);
-    const route = readRoute([...routeIds][0]);
-    if (!route) process.exit(0);
+    let archivePath;
+    if (routing.routeMarkerSeen) {
+      // 新markerがあればlegacyへfallbackせず、曖昧・不正なrouteは拒否する。
+      if (routing.routeIds.size !== 1) process.exit(0);
+      const route = readRoute([...routing.routeIds][0]);
+      if (!route) process.exit(0);
+      archivePath = route.archivePath;
+    } else {
+      // 旧セッションは<RELIC>内の単一engramIdだけを既定保存先へrouteする。
+      if (routing.legacyEngramIds.size !== 1) process.exit(0);
+      const engramId = [...routing.legacyEngramIds][0];
+      archivePath = join(homedir(), ".relic", "engrams", engramId, "archive.md");
+    }
 
     if (!lastPrompt && !lastResponse) process.exit(0);
 
-    const archivePath = route.archivePath;
     mkdirSync(dirname(archivePath), { recursive: true });
     const date = new Date().toISOString().split("T")[0];
     const summary = lastPrompt.slice(0, 80).replace(/\\n/g, " ");
