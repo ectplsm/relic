@@ -7,7 +7,7 @@ This guide covers how Relic connects to shells, records raw logs, and turns them
 | Shell | Command | Injection Method |
 |-------|---------|-----------------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt` (direct override) |
-| [Codex CLI](https://github.com/openai/codex) | `relic codex` | `-c developer_instructions` (developer-role message) |
+| [Codex CLI](https://github.com/openai/codex) | `relic codex` | Temporary composed `--profile` (`developer_instructions`) |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `GEMINI_SYSTEM_MD` (system prompt) |
 
 All shell commands support:
@@ -17,6 +17,23 @@ All shell commands support:
 - `--cwd <dir>` — Working directory for the shell (default: current directory)
 
 Extra arguments are passed through to the underlying CLI.
+
+### Codex profiles and argument order
+
+`relic codex --profile work` also accepts `--profile=work` and `-p work`. Relic preserves the selected profile's settings, adds the Engram instructions, and launches Codex with a temporary profile. The original profile is never modified. Using a profile instead of a `-c` override keeps Codex compatible with its shared background server.
+
+Codex reserves `-p` for profiles. Use the long `--path <dir>` form to override the Relic Engrams directory.
+
+To resume or fork a session, write `resume` or `fork` immediately after `relic codex`. Put Codex options such as `--last`, `--profile`, and `--search` after it:
+
+```bash
+relic codex resume --last --profile work
+relic codex fork --last --search
+```
+
+Avoid forms such as `relic codex --search resume --last`; Relic would treat that as a new session because `resume` is not in the expected position.
+
+Relic does not reinject an Engram for these subcommands. The resumed or forked session continues using its original Engram and archive destination.
 
 ## Raw Log Recording
 
@@ -34,16 +51,20 @@ On the first run of `relic claude`, Relic registers `~/.relic/hooks/claude-stop.
 
 ### Codex CLI
 
-On the first run of `relic codex`, Relic registers `~/.relic/hooks/codex-stop.js` in `~/.codex/hooks.json`.
+On the first run of `relic codex`, Relic registers `~/.relic/hooks/codex-stop.js` in `$CODEX_HOME/hooks.json` (`~/.codex/hooks.json` by default).
 
-> Codex hooks require `features.hooks=true`.
-> `relic codex` enables that automatically on every launch via `-c features.hooks=true`.
-> You can also enable hooks globally in `~/.codex/config.toml`:
+Relic respects the effective Codex Hooks setting; it does not force-enable Hooks or bypass hook trust. If Hooks are disabled or the Relic hook is not trusted, `archive.md` receives no new entries. Use `/hooks` in Codex to inspect, trust, enable, or disable the hook.
+
+Hooks are enabled by default in current Codex releases. If you previously disabled them, enable them in `$CODEX_HOME/config.toml`:
 >
 > ```toml
 > [features]
 > hooks = true
 > ```
+
+Archive routing remains associated with the session, so `resume` and `fork` continue writing to the original Engram, including sessions created by older Relic versions and destinations selected with `--path`.
+
+See the official [Codex profile configuration](https://learn.chatgpt.com/docs/config-file/config-advanced) and [Hooks documentation](https://learn.chatgpt.com/docs/hooks) for upstream behavior.
 
 ### Gemini CLI
 

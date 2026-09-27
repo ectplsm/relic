@@ -99,7 +99,16 @@ Codex CLI:
 
 ```bash
 relic codex
+# 既存の Codex profile を変更せずに合成
+relic codex --profile work
+# resume / fork は Codex へ渡す最初の引数にする
+relic codex resume --last --profile work
+relic codex fork --last
 ```
+
+sessionを再開・分岐するときは、`relic codex`の直後に`resume`または`fork`を書きます。`--last`、`--profile`、`--search`などのCodexオプションは、その後ろに続けてください。たとえば`relic codex resume --last --search`とし、`relic codex --search resume --last`とはしません。Codexでは`-p`をprofileに使うため、RelicのEngramディレクトリを変える場合は`-p`ではなく`--path`を使います。
+
+Relic は Codex Stop hook を登録しますが、強制的な有効化や自動 trust は行いません。Codex Hooks が無効、または hook が未 trust の場合、`archive.md` には新しい記録が追記されません。`/hooks` で状態を確認してください。
 
 Gemini CLI:
 
@@ -109,7 +118,7 @@ relic gemini
 
 ### 4. 記憶を整理する
 
-Constructを使い続けると、会話ログがバックグラウンドhookで自動的に `archive.md` に保存されます。これを永続的な記憶に蒸留するには、時々Constructにこう伝えてください:
+Constructとの会話ログは、バックグラウンドhookによって `archive.md` に自動保存されます。ただし、hookが無効または未trustの場合は保存されないため注意してください。これを永続的な記憶に蒸留するには、時々Constructにこう伝えてください:
 
 > **「記憶を整理して」**
 

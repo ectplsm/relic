@@ -99,7 +99,16 @@ Codex CLI:
 
 ```bash
 relic codex
+# Merge an existing Codex profile without modifying it
+relic codex --profile work
+# resume/fork must be the first forwarded Codex argument
+relic codex resume --last --profile work
+relic codex fork --last
 ```
+
+To resume or fork a session, write `resume` or `fork` immediately after `relic codex`. Put Codex options such as `--last`, `--profile`, and `--search` after it. For example, use `relic codex resume --last --search`, not `relic codex --search resume --last`. Codex uses `-p` for profiles, so use `--path` (not `-p`) to override the Relic Engrams directory.
+
+Relic registers a Codex Stop hook but does not force-enable or auto-trust it. If Codex Hooks are disabled or the hook is not trusted, no new entries are appended to `archive.md`; inspect it with `/hooks`.
 
 Gemini CLI:
 
@@ -109,7 +118,7 @@ relic gemini
 
 ### 4. Organize Memories
 
-As you use a Construct, conversation logs are automatically saved to `archive.md` by background hooks. To distill these into lasting memory, periodically tell the Construct:
+Background hooks automatically save your conversation logs to `archive.md` as you use a Construct. Be aware that logs are not saved when a hook is disabled or not trusted. To distill these logs into lasting memory, periodically tell the Construct:
 
 > **"Organize my memories"**
 

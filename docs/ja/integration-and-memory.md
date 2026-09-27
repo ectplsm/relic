@@ -7,7 +7,7 @@
 | Shell | コマンド | 注入方法 |
 |-------|---------|---------|
 | [Claude Code](https://github.com/anthropics/claude-code) | `relic claude` | `--system-prompt` による直接上書き |
-| [Codex CLI](https://github.com/openai/codex) | `relic codex` | `-c developer_instructions` による developer role 注入 |
+| [Codex CLI](https://github.com/openai/codex) | `relic codex` | 一時的に合成した `--profile` の `developer_instructions` |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `relic gemini` | `GEMINI_SYSTEM_MD` による system prompt 注入 |
 
 全 shell コマンドは以下を共通で受けます。
@@ -17,6 +17,23 @@
 - `--cwd <dir>` — shell の作業ディレクトリ（デフォルトは現在位置）
 
 追加引数はそのまま元の CLI に透過します。
+
+### Codex profile と引数順
+
+`relic codex --profile work` のほか、`--profile=work` と `-p work` も使用できます。Relic は選択したprofileの設定を維持したままEngram指示を追加し、一時profileでCodexを起動します。元profileは変更しません。`-c` overrideではなくprofileを使うため、Codexの共有background serverと共存できます。
+
+Codex は `-p` をprofile指定に使います。Relic のEngramディレクトリを変更する場合は、長い形式の `--path <dir>` を使ってください。
+
+sessionを再開・分岐するときは、`relic codex`の直後に`resume`または`fork`を書きます。`--last`、`--profile`、`--search`などのCodexオプションは、その後ろに続けます。
+
+```bash
+relic codex resume --last --profile work
+relic codex fork --last --search
+```
+
+`relic codex --search resume --last`のような順序は避けてください。`resume`が所定の位置にないため、Relicは新規sessionとして扱います。
+
+これらのsubcommandではEngramを再注入せず、元sessionのEngramとarchive保存先を引き継ぎます。
 
 ## 生ログの記録
 
@@ -34,16 +51,20 @@ Relic は各 shell の hook 機構を使って、prompt と response を `archiv
 
 ### Codex CLI
 
-`relic codex` の初回起動時に、`~/.relic/hooks/codex-stop.js` を `~/.codex/hooks.json` に登録します。
+`relic codex` の初回起動時に、`~/.relic/hooks/codex-stop.js` を `$CODEX_HOME/hooks.json`（デフォルトは `~/.codex/hooks.json`）に登録します。
 
-> Codex hooks には `features.hooks=true` が必要です。
-> `relic codex` は毎回 `-c features.hooks=true` を付けて自動で有効化します。
-> グローバルに有効化したい場合は、`~/.codex/config.toml` に以下を追加します。
+Relic はCodex Hooksの実効設定を尊重し、Hooksの強制有効化やhook trustの回避は行いません。Hooksが無効、またはRelic hookが未trustの場合、`archive.md`には新しい記録が追記されません。Codexの`/hooks`から状態の確認、trust、有効化、無効化を行えます。
+
+現在のCodexではHooksはデフォルトで有効です。以前に無効化している場合は、`$CODEX_HOME/config.toml`で有効化してください。
 >
 > ```toml
 > [features]
 > hooks = true
 > ```
+
+archive保存先はsessionに紐づくため、`resume` / `fork`でも元のEngramへ記録を継続します。旧Relicで作成したsessionや、`--path`で保存先を変更したsessionにも対応します。
+
+上流仕様は公式の[Codex profile設定](https://learn.chatgpt.com/docs/config-file/config-advanced)と[Hooksドキュメント](https://learn.chatgpt.com/docs/hooks)を参照してください。
 
 ### Gemini CLI
 
