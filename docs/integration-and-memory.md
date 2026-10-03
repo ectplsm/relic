@@ -34,16 +34,16 @@ On the first run of `relic claude`, Relic registers `~/.relic/hooks/claude-stop.
 
 ### Codex CLI
 
-On the first run of `relic codex`, Relic registers `~/.relic/hooks/codex-stop.js` in `~/.codex/hooks.json`.
+On the first run of `relic codex`, Relic registers `~/.relic/hooks/codex-stop.js` in `$CODEX_HOME/hooks.json`. If `CODEX_HOME` is not set, Relic uses `~/.codex/hooks.json`. Relative `CODEX_HOME` values are resolved from the shell working directory.
 
-> Codex hooks require `features.hooks=true`.
-> `relic codex` enables that automatically on every launch via `-c features.hooks=true`.
-> You can also enable hooks globally in `~/.codex/config.toml`:
+Codex hooks are enabled by default. Relic does not override your Codex Hooks setting. If you disable Hooks in `$CODEX_HOME/config.toml`, persona injection continues to work, but conversations are not appended to `archive.md`:
 >
 > ```toml
 > [features]
-> hooks = true
+> hooks = false
 > ```
+
+Codex requires non-managed hooks to be reviewed and trusted before they run. Use `/hooks` in Codex CLI to inspect and trust the Relic hook.
 
 ### Gemini CLI
 
