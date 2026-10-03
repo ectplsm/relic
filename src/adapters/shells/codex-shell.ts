@@ -54,10 +54,7 @@ export class CodexShell implements ShellLauncher {
       );
     }
 
-    args.push(
-      "-c", "features.hooks=true",
-      ...(options?.extraArgs ?? []),
-    );
+    args.push(...(options?.extraArgs ?? []));
 
     const env: Record<string, string> = {};
     if (options?.engramId) env.RELIC_ENGRAM_ID = options.engramId;
