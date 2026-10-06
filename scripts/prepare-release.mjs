@@ -12,7 +12,8 @@ const STABLE_SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 function printUsage() {
   console.log(`Usage: npm run release:prepare -- <version> [options]
 
-Prepare a release commit and annotated tag. Publishing is handled separately.
+Prepare a release commit, annotated tag, and draft GitHub Release.
+Publishing is handled separately by GitHub Actions.
 
 Arguments:
   <version>              Stable SemVer version, with or without a leading v
@@ -20,7 +21,7 @@ Arguments:
 Options:
   --no-ai-notes          Generate deterministic release notes without Codex
   --notes-file <path>    Use an existing release notes file
-  --dry-run              Generate and validate notes without changing Git state
+  --dry-run              Generate and validate notes without changing local or remote state
   -h, --help             Show this help
 `);
 }
@@ -89,9 +90,8 @@ function ensureRegistryVersionIsAvailable(packageName, version, repoRoot) {
   }
 }
 
-function preflight(repoRoot, version) {
+function preflight(repoRoot, version, { dryRun }) {
   const branch = run("git", ["branch", "--show-current"], { cwd: repoRoot });
-  if (branch !== "main") throw new Error(`Release preparation must run on main, not ${branch || "detached HEAD"}`);
   if (run("git", ["status", "--porcelain"], { cwd: repoRoot })) {
     throw new Error("Working tree must be clean");
   }
@@ -99,7 +99,22 @@ function preflight(repoRoot, version) {
   run("git", ["fetch", "--quiet", "origin", "main", "--tags"], { cwd: repoRoot });
   const head = run("git", ["rev-parse", "HEAD"], { cwd: repoRoot });
   const remoteMain = run("git", ["rev-parse", "origin/main"], { cwd: repoRoot });
-  if (head !== remoteMain) throw new Error("main must exactly match origin/main");
+  if (dryRun) {
+    if (branch !== "main") {
+      console.warn(`Dry run: generating notes from ${branch || "detached HEAD"}, not main.`);
+    }
+    if (head !== remoteMain) {
+      console.warn("Dry run: HEAD does not match origin/main.");
+    }
+  } else {
+    if (branch !== "main") {
+      throw new Error(`Release preparation must run on main, not ${branch || "detached HEAD"}`);
+    }
+    if (head !== remoteMain) throw new Error("main must exactly match origin/main");
+
+    run("gh", ["auth", "status"], { cwd: repoRoot });
+    run("gh", ["repo", "view", "--json", "nameWithOwner"], { cwd: repoRoot });
+  }
 
   const packageJsonPath = join(repoRoot, "package.json");
   const packageLockPath = join(repoRoot, "package-lock.json");
@@ -129,6 +144,25 @@ function preflight(repoRoot, version) {
 
   ensureRegistryVersionIsAvailable(packageJson.name, version, repoRoot);
   return { packageJson, packageJsonPath, packageLockPath, previousTag, tag, commitCount };
+}
+
+function createDraftRelease(repoRoot, release, notesPath) {
+  const releaseUrl = run(
+    "gh",
+    [
+      "release", "create", release.tag,
+      "--verify-tag",
+      "--draft",
+      "--title", release.tag,
+      "--notes-file", notesPath,
+    ],
+    { cwd: repoRoot },
+  );
+
+  console.log("Draft GitHub Release created:");
+  console.log(`  ${releaseUrl}`);
+  console.log("\nReview it, then start the publish workflow with:");
+  console.log(`  gh workflow run release.yml -f tag=${release.tag}`);
 }
 
 function assertOnlyVersionFilesChanged(repoRoot) {
@@ -219,12 +253,14 @@ async function main() {
   process.chdir(repoRoot);
   console.log(`Preparing v${options.version} from ${basename(repoRoot)}...`);
 
-  const release = preflight(repoRoot, options.version);
+  const release = preflight(repoRoot, options.version, { dryRun: options.dryRun });
   console.log(`Preflight passed: ${release.previousTag}..HEAD (${release.commitCount} commits)`);
 
   const tempDir = mkdtempSync(join(tmpdir(), "relic-release-"));
   let cleanupTemp = true;
   let releaseCommitCreated = false;
+  let releasePushed = false;
+  let notesPath;
 
   try {
     const notes = prepareReleaseNotes({
@@ -236,12 +272,13 @@ async function main() {
       useAiNotes: options.useAiNotes,
       tempDir,
     });
+    notesPath = notes.notesPath;
     console.log("Release notes validated.");
 
     if (options.dryRun) {
       console.log("\n--- Release notes preview ---\n");
       console.log(notes.content.trimEnd());
-      console.log("\nDry run complete. No files, commits, tags, or remotes were changed.");
+      console.log("\nDry run complete. No files, commits, tags, drafts, or remotes were changed.");
       return;
     }
 
@@ -254,26 +291,36 @@ async function main() {
     createReleaseCommit(repoRoot, options.version, release, originals);
     releaseCommitCreated = true;
 
-    run("git", ["tag", "-a", "--cleanup=verbatim", release.tag, "-F", notes.notesPath], {
+    run("git", ["tag", "-a", release.tag, "-m", `Release ${release.tag}`], {
       cwd: repoRoot,
       stdio: "inherit",
     });
     console.log(`Created release commit and annotated tag ${release.tag}.`);
 
-    if (await confirm(`Push main and ${release.tag} to origin?`)) {
+    if (await confirm(`Push main and ${release.tag}, then create a draft GitHub Release?`)) {
       run("git", ["push", "--atomic", "origin", "main", release.tag], {
         cwd: repoRoot,
         stdio: "inherit",
       });
+      releasePushed = true;
       console.log(`Pushed main and ${release.tag}.`);
+      createDraftRelease(repoRoot, release, notes.notesPath);
     } else {
+      cleanupTemp = false;
       console.log("Release remains local. Push it later with:");
       console.log(`  git push --atomic origin main ${release.tag}`);
+      console.log("Release notes preserved at:");
+      console.log(`  ${notes.notesPath}`);
     }
   } catch (error) {
     cleanupTemp = false;
     console.error(`Temporary release files preserved at ${tempDir}`);
-    if (releaseCommitCreated) {
+    if (releasePushed && notesPath) {
+      console.error(`The release was pushed, but its draft may not exist. Retry with:`);
+      console.error(
+        `  gh release create ${release.tag} --verify-tag --draft --title ${release.tag} --notes-file ${notesPath}`,
+      );
+    } else if (releaseCommitCreated) {
       console.error(`The release commit exists locally; inspect it before retrying ${release.tag}.`);
     }
     throw error;
