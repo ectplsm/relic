@@ -34,16 +34,16 @@ Relic は各 shell の hook 機構を使って、prompt と response を `archiv
 
 ### Codex CLI
 
-`relic codex` の初回起動時に、`~/.relic/hooks/codex-stop.js` を `~/.codex/hooks.json` に登録します。
+`relic codex` の初回起動時に、`~/.relic/hooks/codex-stop.js` を `$CODEX_HOME/hooks.json` に登録します。`CODEX_HOME` が未設定の場合は `~/.codex/hooks.json` を使います。相対パスの `CODEX_HOME` は shell の作業ディレクトリを基準に解決します。
 
-> Codex hooks には `features.hooks=true` が必要です。
-> `relic codex` は毎回 `-c features.hooks=true` を付けて自動で有効化します。
-> グローバルに有効化したい場合は、`~/.codex/config.toml` に以下を追加します。
+Codex hooks はデフォルトで有効です。Relic は Codex の Hooks 設定を上書きしません。`$CODEX_HOME/config.toml` で Hooks を無効化した場合、persona の注入は引き続き動作しますが、会話は `archive.md` に追記されません。
 >
 > ```toml
 > [features]
-> hooks = true
+> hooks = false
 > ```
+
+Codex で non-managed hook を実行するには、事前の review と trust が必要です。Codex CLI の `/hooks` から Relic hook を確認して trust してください。
 
 ### Gemini CLI
 
