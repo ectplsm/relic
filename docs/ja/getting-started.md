@@ -8,7 +8,19 @@
 npm install -g @ectplsm/relic
 ```
 
-Relic には Node.js 18 以上が必要です。
+Relic には Node.js 18.14.1 以上が必要です。
+
+### 更新通知
+
+Relic は、npm の新しい安定版をバックグラウンドで 1 日に最大 1 回確認します。
+更新がある場合、対話的なコマンドでは起動時に現在のバージョン、最新バージョン、
+更新コマンドを表示します。Relic が自動更新することはありません。
+
+確認と通知の両方を無効にするには、`NO_UPDATE_NOTIFIER=1` を設定します。
+
+```bash
+export NO_UPDATE_NOTIFIER=1
+```
 
 ## クイックスタート
 

@@ -27,7 +27,7 @@ Relic manages AI **Engrams** (memory + personality) and injects them across codi
 
 ## Requirements
 
-- Node.js 18 or later
+- Node.js 18.14.1 or later
 
 ## Install
 

@@ -8,7 +8,20 @@ This guide covers the first-run path for Relic.
 npm install -g @ectplsm/relic
 ```
 
-Relic requires Node.js 18 or later.
+Relic requires Node.js 18.14.1 or later.
+
+### Update Notifications
+
+Relic checks for new stable npm releases in the background at most once per
+day. When an update is available, interactive commands show the installed
+version, latest version, and update command at startup. Relic never updates
+itself automatically.
+
+Set `NO_UPDATE_NOTIFIER=1` to disable both the check and notification:
+
+```bash
+export NO_UPDATE_NOTIFIER=1
+```
 
 ## Quick Start
 
