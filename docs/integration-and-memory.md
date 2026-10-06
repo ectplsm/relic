@@ -135,7 +135,7 @@ To suppress confirmation dialogs and auto-approve Relic tools across all project
 codex mcp add relic -- relic-mcp
 ```
 
-To auto-approve Relic tools, add this to `~/.codex/config.toml`:
+To auto-approve Relic tools, add this to `$CODEX_HOME/config.toml`. If `CODEX_HOME` is not set, use `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.relic.tools.relic_engram_create]

@@ -135,7 +135,7 @@ claude mcp add --scope user relic -- relic-mcp
 codex mcp add relic -- relic-mcp
 ```
 
-Relic ツールを自動承認するには、`~/.codex/config.toml` に以下を追加します。
+Relic ツールを自動承認するには、`$CODEX_HOME/config.toml` に以下を追加します。`CODEX_HOME` が未設定の場合は `~/.codex/config.toml` を使います。
 
 ```toml
 [mcp_servers.relic.tools.relic_engram_create]
