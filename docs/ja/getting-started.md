@@ -8,7 +8,7 @@
 npm install -g @ectplsm/relic
 ```
 
-Relic には Node.js 18 以上が必要です。
+Relic には Node.js 18.14.1 以上が必要です。
 
 ### 更新通知
 

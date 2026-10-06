@@ -8,7 +8,7 @@ This guide covers the first-run path for Relic.
 npm install -g @ectplsm/relic
 ```
 
-Relic requires Node.js 18 or later.
+Relic requires Node.js 18.14.1 or later.
 
 ### Update Notifications
 
