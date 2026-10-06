@@ -227,6 +227,7 @@ We welcome contributions! To set up the project locally for development:
    - `npm run dev:cli`: Run the CLI in development mode (using `tsx`).
    - `npm run dev:mcp`: Run the MCP server in development mode (using `tsx`).
    - `npm run release:prepare -- <version>`: Generate release notes, validate the package, create and push the version commit and annotated tag, then create a draft GitHub Release. Codex generates the notes by default; use `--no-ai-notes`, `--notes-file <path>`, or `--dry-run` when needed.
+   - After reviewing the draft, run `gh workflow run release.yml -f tag=v<version>` to publish the package and GitHub Release. npm Trusted Publishing must authorize `ectplsm/relic` and the `release.yml` workflow with direct publishing enabled; no long-lived npm token is used.
 
 Before contributing, please read [CLAUDE.md](./CLAUDE.md) for strict coding conventions, parent documents, and PR rules.
 

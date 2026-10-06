@@ -227,6 +227,7 @@ Relic がこれから目指すマイルストーン:
    - `npm run dev:cli`: 開発モードでCLIを実行します（`tsx`を使用）。
    - `npm run dev:mcp`: 開発モードでMCPサーバーを実行します（`tsx`を使用）。
    - `npm run release:prepare -- <version>`: release notes の生成、package の検証、version commit と annotated tag の作成・push、Draft GitHub Release の作成を行います。デフォルトでは Codex が release notes を生成し、必要に応じて `--no-ai-notes`、`--notes-file <path>`、`--dry-run` を使えます。
+   - Draft の確認後、`gh workflow run release.yml -f tag=v<version>` で package と GitHub Release を公開します。npm Trusted Publishing では `ectplsm/relic` と `release.yml` workflow を直接 publish 可能な構成で許可します。長期 npm token は使用しません。
 
 開発ルールやプルリクエストの規約については、事前に [CLAUDE.md](./CLAUDE.md) をご一読ください。
 
