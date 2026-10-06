@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { resolve, dirname } from "node:path";
 import { Command } from "commander";
+import updateNotifier from "update-notifier";
 import { registerInitCommand } from "./commands/init.js";
 import { registerListCommand } from "./commands/list.js";
 import { registerShowCommand } from "./commands/show.js";
@@ -18,6 +19,13 @@ import { registerMikoshiCommand } from "./commands/mikoshi.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, "../../../package.json"), "utf-8"));
+
+updateNotifier({
+  pkg: {
+    name: pkg.name,
+    version: pkg.version,
+  },
+}).notify({ defer: false });
 
 const program = new Command();
 
