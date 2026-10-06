@@ -226,6 +226,7 @@ Relic がこれから目指すマイルストーン:
    - `npm run typecheck`: TypeScriptの型チェックを（コンパイルファイルを出力せずに）実行します。
    - `npm run dev:cli`: 開発モードでCLIを実行します（`tsx`を使用）。
    - `npm run dev:mcp`: 開発モードでMCPサーバーを実行します（`tsx`を使用）。
+   - `npm run release:prepare -- <version>`: release notes の生成、package の検証、version commit、annotated tag の作成を行います。デフォルトでは Codex が release notes を生成し、必要に応じて `--no-ai-notes`、`--notes-file <path>`、`--dry-run` を使えます。
 
 開発ルールやプルリクエストの規約については、事前に [CLAUDE.md](./CLAUDE.md) をご一読ください。
 

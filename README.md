@@ -226,6 +226,7 @@ We welcome contributions! To set up the project locally for development:
    - `npm run typecheck`: Run the TypeScript compiler without emitting files.
    - `npm run dev:cli`: Run the CLI in development mode (using `tsx`).
    - `npm run dev:mcp`: Run the MCP server in development mode (using `tsx`).
+   - `npm run release:prepare -- <version>`: Generate release notes, validate the package, create the version commit, and create an annotated tag. Codex generates the notes by default; use `--no-ai-notes`, `--notes-file <path>`, or `--dry-run` when needed.
 
 Before contributing, please read [CLAUDE.md](./CLAUDE.md) for strict coding conventions, parent documents, and PR rules.
 
