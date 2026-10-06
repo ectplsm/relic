@@ -20,12 +20,14 @@ import { registerMikoshiCommand } from "./commands/mikoshi.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, "../../../package.json"), "utf-8"));
 
-updateNotifier({
-  pkg: {
-    name: pkg.name,
-    version: pkg.version,
-  },
-}).notify({ defer: false });
+if (process.stdout.isTTY) {
+  updateNotifier({
+    pkg: {
+      name: pkg.name,
+      version: pkg.version,
+    },
+  }).notify({ defer: false });
+}
 
 const program = new Command();
 
