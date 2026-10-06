@@ -19,6 +19,9 @@ jobs:
     name: Publish npm package and GitHub Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Security boundary: this must match the protected environment configured in npm Trusted Publishing.
+    environment:
+      name: npm
     permissions:
       contents: write
       id-token: write
@@ -53,6 +56,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Release workflow must be dispatched from main, not $GITHUB_REF" >&2
+            exit 1
+          fi
 
           if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
             echo "Invalid stable release tag: $RELEASE_TAG" >&2

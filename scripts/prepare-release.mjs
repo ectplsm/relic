@@ -162,7 +162,7 @@ function createDraftRelease(repoRoot, release, notesPath) {
   console.log("Draft GitHub Release created:");
   console.log(`  ${releaseUrl}`);
   console.log("\nReview it, then start the publish workflow with:");
-  console.log(`  gh workflow run release.yml -f tag=${release.tag}`);
+  console.log(`  gh workflow run release.yml --ref main -f tag=${release.tag}`);
 }
 
 function assertOnlyVersionFilesChanged(repoRoot) {
