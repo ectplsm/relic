@@ -1,0 +1,155 @@
+name: Publish Release
+
+run-name: Publish ${{ inputs.tag }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to publish (for example v0.5.3)
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish npm package and GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Security boundary: this must match the protected environment configured in npm Trusted Publishing.
+    environment:
+      name: npm
+    permissions:
+      contents: write
+      id-token: write
+
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
+
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Use an OIDC-compatible npm CLI
+        run: |
+          npm install --global npm@11
+          npm --version
+
+      - name: Validate release inputs
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Release workflow must be dispatched from main, not $GITHUB_REF" >&2
+            exit 1
+          fi
+
+          if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "Invalid stable release tag: $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          if [[ "$(git cat-file -t "$RELEASE_TAG")" != "tag" ]]; then
+            echo "Release tag must be annotated: $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          tag_commit="$(git rev-list -n 1 "$RELEASE_TAG")"
+          if [[ "$tag_commit" != "$(git rev-parse HEAD)" ]]; then
+            echo "Checked out commit does not match $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main; then
+            echo "$RELEASE_TAG is not reachable from origin/main" >&2
+            exit 1
+          fi
+
+          node scripts/release/validate-publish.mjs "$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+          if [[ "$(gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft')" != "true" ]]; then
+            echo "GitHub Release for $RELEASE_TAG must exist and still be a draft" >&2
+            exit 1
+          fi
+
+          release_url="$(gh release view "$RELEASE_TAG" --json url --jq '.url')"
+          echo "release_url=$release_url" >> "$GITHUB_OUTPUT"
+          echo "Validated draft release: $release_url"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate package
+        run: |
+          npm run typecheck
+          npm run build
+          npm pack --dry-run
+
+      - name: Check npm publication state
+        id: registry
+        shell: bash
+        env:
+          PACKAGE_NAME: ${{ steps.release.outputs.package_name }}
+          PACKAGE_VERSION: ${{ steps.release.outputs.package_version }}
+        run: |
+          set -euo pipefail
+
+          error_file="$(mktemp)"
+          trap 'rm -f "$error_file"' EXIT
+          if published_metadata="$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" version gitHead --json 2>"$error_file")"; then
+            published_version="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).version)' "$published_metadata")"
+            published_git_head="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).gitHead ?? "")' "$published_metadata")"
+            expected_git_head="$(git rev-list -n 1 "$RELEASE_TAG")"
+
+            if [[ "$published_version" != "$PACKAGE_VERSION" ]]; then
+              echo "npm returned an unexpected version: $published_version" >&2
+              exit 1
+            fi
+            if [[ "$published_git_head" != "$expected_git_head" ]]; then
+              echo "Published npm package does not match the release tag commit" >&2
+              echo "  npm gitHead: ${published_git_head:-missing}" >&2
+              echo "  tag commit: $expected_git_head" >&2
+              exit 1
+            fi
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "$PACKAGE_NAME@$PACKAGE_VERSION already matches $RELEASE_TAG; npm publish will be skipped."
+          elif grep -Eqi 'E404|404 Not Found' "$error_file"; then
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            echo "$PACKAGE_NAME@$PACKAGE_VERSION is available for publication."
+          else
+            cat "$error_file" >&2
+            exit 1
+          fi
+
+      - name: Publish package to npm
+        if: steps.registry.outputs.published != 'true'
+        run: npm publish --access public
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$RELEASE_TAG" --verify-tag --draft=false
+
+      - name: Show published release
+        run: |
+          echo "Published ${{ steps.release.outputs.package_name }}@${{ steps.release.outputs.package_version }}"
+          echo "${{ steps.release.outputs.release_url }}"

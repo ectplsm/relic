@@ -24,7 +24,8 @@
     "dev:cli": "tsx src/interfaces/cli/index.ts",
     "dev:mcp": "tsx src/interfaces/mcp/index.ts",
     "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsc",
+    "release:prepare": "node scripts/prepare-release.mjs"
   },
   "files": [
     "dist",
